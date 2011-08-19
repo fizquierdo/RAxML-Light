@@ -331,10 +331,31 @@ extern double exp_approx (double x);
 #define GAMMA       1
 #define GAMMA_I     2
 
-
-
+/* recomp constants */
+#define SLOT_UNUSED     -2 
+#define NODE_UNPINNED   -3 
+#define INNER_NODE_INIT_STLEN   -1 
+#define NO_VEC_RECOMP        -1
 
 typedef  int boolean;
+
+typedef struct
+{
+  int numVectors;      /* #inner vectors in RAM*/
+  size_t width;        /* #doubles required per vector */
+  double **tmpvectors; /* size: numVectors, points to the vectors */
+  int *iVector;        /* size: numVectors, stores node id || SLOT_UNUSED  */
+  int *iNode;          /* size: inner nodes, stores slot id || NODE_UNPINNED */
+  int *stlen;          /* #tips behind the current orientation of the indexed inner node */ 
+  int *unpinnable;     /* size:numVectors , TRUE if we dont need the vector */
+  int maxVectorsUsed;
+  double pinTime;
+  boolean allSlotsBusy; 
+  /* unpin prio */
+  int *unpinPrio;      /* size:numVectors, slots present in this list have priority to be unpinned */
+  int nextPrio;
+  boolean usePrioList;
+}recompVectors;
 
 
 typedef struct {
@@ -693,6 +714,11 @@ typedef struct {
 
 
 typedef  struct  {
+  /* INIT recomp */
+  recompVectors *rvec;
+  float vectorRecomFraction;
+  /* recomp END */
+
   boolean useGappedImplementation;
   boolean saveMemory;
 
@@ -1080,6 +1106,7 @@ typedef  struct {
   int           slidingWindowSize;
   boolean       writeBinaryFile;
   boolean       readBinaryFile;
+  float         vectorRecomFraction; 
 } analdef;
 
 typedef struct 

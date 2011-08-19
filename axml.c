@@ -2773,6 +2773,8 @@ static void initAdef(analdef *adef)
   adef->slidingWindowSize      = 100;
   adef->writeBinaryFile        = FALSE;
   adef->readBinaryFile         = FALSE;
+  /* vector recomputation deactivated by default */
+  adef->vectorRecomFraction    = NO_VEC_RECOMP;
 }
 
 
@@ -3566,7 +3568,7 @@ static void get_args(int argc, char *argv[], analdef *adef, tree *tr)
 
 
   while(!bad_opt &&
-      ((c = mygetopt(argc,argv,"T:P:R:e:c:f:i:m:t:w:s:n:o:q:G:vhMSDB", &optind, &optarg))!=-1))
+      ((c = mygetopt(argc,argv,"T:P:R:e:c:f:i:m:t:w:s:n:o:q:r:G:vhMSDB", &optind, &optarg))!=-1))
   {
     switch(c)
     {
@@ -3629,6 +3631,10 @@ static void get_args(int argc, char *argv[], analdef *adef, tree *tr)
       case 'q':
         strcpy(modelFileName,optarg);
         adef->useMultipleModel = TRUE;
+        break;
+
+     case 'r':
+        sscanf(optarg, "%f", &adef->vectorRecomFraction);
         break;
 
       case 'v':
@@ -5893,6 +5899,13 @@ int main (int argc, char *argv[])
       return 0;
     }
 
+    /* INIT recomp */
+    if(adef->vectorRecomFraction >= 0.1 && adef->vectorRecomFraction < 1.0)
+    {
+      tr->vectorRecomFraction = adef->vectorRecomFraction;
+      printBothOpen("Memory Saving:  A %.2f fraction of the inner vectors will be used\n",tr->vectorRecomFraction);
+    }
+    /* recomp END */
 
 #ifdef _USE_PTHREADS
     startPthreads(tr);
