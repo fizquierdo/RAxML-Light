@@ -70,7 +70,7 @@
 
 #define twotothe256  \
   115792089237316195423570985008687907853269984665640564039457584007913129639936.0  
-                                                     /*  2**256 (exactly)  */
+/*  2**256 (exactly)  */
 
 #define minlikelihood  (1.0/twotothe256)
 #define minusminlikelihood -minlikelihood
@@ -145,7 +145,7 @@
    on the other hand 0.001 caused problems with some of the 16-state secondary structure models
 
    For some reason the frequency settings seem to be repeatedly causing numerical problems
-   
+
 */
 
 #define ITMAX 100
@@ -366,9 +366,9 @@ typedef unsigned int parsimonyNumber;
 #define PCF 32
 
 /*
-  typedef uint64_t parsimonyNumber;
+   typedef uint64_t parsimonyNumber;
 
-  #define PCF 16
+#define PCF 16
 
 
 typedef unsigned char parsimonyNumber;
@@ -382,7 +382,7 @@ typedef struct
   entry **table;
   hashNumberType entryCount;
 }
-  hashtable;
+hashtable;
 
 
 struct stringEnt
@@ -393,13 +393,13 @@ struct stringEnt
 };
 
 typedef struct stringEnt stringEntry;
- 
+
 typedef struct
 {
   hashNumberType tableSize;
   stringEntry **table;
 }
-  stringHashtable;
+stringHashtable;
 
 
 typedef struct
@@ -407,7 +407,7 @@ typedef struct
   unsigned int  parsimonyScore;
   unsigned int  parsimonyState;
 }
-  parsimonyVector;
+parsimonyVector;
 
 
 typedef struct ratec
@@ -415,7 +415,7 @@ typedef struct ratec
   double accumulatedSiteLikelihood;
   double rate;
 }
-  rateCategorize;
+rateCategorize;
 
 
 typedef struct
@@ -482,14 +482,14 @@ typedef struct
   int partitions;
   int *partitionList;
 }
-  linkageData;
+linkageData;
 
 typedef struct
 {
   int entries;
   linkageData* ld;
 }
-  linkageList;
+linkageList;
 
 
 typedef  struct noderec
@@ -506,14 +506,14 @@ typedef  struct noderec
   int              number;
   char             x;
 }
-  node, *nodeptr;
+node, *nodeptr;
 
 typedef struct
-  {
-    double lh;
-    int number;
-  }
-  info;
+{
+  double lh;
+  int number;
+}
+info;
 
 typedef struct bInf {
   double likelihood;
@@ -564,12 +564,12 @@ typedef struct {
   int             **expVector;
   double          **xVector;
   int             *xSpaceVector;
- 
+
   unsigned char            **yVector;
   parsimonyVector **pVector;
   char   *partitionName;
   double *sumBuffer;
- 
+
   double *gammaRates;
 
   double *EIGN;
@@ -581,7 +581,7 @@ typedef struct {
 
 
 
-  
+
 
   double *left;
   double *right;
@@ -593,24 +593,24 @@ typedef struct {
   double *tipVector; 
   double *substRates;
   double *perSiteLL;
-  
+
   double *perSiteRates;
 
   double *wr;
   double *wr2;
 
-  
+
 
   unsigned int    *globalScaler;
   double          *globalScalerDouble;
   int    *wgt;
- 
+
   int    *rateCategory;
   int    *symmetryVector;
   int    *frequencyGrouping;
   boolean nonGTR;
   double alpha;
-  
+
 
   int gapVectorLength;
   unsigned int *gapVector;
@@ -649,11 +649,11 @@ typedef struct List_{
 #define SLOW_SPRS     3
 
 typedef struct {
- 
+
   int state;
 
   unsigned int vLength;
-  
+
   int rearrangementsMax;
   int rearrangementsMin;
   int thoroughIterations;
@@ -664,7 +664,7 @@ typedef struct {
   int bestTrav;
   int    Thorough;
   int    optimizeRateCategoryInvocations;
-  
+
   double accumulatedTime;
 
   double startLH; 
@@ -672,15 +672,15 @@ typedef struct {
   double previousLh;
   double difference;
   double epsilon;
-  
+
   boolean impr;
   boolean cutoff;  
-       
+
   double tr_startLH;
   double tr_endLH;
   double tr_likelihood;
   double tr_bestOfNode;
-  
+
   double tr_lhCutoff;
   double tr_lhAVG;
   double tr_lhDEC;
@@ -688,14 +688,14 @@ typedef struct {
   int    tr_itCount;  
   int    tr_doCutoff;
 
-                                                                    
+
 } checkPointState;
 
 
 typedef  struct  {
   boolean useGappedImplementation;
   boolean saveMemory;
-  
+
   int    *resample;
 
   int numberOfBranches;
@@ -705,13 +705,13 @@ typedef  struct  {
 
 #if (defined(_USE_PTHREADS) || (_FINE_GRAIN_MPI))
   /*
-    do we need this stuff ?
-  */
+     do we need this stuff ?
+     */
   /*unsigned int **bitVectors;
     hashtable *h;*/
- 
-    
-   
+
+
+
 
   double *temporaryVector;
   parsimonyVector *temporaryParsimonyVector;
@@ -719,31 +719,31 @@ typedef  struct  {
   double *temporarySumBuffer;
   size_t contiguousVectorLength;
   size_t contiguousScalingLength;  
- 
- 
+
+
 
   int *contiguousRateCategory;
   int *contiguousWgt;
- 
+
 
   unsigned char **contiguousTips;
 
   double *contiguousWR;
   double *contiguousWR2;
-  
-  
+
+
   int *expArray;
   unsigned char *y_ptr;
   double *likelihoodArray;
- 
+
   double *wrPtr;
   double *wr2Ptr;
 
- 
+
 
   double *perSiteLLPtr;
   int    *wgtPtr;
-  
+
   int    *rateCategoryPtr;
 
   int threadID;
@@ -751,7 +751,7 @@ typedef  struct  {
   double upper_spacing;
   double *lhs;
 #endif
-  
+
 
 
   parsimonyNumber **parsimonyState_A;
@@ -761,7 +761,7 @@ typedef  struct  {
   unsigned int *parsimonyScore; 
   int *ti;
   unsigned int compressedWidth;
-  
+
   int numberOfTrees; 
 
   stringHashtable  *nameHash;
@@ -790,7 +790,7 @@ typedef  struct  {
 
   double           *wr;
   double           *wr2;
-  
+
   double           *sumBuffer;
   double           *perSiteLL;
   double           coreLZ[NUM_BRANCHES];
@@ -810,14 +810,14 @@ typedef  struct  {
   nodeptr          rightNodes[NUM_BRANCHES]; 
   nodeptr          storedBacks[NUM_BRANCHES];
   lhList          *likelihoodList[NUM_BRANCHES];
- 
+
   double           zLeft[NUM_BRANCHES];
   double           zRight[NUM_BRANCHES];
   double           zDown[NUM_BRANCHES];
 
- 
-  
- 
+
+
+
   branchInfo	   *bInf;
 
   int              multiStateModel;
@@ -829,7 +829,7 @@ typedef  struct  {
   /* the stuff below is shared among DNA and AA, span does
      not change depending on datatype */
 
-  
+
   double           *fracchanges;
 
   /* model stuff end */
@@ -859,7 +859,7 @@ typedef  struct  {
   double           endLH;
   double           likelihood;
   double          *likelihoods;
- 
+
   node           **nodep;
   nodeptr          nodeBaseAddress;
   node            *start;
@@ -875,7 +875,7 @@ typedef  struct  {
   int              NumberOfCategories;
   int              NumberOfModels;
   int              parsimonyLength;
-  
+
   int              checkPointCounter;
   int              treeID;
   int              numberOfOutgroups;
@@ -917,7 +917,7 @@ typedef  struct  {
   double lzr[NUM_BRANCHES];
   double lzi[NUM_BRANCHES];
 
- 
+
   int mr_thresh;
 #ifdef _USE_PTHREADS
 
@@ -933,7 +933,7 @@ typedef  struct  {
   int bipStatusLen;
   entry **entriesOfSection;
   int recommendedAmountJobs;
- 
+
 
   /* used for printBip */
   boolean *hasAncestor; 
@@ -949,7 +949,7 @@ typedef  struct  {
   pthread_mutex_t** mutexesForHashing; 
 
 
- 
+
 
 #endif
 
@@ -958,7 +958,7 @@ typedef  struct  {
   unsigned int vLength;
 
   hashtable *h;
-  
+
 
 } tree;
 
@@ -971,7 +971,7 @@ typedef struct
   nodeptr p, q;
   int cp, cq;
 }
-  connectRELL, *connptrRELL;
+connectRELL, *connptrRELL;
 
 typedef  struct
 {
@@ -979,7 +979,7 @@ typedef  struct
   int             start;
   double          likelihood;
 }
-  topolRELL;
+topolRELL;
 
 
 typedef  struct
@@ -987,7 +987,7 @@ typedef  struct
   int max;
   topolRELL **t;
 }
-  topolRELL_LIST;
+topolRELL_LIST;
 
 
 /**************************************************************/
@@ -995,39 +995,39 @@ typedef  struct
 
 
 typedef struct conntyp {
-    double           z[NUM_BRANCHES];           /* branch length */
-    node            *p, *q;       /* parent and child sectors */
-    void            *valptr;      /* pointer to value of subtree */
-    int              descend;     /* pointer to first connect of child */
-    int              sibling;     /* next connect from same parent */
-    } connect, *connptr;
+  double           z[NUM_BRANCHES];           /* branch length */
+  node            *p, *q;       /* parent and child sectors */
+  void            *valptr;      /* pointer to value of subtree */
+  int              descend;     /* pointer to first connect of child */
+  int              sibling;     /* next connect from same parent */
+} connect, *connptr;
 
 typedef  struct {
-    double           likelihood;
+  double           likelihood;
   int              initialTreeNumber;
-    connect         *links;       /* pointer to first connect (start) */
-    node            *start;
-    int              nextlink;    /* index of next available connect */
-                                  /* tr->start = tpl->links->p */
-    int              ntips;
-    int              nextnode;
-    int              scrNum;      /* position in sorted list of scores */
-    int              tplNum;      /* position in sorted list of trees */
+  connect         *links;       /* pointer to first connect (start) */
+  node            *start;
+  int              nextlink;    /* index of next available connect */
+  /* tr->start = tpl->links->p */
+  int              ntips;
+  int              nextnode;
+  int              scrNum;      /* position in sorted list of scores */
+  int              tplNum;      /* position in sorted list of trees */
 
-    } topol;
+} topol;
 
 typedef struct {
-    double           best;        /* highest score saved */
-    double           worst;       /* lowest score saved */
-    topol           *start;       /* starting tree for optimization */
-    topol          **byScore;
-    topol          **byTopol;
-    int              nkeep;       /* maximum topologies to save */
-    int              nvalid;      /* number of topologies saved */
-    int              ninit;       /* number of topologies initialized */
-    int              numtrees;    /* number of alternatives tested */
-    boolean          improved;
-    } bestlist;
+  double           best;        /* highest score saved */
+  double           worst;       /* lowest score saved */
+  topol           *start;       /* starting tree for optimization */
+  topol          **byScore;
+  topol          **byTopol;
+  int              nkeep;       /* maximum topologies to save */
+  int              nvalid;      /* number of topologies saved */
+  int              ninit;       /* number of topologies initialized */
+  int              numtrees;    /* number of alternatives tested */
+  boolean          improved;
+} bestlist;
 
 typedef  struct {
   int              categories;
@@ -1243,7 +1243,7 @@ extern boolean freeBestTree ( bestlist *bt );
 
 
 extern char *Tree2String ( char *treestr, tree *tr, nodeptr p, boolean printBranchLengths, boolean printNames, boolean printLikelihood, 
-			   boolean rellTree, boolean finalPrint, analdef *adef, int perGene, boolean branchLabelSupport, boolean printSHSupport);
+    boolean rellTree, boolean finalPrint, analdef *adef, int perGene, boolean branchLabelSupport, boolean printSHSupport);
 extern void printTreePerGene(tree *tr, analdef *adef, char *fileName, char *permission);
 
 
@@ -1353,7 +1353,7 @@ extern void printBothOpenMPI(const char* format, ... );
 extern void initRateMatrix(tree *tr);
 
 extern void bitVectorInitravSpecial(unsigned int **bitVectors, nodeptr p, int numsp, unsigned int vectorLength, hashtable *h, int treeNumber, int function, branchInfo *bInf,
-				    int *countBranches, int treeVectorLength, boolean traverseOnly, boolean computeWRF);
+    int *countBranches, int treeVectorLength, boolean traverseOnly, boolean computeWRF);
 
 extern int getIncrement(tree *tr, int model);
 
@@ -1394,7 +1394,7 @@ extern boolean computeBootStopMPI(tree *tr, char *bootStrapFileName, analdef *ad
 #ifdef _USE_PTHREADS
 
 extern void makenewzClassify(tree *tr, int maxiter, double *result, double *z0, double *x1_start, double *x2_start,
-			     unsigned char *tipX1,  unsigned char *tipX2, int tipCase, boolean *partitionConverged);
+    unsigned char *tipX1,  unsigned char *tipX2, int tipCase, boolean *partitionConverged);
 
 extern void    newviewClassify(tree *tr, branchInfo *bInf, double *z);
 
@@ -1402,7 +1402,7 @@ extern void addTraverseRobIterative(tree *tr, int branchNumber);
 extern void insertionsParsimonyIterative(tree *tr, int branchNumber);
 
 extern void newviewClassifySpecial(tree *tr, double *x1_start, double *x2_start, double *x3_start, int *ex1, int *ex2, int *ex3,
-				   unsigned char *tipX1,  unsigned char *tipX2, int tipCase, double *pz, double *qz);
+    unsigned char *tipX1,  unsigned char *tipX2, int tipCase, double *pz, double *qz);
 extern double evalCL(tree *tr, double *x2, int *ex2, unsigned char *tip, double *pz);
 
 extern void testInsertThoroughIterative(tree *tr, int branchNumber, boolean bootstrap);
@@ -1461,24 +1461,24 @@ extern void testInsertThoroughIterative(tree *tr, int branchNumber, boolean boot
 
 /*
 
-parallel tree parsing abandoned ...
+   parallel tree parsing abandoned ...
 
-  #define THREAD_FILL_HASH_FOR_CONSENSUS      41
+#define THREAD_FILL_HASH_FOR_CONSENSUS      41
 
 parallel dropset comp. currently doesn't scale well 
 
-  #define THREAD_FIND_BEST_DROPSET            42
-  #define THREAD_CALC_DROPSETS                43
+#define THREAD_FIND_BEST_DROPSET            42
+#define THREAD_CALC_DROPSETS                43
 
 */
 
 /*
-  Pthreads-based MP computations don't really scale for the 
-  SSE3-based optimized version 
+   Pthreads-based MP computations don't really scale for the 
+   SSE3-based optimized version 
 
-  #define THREAD_FAST_EVALUATE_PARSIMONY        XX
-  #define THREAD_FAST_NEWVIEW_PARSIMONY         XX
-  #define THREAD_INIT_FAST_PARSIMONY            XX
+#define THREAD_FAST_EVALUATE_PARSIMONY        XX
+#define THREAD_FAST_NEWVIEW_PARSIMONY         XX
+#define THREAD_INIT_FAST_PARSIMONY            XX
 */
 
 typedef struct
@@ -1486,7 +1486,7 @@ typedef struct
   tree *tr;
   int threadNumber;
 }
-  threadData;
+threadData;
 
 void threadMakeVector(tree *tr, int tid);
 void threadComputeAverage(tree *tr, int tid);
@@ -1527,7 +1527,7 @@ typedef struct
   double lower_spacing;
   double upper_spacing;
 } jobDescr;
-    
+
 
 
 extern void masterBarrierMPI(int jobType, tree *tr);
