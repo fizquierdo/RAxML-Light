@@ -1032,6 +1032,7 @@ static void getVects(tree *tr, unsigned char **tipX1, unsigned char **tipX2, dou
     states = tr->partitionData[model].states,
     pNumber, 
     qNumber;
+  int slot = -1;
 
   if(tr->rateHetModel == CAT)
     rateHet = 1;
@@ -1064,7 +1065,15 @@ static void getVects(tree *tr, unsigned char **tipX1, unsigned char **tipX2, dou
       if(isTip(qNumber, tr->mxtips))
       {
         *tipX1 = tr->partitionData[model].yVector[qNumber];
-        *x2_start = tr->partitionData[model].xVector[pNumber - tr->mxtips - 1];
+        if(tr->useRecom)
+        {
+          getxVector(tr, pNumber, &slot);			  
+          *x2_start = tr->rvec->tmpvectors[slot];
+        }
+        else
+        {
+          *x2_start = tr->partitionData[model].xVector[pNumber - tr->mxtips - 1];
+        }
 
         if(tr->saveMemory)
         {
@@ -1075,7 +1084,15 @@ static void getVects(tree *tr, unsigned char **tipX1, unsigned char **tipX2, dou
       else
       {
         *tipX1 = tr->partitionData[model].yVector[pNumber];
-        *x2_start = tr->partitionData[model].xVector[qNumber - tr->mxtips - 1];
+        if(tr->useRecom)
+        {
+          getxVector(tr, qNumber, &slot);			  
+          *x2_start = tr->rvec->tmpvectors[slot];
+        }
+        else
+        {
+          *x2_start = tr->partitionData[model].xVector[qNumber - tr->mxtips - 1];
+        }
 
         if(tr->saveMemory)
         {
@@ -1095,8 +1112,18 @@ static void getVects(tree *tr, unsigned char **tipX1, unsigned char **tipX2, dou
   {
     *tipCase = INNER_INNER;
 
-    *x1_start = tr->partitionData[model].xVector[pNumber - tr->mxtips - 1];
-    *x2_start = tr->partitionData[model].xVector[qNumber - tr->mxtips - 1];
+    if(tr->useRecom)
+    {
+      getxVector(tr, pNumber, &slot);			  
+      *x1_start = tr->rvec->tmpvectors[slot];
+      getxVector(tr, qNumber, &slot);			  
+      *x2_start = tr->rvec->tmpvectors[slot];
+    }
+    else
+    {
+      *x1_start = tr->partitionData[model].xVector[pNumber - tr->mxtips - 1];
+      *x2_start = tr->partitionData[model].xVector[qNumber - tr->mxtips - 1];
+    }
 
     if(tr->saveMemory)
     {
@@ -1563,10 +1590,16 @@ void makenewzGeneric(tree *tr, nodeptr p, nodeptr q, double *z0, int maxiter, do
 
     tr->td[0].count = 1;
 
-    if(!p->x)
-      computeTraversalInfo(p, &(tr->td[0].ti[0]), &(tr->td[0].count), tr->mxtips, tr->numBranches);
-    if(!q->x)
-      computeTraversalInfo(q, &(tr->td[0].ti[0]), &(tr->td[0].count), tr->mxtips, tr->numBranches);
+    if(needsRecomp(tr,p))
+      computeTraversalInfo(tr, p, &(tr->td[0].ti[0]), &(tr->td[0].count), tr->mxtips, tr->numBranches);
+    if(needsRecomp(tr,q))
+      computeTraversalInfo(tr, q, &(tr->td[0].ti[0]), &(tr->td[0].count), tr->mxtips, tr->numBranches);
+    if(tr->useRecom)
+    {
+      protectNodesInTraversal(tr);
+      protectNode(tr, p->number);
+      protectNode(tr, q->number);
+    }
   }
 
 

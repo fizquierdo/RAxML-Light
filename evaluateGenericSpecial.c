@@ -998,6 +998,7 @@ double evaluateIterative(tree *tr,  boolean writeVector)
             qNumber = tr->td[0].ti[0].qNumber, 
             model;
 
+  int slot = -1;
   newviewIterative(tr);  
 
   for(model = 0; model < tr->NumberOfModels; model++)
@@ -1044,7 +1045,16 @@ double evaluateIterative(tree *tr,  boolean writeVector)
       {	        	    
         if(isTip(qNumber, tr->mxtips))
         {			  		 
-          x2_start = tr->partitionData[model].xVector[pNumber - tr->mxtips -1];		  
+          if(tr->useRecom)
+          {
+            getxVector(tr, pNumber, &slot);			  
+            x2_start = tr->rvec->tmpvectors[slot];
+            assert(x2_start[0] != INVALID_VALUE);
+          }
+          else
+          {
+            x2_start = tr->partitionData[model].xVector[pNumber - tr->mxtips -1];		  
+          }
           tip      = tr->partitionData[model].yVector[qNumber];	 
 
           if(tr->saveMemory)
@@ -1055,7 +1065,16 @@ double evaluateIterative(tree *tr,  boolean writeVector)
         }           
         else
         {		 
-          x2_start = tr->partitionData[model].xVector[qNumber - tr->mxtips - 1];		  		  
+          if(tr->useRecom)
+          {
+            getxVector(tr, qNumber, &slot);			  
+            x2_start = tr->rvec->tmpvectors[slot];
+            assert(x2_start[0] != INVALID_VALUE);
+          }
+          else
+          {
+            x2_start = tr->partitionData[model].xVector[qNumber - tr->mxtips - 1];		  		  
+          }
           tip = tr->partitionData[model].yVector[pNumber];
 
           if(tr->saveMemory)
@@ -1069,8 +1088,20 @@ double evaluateIterative(tree *tr,  boolean writeVector)
       else
       {  
 
-        x1_start = tr->partitionData[model].xVector[pNumber - tr->mxtips - 1];
-        x2_start = tr->partitionData[model].xVector[qNumber - tr->mxtips - 1];
+        if(tr->useRecom)
+        {
+          getxVector(tr, pNumber, &slot);			  
+          x1_start = tr->rvec->tmpvectors[slot];
+          getxVector(tr, qNumber, &slot);			  
+          x2_start = tr->rvec->tmpvectors[slot];
+          assert(x1_start[0] != INVALID_VALUE);
+          assert(x2_start[0] != INVALID_VALUE);
+        }
+        else
+        {
+          x1_start = tr->partitionData[model].xVector[pNumber - tr->mxtips - 1];
+          x2_start = tr->partitionData[model].xVector[qNumber - tr->mxtips - 1];
+        }
 
         if(tr->saveMemory)
         {
@@ -1318,11 +1349,17 @@ double evaluateGeneric (tree *tr, nodeptr p)
       tr->td[0].ti[0].qz[i] =  q->z[i];
 
     tr->td[0].count = 1;
-    if(!p->x)
-      computeTraversalInfo(p, &(tr->td[0].ti[0]), &(tr->td[0].count), tr->mxtips, tr->numBranches);
-    if(!q->x)
-      computeTraversalInfo(q, &(tr->td[0].ti[0]), &(tr->td[0].count), tr->mxtips, tr->numBranches);  
+    if(needsRecomp(tr, p))
+      computeTraversalInfo(tr, p, &(tr->td[0].ti[0]), &(tr->td[0].count), tr->mxtips, tr->numBranches);
+    if(needsRecomp(tr, q))
+      computeTraversalInfo(tr, q, &(tr->td[0].ti[0]), &(tr->td[0].count), tr->mxtips, tr->numBranches);  
 
+    if(tr->useRecom)
+    {
+      protectNodesInTraversal(tr);
+      protectNode(tr, p->number);
+      protectNode(tr, q->number);
+    }
 #ifdef _USE_PTHREADS 
     {
       int j;

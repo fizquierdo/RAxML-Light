@@ -2655,11 +2655,19 @@ static void allocNodex (tree *tr)
 
 
 
-
-  if(!tr->multiGene)
-  {     
-    likelihoodArray = (double *)malloc_aligned(tr->innerNodes * memoryRequirements * sizeof(double));
-    assert(likelihoodArray != NULL);
+  if(tr->useRecom)
+  {
+    assert(!tr->multiGene); /* TODOFER support multiGene option */
+    allocRecompVectors(tr, memoryRequirements);
+  }
+  else
+  {
+    tr->rvec = NULL;
+    if(!tr->multiGene)
+    {     
+      likelihoodArray = (double *)malloc_aligned(tr->innerNodes * memoryRequirements * sizeof(double));
+      assert(likelihoodArray != NULL);
+    }
   }
 
 
@@ -2696,25 +2704,26 @@ static void allocNodex (tree *tr)
     offset += (size_t)(tr->discreteRateCategories) * (size_t)(tr->partitionData[model].states) * width;      
   }
 
-
-
-  for(i = 0; i < tr->innerNodes; i++)
+  if(!tr->useRecom)
   {
-    offset = 0;
-
-    for(model = 0; model < (size_t)tr->NumberOfModels; model++)
+    for(i = 0; i < tr->innerNodes; i++)
     {
-      size_t width = tr->partitionData[model].upper - tr->partitionData[model].lower;
+      offset = 0;
 
-      if(!tr->multiGene)
-      {	      	    	  	     
-        if(tr->saveMemory)		
-          tr->partitionData[model].xVector[i]   = (double*)NULL;
-        else		
-          tr->partitionData[model].xVector[i]   = &likelihoodArray[i * memoryRequirements + offset];		  		      		      	      
-      }	
+      for(model = 0; model < (size_t)tr->NumberOfModels; model++)
+      {
+        size_t width = tr->partitionData[model].upper - tr->partitionData[model].lower;
 
-      offset += (size_t)(tr->discreteRateCategories) * (size_t)(tr->partitionData[model].states) * width;	 
+        if(!tr->multiGene)
+        {	      	    	  	     
+          if(tr->saveMemory)		
+            tr->partitionData[model].xVector[i]   = (double*)NULL;
+          else		
+            tr->partitionData[model].xVector[i]   = &likelihoodArray[i * memoryRequirements + offset];		  		      		      	      
+        }	
+
+        offset += (size_t)(tr->discreteRateCategories) * (size_t)(tr->partitionData[model].states) * width;	 
+      }
     }
   }
 }
@@ -5903,8 +5912,11 @@ int main (int argc, char *argv[])
     if(adef->vectorRecomFraction >= 0.1 && adef->vectorRecomFraction < 1.0)
     {
       tr->vectorRecomFraction = adef->vectorRecomFraction;
+      tr->useRecom = TRUE;
       printBothOpen("Memory Saving:  A %.2f fraction of the inner vectors will be used\n",tr->vectorRecomFraction);
     }
+    else
+      tr->useRecom = FALSE;
     /* recomp END */
 
 #ifdef _USE_PTHREADS
@@ -5924,6 +5936,7 @@ int main (int argc, char *argv[])
 
     printBothOpen("Memory Saving Option: %s\n", (tr->saveMemory == TRUE)?"ENABLED":"DISABLED");
 
+    printBothOpen("Intializing model\n");
     initModel(tr, rdta, cdta, adef);                
 
     if(tr->searchConvergenceCriterion)
@@ -5940,6 +5953,9 @@ int main (int argc, char *argv[])
 
       assert(0);
 #endif
+
+      if(tr->useRecom)
+        assert(0); /* TODOFER add restart support?*/
 
       restart(tr, adef);
 

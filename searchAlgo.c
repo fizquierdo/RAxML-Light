@@ -714,6 +714,32 @@ void addTraverseBIG(tree *tr, nodeptr p, nodeptr q, int mintrav, int maxtrav)
 } 
 
 
+void remove_and_traverse(tree *tr,nodeptr p, nodeptr p1, nodeptr p2, int mintrav, int maxtrav)
+{
+  /* avoid duplication of code, and wrap up the priority List nicely */
+
+  nodeptr return_p;
+  if(tr->useRecom)
+    set_node_priority(tr, p); /* uncomment to deactivate the prio list usage */
+
+  return_p = removeNodeBIG(tr, p,  tr->numBranches);
+  assert(p != NULL);
+
+  if (!isTip(p1->number, tr->rdta->numsp)) 
+  {
+    addTraverseBIG(tr, p, p1->next->back,      mintrav, maxtrav);         
+    addTraverseBIG(tr, p, p1->next->next->back,mintrav, maxtrav);          
+  }
+
+  if (!isTip(p2->number, tr->rdta->numsp)) 
+  {
+    addTraverseBIG(tr, p, p2->next->back,      mintrav, maxtrav);
+    addTraverseBIG(tr, p, p2->next->next->back,mintrav, maxtrav);          
+  }
+
+  if(tr->useRecom)
+    tr->rvec->usePrioList = FALSE;
+}
 
 
 
@@ -743,23 +769,7 @@ int rearrangeBIG(tree *tr, nodeptr p, int mintrav, int maxtrav)
         p2z[i] = p2->z[i];	   	   
       }
 
-      if (! removeNodeBIG(tr, p,  tr->numBranches)) return badRear;
-
-      if (!isTip(p1->number, tr->rdta->numsp)) 
-      {
-        addTraverseBIG(tr, p, p1->next->back,
-            mintrav, maxtrav);         
-        addTraverseBIG(tr, p, p1->next->next->back,
-            mintrav, maxtrav);          
-      }
-
-      if (!isTip(p2->number, tr->rdta->numsp)) 
-      {
-        addTraverseBIG(tr, p, p2->next->back,
-            mintrav, maxtrav);
-        addTraverseBIG(tr, p, p2->next->next->back,
-            mintrav, maxtrav);          
-      }
+      remove_and_traverse(tr, p, p1, p2, mintrav, maxtrav);
 
       hookup(p->next,       p1, p1z, tr->numBranches); 
       hookup(p->next->next, p2, p2z, tr->numBranches);	   	    	    
@@ -793,25 +803,10 @@ int rearrangeBIG(tree *tr, nodeptr p, int mintrav, int maxtrav)
         q2z[i] = q2->z[i];
       }
 
-      if (! removeNodeBIG(tr, q, tr->numBranches)) return badRear;
 
       mintrav2 = mintrav > 2 ? mintrav : 2;
 
-      if (/*! q1->tip*/ !isTip(q1->number, tr->rdta->numsp)) 
-      {
-        addTraverseBIG(tr, q, q1->next->back,
-            mintrav2 , maxtrav);
-        addTraverseBIG(tr, q, q1->next->next->back,
-            mintrav2 , maxtrav);         
-      }
-
-      if (/*! q2->tip*/ ! isTip(q2->number, tr->rdta->numsp)) 
-      {
-        addTraverseBIG(tr, q, q2->next->back,
-            mintrav2 , maxtrav);
-        addTraverseBIG(tr, q, q2->next->next->back,
-            mintrav2 , maxtrav);          
-      }	   
+      remove_and_traverse(tr, q, q1, q2, mintrav2, maxtrav);
 
       hookup(q->next,       q1, q1z, tr->numBranches); 
       hookup(q->next->next, q2, q2z, tr->numBranches);

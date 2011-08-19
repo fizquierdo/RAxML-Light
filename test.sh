@@ -5,8 +5,8 @@
 DATADIR=../RAxML-Light-1.0.4/data
 NAME=TEST
 
-SET=7.phy
-TREE=RAxML_parsimonyTree.7_s12345.0
+SET=50
+TREE=RAxML_parsimonyTree.50sim.0
 FACTOR=0.99
 
 # just clean dir

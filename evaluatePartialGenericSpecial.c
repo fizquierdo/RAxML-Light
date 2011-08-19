@@ -382,7 +382,7 @@ static double evaluatePartialGTRCAT(int i, double ki, int counter,  traversalInf
 
 
 
-void computeFullTraversalInfo(nodeptr p, traversalInfo *ti, int *counter, int maxTips, int numBranches)
+void computeFullTraversalInfo(nodeptr p, traversalInfo *ti, int *counter, int maxTips, int numBranches, recompVectors *rvec)
 {
   if(isTip(p->number, maxTips))
     return; 
@@ -417,6 +417,8 @@ void computeFullTraversalInfo(nodeptr p, traversalInfo *ti, int *counter, int ma
         ti[*counter].rz[i] = z;	    
       }     
       *counter = *counter + 1;
+      if(rvec != NULL)
+        validate_stlen(p, maxTips, 2, rvec->stlen);
     }  
     else
     {
@@ -431,7 +433,14 @@ void computeFullTraversalInfo(nodeptr p, traversalInfo *ti, int *counter, int ma
           q = tmp;
         }
 
-        computeFullTraversalInfo(r, ti, counter, maxTips, numBranches);	
+        computeFullTraversalInfo(r, ti, counter, maxTips, numBranches, rvec);	
+        if(rvec != NULL)
+        {
+          int r_stlen = rvec->stlen[r->number - maxTips - 1];
+          assert(r_stlen != INNER_NODE_INIT_STLEN);
+          assert(r_stlen >= 2 && r_stlen <= maxTips - 1);
+          validate_stlen(p, maxTips, r_stlen + 1, rvec->stlen);
+        }
 
         ti[*counter].tipCase = TIP_INNER; 
         ti[*counter].pNumber = p->number;
@@ -454,8 +463,36 @@ void computeFullTraversalInfo(nodeptr p, traversalInfo *ti, int *counter, int ma
       }
       else
       {	 	  
-        computeFullTraversalInfo(q, ti, counter, maxTips, numBranches);	       
-        computeFullTraversalInfo(r, ti, counter, maxTips, numBranches);
+        if(rvec != NULL)
+        {
+          int q_stlen, r_stlen;
+          r_stlen = rvec->stlen[r->number - maxTips - 1];
+          q_stlen = rvec->stlen[q->number - maxTips - 1];
+          if(r_stlen == INNER_NODE_INIT_STLEN || !r->x)
+            r_stlen = tipsPartialCountStlen(maxTips, r, rvec);
+          if(q_stlen == INNER_NODE_INIT_STLEN || !q->x)
+            q_stlen = tipsPartialCountStlen(maxTips, q, rvec);
+          /* check that the stlen  read / computed make sense at all*/
+          assert(q_stlen >= 2 && q_stlen <= maxTips - 1);
+          assert(r_stlen >= 2 && r_stlen <= maxTips - 1);
+          if(q_stlen > r_stlen)
+          {
+            computeFullTraversalInfo(q, ti, counter, maxTips, numBranches, rvec);	       
+            computeFullTraversalInfo(r, ti, counter, maxTips, numBranches, rvec);
+          }
+          else
+          {
+            computeFullTraversalInfo(r, ti, counter, maxTips, numBranches, rvec);	       
+            computeFullTraversalInfo(q, ti, counter, maxTips, numBranches, rvec);
+          }
+          int val = rvec->stlen[q->number - maxTips - 1] + rvec->stlen[r->number - maxTips - 1];
+          validate_stlen(p, maxTips, val, rvec->stlen);
+        }
+        else
+        {
+          computeFullTraversalInfo(r, ti, counter, maxTips, numBranches, rvec);	       
+          computeFullTraversalInfo(q, ti, counter, maxTips, numBranches, rvec);
+        }
 
         ti[*counter].tipCase = INNER_INNER; 
         ti[*counter].pNumber = p->number;
@@ -493,8 +530,8 @@ void determineFullTraversal(nodeptr p, tree *tr)
   assert(isTip(p->number, tr->mxtips));
 
   tr->td[0].count = 1; 
-  computeFullTraversalInfo(q, &(tr->td[0].ti[0]),  &(tr->td[0].count), tr->mxtips, tr->numBranches); 
-  computeFullTraversalInfo(p, &(tr->td[0].ti[0]),  &(tr->td[0].count), tr->mxtips, tr->numBranches);
+  computeFullTraversalInfo(q, &(tr->td[0].ti[0]),  &(tr->td[0].count), tr->mxtips, tr->numBranches, tr->rvec); 
+  computeFullTraversalInfo(p, &(tr->td[0].ti[0]),  &(tr->td[0].count), tr->mxtips, tr->numBranches, tr->rvec);
 }
 
 

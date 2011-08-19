@@ -336,6 +336,7 @@ extern double exp_approx (double x);
 #define NODE_UNPINNED   -3 
 #define INNER_NODE_INIT_STLEN   -1 
 #define NO_VEC_RECOMP        -1
+#define INVALID_VALUE   -999.0 
 
 typedef  int boolean;
 
@@ -717,6 +718,7 @@ typedef  struct  {
   /* INIT recomp */
   recompVectors *rvec;
   float vectorRecomFraction;
+  boolean useRecom;
   /* recomp END */
 
   boolean useGappedImplementation;
@@ -1298,7 +1300,7 @@ extern double evaluateGenericVector (tree *tr, nodeptr p);
 extern void categorizeGeneric (tree *tr, nodeptr p);
 extern double makenewzPartitionGeneric(tree *tr, nodeptr p, nodeptr q, double z0, int maxiter, int model);
 extern boolean isTip(int number, int maxTips);
-extern void computeTraversalInfo(nodeptr p, traversalInfo *ti, int *counter, int maxTips, int numBranches);
+extern void computeTraversalInfo(tree *tr, nodeptr p, traversalInfo *ti, int *counter, int maxTips, int numBranches);
 
 
 
@@ -1349,7 +1351,7 @@ extern nodeptr findAnyTip(nodeptr p, int numsp);
 
 extern void parseProteinModel(analdef *adef);
 
-extern void computeFullTraversalInfo(nodeptr p, traversalInfo *ti, int *counter, int maxTips, int numBranches);
+extern void computeFullTraversalInfo(nodeptr p, traversalInfo *ti, int *counter, int maxTips, int numBranches, recompVectors *rvec);
 
 extern void computeNextReplicate(tree *tr, long *seed, int *originalRateCategories, int *originalInvariant, boolean isRapid, boolean fixRates);
 /*extern void computeNextReplicate(tree *tr, analdef *adef, int *originalRateCategories, int *originalInvariant);*/

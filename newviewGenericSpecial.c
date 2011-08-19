@@ -4327,7 +4327,7 @@ static void newviewGTRCATPROT_SAVE(int tipCase, double *extEV,
 
 
 
-void computeTraversalInfo(nodeptr p, traversalInfo *ti, int *counter, int maxTips, int numBranches)
+void computeTraversalInfo(tree *tr, nodeptr p, traversalInfo *ti, int *counter, int maxTips, int numBranches)
 {
   if(isTip(p->number, maxTips))
     return;
@@ -4349,6 +4349,8 @@ void computeTraversalInfo(nodeptr p, traversalInfo *ti, int *counter, int maxTip
       ti[*counter].pNumber = p->number;
       ti[*counter].qNumber = q->number;
       ti[*counter].rNumber = r->number;
+      if(tr->rvec != NULL)
+        set_stlen(tr, p, 2);
 
       for(i = 0; i < numBranches; i++)
       {
@@ -4377,12 +4379,27 @@ void computeTraversalInfo(nodeptr p, traversalInfo *ti, int *counter, int maxTip
           q = tmp;
         }
 
-        while ((! p->x) || (! r->x))
+        int r_stlen;
+        while ((! p->x) || needsRecomp(tr, r))
         {
-          if (! r->x)
-            computeTraversalInfo(r, ti, counter, maxTips, numBranches);
-          if (! p->x)
-            getxnode(p);
+          if (needsRecomp(tr, r))
+            computeTraversalInfo(tr, r, ti, counter, maxTips, numBranches);
+          if(tr->useRecom)
+          {
+            if(!r->x)
+              r_stlen = tipsPartialCountStlen(tr->mxtips, r, tr->rvec);
+            else
+              r_stlen = tr->rvec->stlen[r->number - tr->mxtips - 1];
+            if (! p->x)
+              getxnode(p);
+            assert(r_stlen + 1 >= 2 && r_stlen + 1 <= tr->mxtips - 1);
+            set_stlen(tr, p, r_stlen + 1);
+          }
+          else
+          {
+            if (! p->x)
+              getxnode(p);
+          }
         }
 
         ti[*counter].tipCase = TIP_INNER;
@@ -4408,14 +4425,52 @@ void computeTraversalInfo(nodeptr p, traversalInfo *ti, int *counter, int maxTip
       else
       {
 
-        while ((! p->x) || (! q->x) || (! r->x))
+        int r_stlen, q_stlen;
+        while ((! p->x) || needsRecomp(tr, q) || needsRecomp(tr, r))
         {
-          if (! q->x)
-            computeTraversalInfo(q, ti, counter, maxTips, numBranches);
-          if (! r->x)
-            computeTraversalInfo(r, ti, counter, maxTips, numBranches);
+          if (needsRecomp(tr, q) && needsRecomp(tr, r))
+          {
+            nodeptr long_p, short_r;
+            if(tr->useRecom)
+            {
+              /* determine order */
+              int q_stlen_fast, r_stlen_fast;
+              q_stlen_fast = tipsPartialCountStlen(tr->mxtips, q, tr->rvec);
+              r_stlen_fast = tipsPartialCountStlen(tr->mxtips, r, tr->rvec);
+              if(q_stlen_fast > r_stlen_fast) 
+              {
+                computeTraversalInfo(tr, q, ti, counter, maxTips, numBranches);
+                computeTraversalInfo(tr, r, ti, counter, maxTips, numBranches);
+              }
+              else
+              {
+                computeTraversalInfo(tr, r, ti, counter, maxTips, numBranches);
+                computeTraversalInfo(tr, q, ti, counter, maxTips, numBranches);
+              }
+            }
+            else
+            {
+              computeTraversalInfo(tr, q, ti, counter, maxTips, numBranches);
+              computeTraversalInfo(tr, r, ti, counter, maxTips, numBranches);
+            }
+
+          }
+          else
+          {
+            /* order is not relevant */
+            if (needsRecomp(tr, q))
+              computeTraversalInfo(tr, q, ti, counter, maxTips, numBranches);
+            if (needsRecomp(tr, r))
+              computeTraversalInfo(tr, r, ti, counter, maxTips, numBranches);
+          }
           if (! p->x)
             getxnode(p);
+          if(tr->useRecom)
+          {
+            r_stlen = tr->rvec->stlen[r->number - tr->mxtips - 1];
+            q_stlen = tr->rvec->stlen[q->number - tr->mxtips - 1];
+            set_stlen(tr, p, r_stlen + q_stlen);
+          }
         }
 
         ti[*counter].tipCase = INNER_INNER;
@@ -4660,12 +4715,23 @@ void newviewIterative (tree *tr)
           requiredLength = width - setBits;		
         }
 
+        int slot = -1, unpin1 = -1, unpin2 = -1;
         switch(tInfo->tipCase)
         {
           case TIP_TIP:		  
             tipX1    = tr->partitionData[model].yVector[tInfo->qNumber];
             tipX2    = tr->partitionData[model].yVector[tInfo->rNumber];		  
-            x3_start = tr->partitionData[model].xVector[tInfo->pNumber - tr->mxtips - 1];			  
+            if(tr->useRecom)
+            {
+              getxVector(tr, tInfo->pNumber, &slot);			  
+              x3_start = tr->rvec->tmpvectors[slot];
+              assert(x3_start != NULL);
+              assert(tr->rvec->width == 4 * width);
+            }
+            else
+            {
+              x3_start = tr->partitionData[model].xVector[tInfo->pNumber - tr->mxtips - 1];			  
+            }
 
             if(tr->saveMemory)
             {
@@ -4677,8 +4743,20 @@ void newviewIterative (tree *tr)
             break;
           case TIP_INNER:		 
             tipX1    =  tr->partitionData[model].yVector[tInfo->qNumber];
-            x2_start = tr->partitionData[model].xVector[tInfo->rNumber - tr->mxtips - 1];
-            x3_start = tr->partitionData[model].xVector[tInfo->pNumber - tr->mxtips - 1];	
+            if(tr->useRecom)
+            {
+              getxVector(tr, tInfo->rNumber, &slot);			  
+              x2_start = tr->rvec->tmpvectors[slot];
+              assert(x2_start[0] != INVALID_VALUE);
+              getxVector(tr, tInfo->pNumber, &slot);			  
+              x3_start = tr->rvec->tmpvectors[slot];
+              unpin2 = tInfo->rNumber;
+            }
+            else
+            {
+              x2_start = tr->partitionData[model].xVector[tInfo->rNumber - tr->mxtips - 1];
+              x3_start = tr->partitionData[model].xVector[tInfo->pNumber - tr->mxtips - 1];	
+            }
 
             if(tr->saveMemory)
             {
@@ -4689,9 +4767,26 @@ void newviewIterative (tree *tr)
 
             break;
           case INNER_INNER:		 		 
-            x1_start       = tr->partitionData[model].xVector[tInfo->qNumber - tr->mxtips - 1];
-            x2_start       = tr->partitionData[model].xVector[tInfo->rNumber - tr->mxtips - 1];
-            x3_start       = tr->partitionData[model].xVector[tInfo->pNumber - tr->mxtips - 1];	
+            if(tr->useRecom)
+            {
+              getxVector(tr, tInfo->qNumber, &slot);			  
+              x1_start = tr->rvec->tmpvectors[slot];
+
+              getxVector(tr, tInfo->rNumber, &slot);			  
+              x2_start = tr->rvec->tmpvectors[slot];
+
+              getxVector(tr, tInfo->pNumber, &slot);			  
+              x3_start = tr->rvec->tmpvectors[slot];
+
+              unpin2 = tInfo->rNumber;
+              unpin1 = tInfo->qNumber;
+            }
+            else
+            {
+              x1_start       = tr->partitionData[model].xVector[tInfo->qNumber - tr->mxtips - 1];
+              x2_start       = tr->partitionData[model].xVector[tInfo->rNumber - tr->mxtips - 1];
+              x3_start       = tr->partitionData[model].xVector[tInfo->pNumber - tr->mxtips - 1];	
+            }
 
             if(tr->saveMemory)
             {
@@ -4827,6 +4922,12 @@ void newviewIterative (tree *tr)
             assert(0);
         }
 
+        if(tr->useRecom)
+        {
+          assert(x3_start[0] != INVALID_VALUE);
+          unpinNode(tr, unpin1);
+          unpinNode(tr, unpin2);
+        }
 
         tr->partitionData[model].globalScaler[tInfo->pNumber] = 
           tr->partitionData[model].globalScaler[tInfo->qNumber] + 
@@ -4861,7 +4962,13 @@ void newviewGeneric (tree *tr, nodeptr p)
   else
   {
     tr->td[0].count = 1;
-    computeTraversalInfo(p, &(tr->td[0].ti[0]), &(tr->td[0].count), tr->mxtips, tr->numBranches);
+    computeTraversalInfo(tr, p, &(tr->td[0].ti[0]), &(tr->td[0].count), tr->mxtips, tr->numBranches);
+    if(tr->useRecom)
+    {
+      protectNodesInTraversal(tr);
+      protectNode(tr, p->number);
+      protectNode(tr, p->back->number);
+    }
 
     if(tr->td[0].count > 1)
     {
@@ -4915,7 +5022,7 @@ void newviewGenericMasked(tree *tr, nodeptr p)
     else
     {
       tr->td[0].count = 1;
-      computeTraversalInfo(p, &(tr->td[0].ti[0]), &(tr->td[0].count), tr->mxtips, tr->numBranches);
+      computeTraversalInfo(tr, p, &(tr->td[0].ti[0]), &(tr->td[0].count), tr->mxtips, tr->numBranches);
 
       if(tr->td[0].count > 1)
       {
