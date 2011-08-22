@@ -5908,12 +5908,11 @@ int main (int argc, char *argv[])
       return 0;
     }
 
-    /* INIT recomp */
-    if(adef->vectorRecomFraction >= 0.1 && adef->vectorRecomFraction < 1.0)
+    /* INIT recomp, decide wether vector recomputation will be applied */
+    if(adef->vectorRecomFraction >= MIN_RECOM_FRACTION && adef->vectorRecomFraction < MAX_RECOM_FRACTION)
     {
       tr->vectorRecomFraction = adef->vectorRecomFraction;
       tr->useRecom = TRUE;
-      printBothOpen("Memory Saving:  A %.2f fraction of the inner vectors will be used\n",tr->vectorRecomFraction);
     }
     else
       tr->useRecom = FALSE;
@@ -5935,8 +5934,9 @@ int main (int argc, char *argv[])
     printModelAndProgramInfo(tr, adef, argc, argv);
 
     printBothOpen("Memory Saving Option: %s\n", (tr->saveMemory == TRUE)?"ENABLED":"DISABLED");
+    if(tr->useRecom)
+      printBothOpen("Memory Saving through vector recomputation:  A %.2f fraction of the inner vectors will be allocated\n", tr->vectorRecomFraction);
 
-    printBothOpen("Intializing model\n");
     initModel(tr, rdta, cdta, adef);                
 
     if(tr->searchConvergenceCriterion)
@@ -5977,10 +5977,13 @@ int main (int argc, char *argv[])
 
       modOptJoerg(tr, adef);
 #else
+      printBothOpen("Eval generic\n");
       evaluateGenericInitrav(tr, tr->start);	 
 
+      printBothOpen("Tree eval\n");
       treeEvaluate(tr, 1); 	 	 	 	 	 
 
+      printBothOpen("compute BIG RAPID\n");
       computeBIGRAPID(tr, adef, TRUE); 	     
 #endif
     }            

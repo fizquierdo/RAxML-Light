@@ -7,7 +7,7 @@ NAME=TEST
 
 SET=50
 TREE=RAxML_parsimonyTree.50sim.0
-FACTOR=0.99
+FACTOR=0.60
 
 # just clean dir
 if [ $1 = clean ] ; then
@@ -29,4 +29,7 @@ if [ $1 = pro ] ; then
   valgrind ./raxmlLight -r $FACTOR -m GTRCAT -n ${NAME} -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE}
 else
   ./raxmlLight -r $FACTOR -m GTRCAT -n ${NAME} -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE}
+  FACTOR=1.1
+  ./raxmlLight -r $FACTOR -m GTRCAT -n ${NAME}_hf -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE}
+  ./raxmlLight -m GTRCAT -n ${NAME}_std -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE}
 fi

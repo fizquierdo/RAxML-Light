@@ -336,6 +336,8 @@ extern double exp_approx (double x);
 #define NODE_UNPINNED   -3 
 #define INNER_NODE_INIT_STLEN   -1 
 #define NO_VEC_RECOMP        -1
+#define MIN_RECOM_FRACTION       0.1 
+#define MAX_RECOM_FRACTION       1.0 
 #define INVALID_VALUE   -999.0 
 
 typedef  int boolean;

@@ -1537,6 +1537,7 @@ void computeBIGRAPID (tree *tr, analdef *adef, boolean estimateModel)
   if(adef->useCheckpoint && ckp.state == SLOW_SPRS)
     goto START_SLOW_SPRS;
 
+  printBothOpen("Starting fast search\n");
   while(impr)
   {              
 START_FAST_SPRS:
@@ -1731,6 +1732,7 @@ cleanup_fast:
   else
     treeEvaluate(tr, 1.0);
 
+  printBothOpen("Starting slow search\n");
   while(1)
   {	 
 START_SLOW_SPRS:

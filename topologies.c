@@ -359,6 +359,8 @@ static boolean restoreTree (topol *tpl, tree *tr)
   tr->ntips      = tpl->ntips;
 
   tr->nextnode   = tpl->nextnode;    
+  if(tr->useRecom)
+    reset_stlen(tr);
 
   evaluateGenericInitrav(tr, tr->start);
   return TRUE;
