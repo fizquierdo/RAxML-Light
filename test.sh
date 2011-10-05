@@ -1,8 +1,6 @@
 #!/bin/bash
 
-
-
-DATADIR=../RAxML-Light-1.0.4/data
+DATADIR=data
 NAME=TEST
 
 SET=50
@@ -29,7 +27,9 @@ if [ $1 = pro ] ; then
   valgrind ./raxmlLight -r $FACTOR -m GTRCAT -n ${NAME} -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE}
 else
   ./raxmlLight -r $FACTOR -m GTRCAT -n ${NAME} -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE}
-  FACTOR=1.1
-  ./raxmlLight -r $FACTOR -m GTRCAT -n ${NAME}_hf -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE}
+  #FACTOR=1.1
+  #./raxmlLight -r $FACTOR -m GTRCAT -n ${NAME}_hf -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE}
   ./raxmlLight -m GTRCAT -n ${NAME}_std -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE}
+  echo "diff"
+  diff RAxML_result.${NAME} RAxML_result.${NAME}_std
 fi
