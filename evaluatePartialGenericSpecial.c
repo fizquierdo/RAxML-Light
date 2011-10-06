@@ -393,7 +393,6 @@ void computeFullTraversalInfo(nodeptr p, traversalInfo *ti, int *counter, int ma
     nodeptr r = p->next->next->back;
 
     /* set xnode info at this point */
-
     p->x = 1;
     p->next->x = 0;
     p->next->next->x = 0;     
@@ -417,8 +416,6 @@ void computeFullTraversalInfo(nodeptr p, traversalInfo *ti, int *counter, int ma
         ti[*counter].rz[i] = z;	    
       }     
       *counter = *counter + 1;
-      if(rvec != NULL)
-        validate_stlen(p, maxTips, 2, rvec->stlen);
     }  
     else
     {
@@ -434,13 +431,6 @@ void computeFullTraversalInfo(nodeptr p, traversalInfo *ti, int *counter, int ma
         }
 
         computeFullTraversalInfo(r, ti, counter, maxTips, numBranches, rvec);	
-        if(rvec != NULL)
-        {
-          int r_stlen = rvec->stlen[r->number - maxTips - 1];
-          assert(r_stlen != INNER_NODE_INIT_STLEN);
-          assert(r_stlen >= 2 && r_stlen <= maxTips - 1);
-          validate_stlen(p, maxTips, r_stlen + 1, rvec->stlen);
-        }
 
         ti[*counter].tipCase = TIP_INNER; 
         ti[*counter].pNumber = p->number;
@@ -468,10 +458,6 @@ void computeFullTraversalInfo(nodeptr p, traversalInfo *ti, int *counter, int ma
           int q_stlen, r_stlen;
           r_stlen = rvec->stlen[r->number - maxTips - 1];
           q_stlen = rvec->stlen[q->number - maxTips - 1];
-          if(r_stlen == INNER_NODE_INIT_STLEN || !r->x)
-            r_stlen = tipsPartialCountStlen(maxTips, r, rvec);
-          if(q_stlen == INNER_NODE_INIT_STLEN || !q->x)
-            q_stlen = tipsPartialCountStlen(maxTips, q, rvec);
           /* check that the stlen  read / computed make sense at all*/
           assert(q_stlen >= 2 && q_stlen <= maxTips - 1);
           assert(r_stlen >= 2 && r_stlen <= maxTips - 1);
@@ -485,8 +471,6 @@ void computeFullTraversalInfo(nodeptr p, traversalInfo *ti, int *counter, int ma
             computeFullTraversalInfo(r, ti, counter, maxTips, numBranches, rvec);	       
             computeFullTraversalInfo(q, ti, counter, maxTips, numBranches, rvec);
           }
-          int val = rvec->stlen[q->number - maxTips - 1] + rvec->stlen[r->number - maxTips - 1];
-          validate_stlen(p, maxTips, val, rvec->stlen);
         }
         else
         {
@@ -518,6 +502,10 @@ void computeFullTraversalInfo(nodeptr p, traversalInfo *ti, int *counter, int ma
 
 void determineFullTraversal(nodeptr p, tree *tr)
 {
+  /*pre - compute the stlens*/
+  if(tr->useRecom)
+    determineFullTraversalStlen(p, tr);
+
   nodeptr q = p->back;
   int k;
 
