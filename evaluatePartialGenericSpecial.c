@@ -389,6 +389,7 @@ void computeFullTraversalInfo(nodeptr p, traversalInfo *ti, int *counter, int ma
 
   {     
     int i;
+    int slot = -1, unpin1 = -1, unpin2 = -1;
     nodeptr q = p->next->back;
     nodeptr r = p->next->next->back;
 
@@ -415,6 +416,12 @@ void computeFullTraversalInfo(nodeptr p, traversalInfo *ti, int *counter, int ma
         z = (z > zmin) ? log(z) : log(zmin);
         ti[*counter].rz[i] = z;	    
       }     
+      // strategy
+      if(rvec != NULL)
+      {
+        getxVector(tr, tInfo->pNumber, &slot);			  
+        ti[*counter].slot_p = slot;	    
+      }
       *counter = *counter + 1;
     }  
     else
@@ -449,6 +456,17 @@ void computeFullTraversalInfo(nodeptr p, traversalInfo *ti, int *counter, int ma
           ti[*counter].rz[i] = z;		
         }   
 
+        if(rvec != NULL)
+        {
+          getxVector(tr, tInfo->rNumber, &slot);			  
+          ti[*counter].slot_r = slot;	    
+
+          getxVector(tr, tInfo->pNumber, &slot);			  
+          ti[*counter].slot_p = slot;	    
+          
+          unpin2 = tInfo->rNumber;
+        }
+
         *counter = *counter + 1;
       }
       else
@@ -471,6 +489,18 @@ void computeFullTraversalInfo(nodeptr p, traversalInfo *ti, int *counter, int ma
             computeFullTraversalInfo(r, ti, counter, maxTips, numBranches, rvec);	       
             computeFullTraversalInfo(q, ti, counter, maxTips, numBranches, rvec);
           }
+          //strategy
+          getxVector(tr, tInfo->qNumber, &slot);			  
+          ti[*counter].slot_q = slot;	    
+
+          getxVector(tr, tInfo->rNumber, &slot);			  
+          ti[*counter].slot_r = slot;	    
+
+          getxVector(tr, tInfo->pNumber, &slot);			  
+          ti[*counter].slot_p = slot;	    
+
+          unpin2 = tInfo->rNumber;
+          unpin1 = tInfo->qNumber;
         }
         else
         {
@@ -497,6 +527,11 @@ void computeFullTraversalInfo(nodeptr p, traversalInfo *ti, int *counter, int ma
         *counter = *counter + 1;
       }
     }    
+  }
+  if(rvec != NULL)
+  {
+    unpinNode(tr, unpin1);
+    unpinNode(tr, unpin2);
   }
 }
 

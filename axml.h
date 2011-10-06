@@ -448,6 +448,13 @@ typedef struct
   int pNumber;
   int qNumber;
   int rNumber;
+
+  int slot_p; 
+  int slot_q; 
+  int slot_r; 
+  //int unpin1; // to be unpinned
+  //int unpin2; // 
+
   double qz[NUM_BRANCHES];
   double rz[NUM_BRANCHES];
 } traversalInfo;

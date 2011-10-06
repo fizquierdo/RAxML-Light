@@ -4723,7 +4723,8 @@ void newviewIterative (tree *tr)
             tipX2    = tr->partitionData[model].yVector[tInfo->rNumber];		  
             if(tr->useRecom)
             {
-              getxVector(tr, tInfo->pNumber, &slot);			  
+              //getxVector(tr, tInfo->pNumber, &slot);			  
+              slot = tInfo->slot_p; 
               x3_start = tr->rvec->tmpvectors[slot];
               assert(x3_start != NULL);
               assert(tr->rvec->width == 4 * width);
@@ -4745,10 +4746,13 @@ void newviewIterative (tree *tr)
             tipX1    =  tr->partitionData[model].yVector[tInfo->qNumber];
             if(tr->useRecom)
             {
-              getxVector(tr, tInfo->rNumber, &slot);			  
+              //getxVector(tr, tInfo->rNumber, &slot);			  
+              slot = tInfo->slot_r; 
               x2_start = tr->rvec->tmpvectors[slot];
               assert(x2_start[0] != INVALID_VALUE);
-              getxVector(tr, tInfo->pNumber, &slot);			  
+
+              //getxVector(tr, tInfo->pNumber, &slot);			  
+              slot = tInfo->slot_p; 
               x3_start = tr->rvec->tmpvectors[slot];
               unpin2 = tInfo->rNumber;
             }
@@ -4769,13 +4773,16 @@ void newviewIterative (tree *tr)
           case INNER_INNER:		 		 
             if(tr->useRecom)
             {
-              getxVector(tr, tInfo->qNumber, &slot);			  
+              //getxVector(tr, tInfo->qNumber, &slot);			  
+              slot = tInfo->slot_q; 
               x1_start = tr->rvec->tmpvectors[slot];
 
-              getxVector(tr, tInfo->rNumber, &slot);			  
+              //getxVector(tr, tInfo->rNumber, &slot);			  
+              slot = tInfo->slot_r; 
               x2_start = tr->rvec->tmpvectors[slot];
 
-              getxVector(tr, tInfo->pNumber, &slot);			  
+              //getxVector(tr, tInfo->pNumber, &slot);			  
+              slot = tInfo->slot_p; 
               x3_start = tr->rvec->tmpvectors[slot];
 
               unpin2 = tInfo->rNumber;
