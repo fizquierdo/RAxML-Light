@@ -485,10 +485,60 @@ void validate_stlen(nodeptr p, int maxTips, int value, int *stlen)
     stlen_ok = FALSE;
   }
   assert(stlen_ok);
+  printBothOpen("storing for p %d -b %d : l %d\n", pnumber, p->back->number, value);
   stlen[index] = value;
 }
 void set_stlen(tree *tr, nodeptr p, int value)
 {
   validate_stlen(p, tr->mxtips, value, tr->rvec->stlen);
+}
+/* pre-compute the node stlens (this needs to be known prior to running the strategy) */
+static void computeFullTraversalInfoStlen(nodeptr p, int maxTips, recompVectors *rvec) 
+{
+  int value;
+  printBothOpen("Visited node %d\n", p->number);
+  if(isTip(p->number, maxTips))
+    return;
+
+  nodeptr q = p->next->back;
+  nodeptr r = p->next->next->back;
+  if(isTip(r->number, maxTips) && isTip(q->number, maxTips))
+  {
+    printBothOpen("Tip %d - Tip %d\n", r->number, q->number);
+    value = 2;
+    printBothOpen("precomp for p %d -b %d : l %d\n", p->number, p->back->number, value);
+  }
+  else
+  {
+    if(isTip(r->number, maxTips) || isTip(q->number, maxTips))
+    {
+      // tip/vec
+      nodeptr tmp;
+      if(isTip(r->number, maxTips))
+      {
+        tmp = r;
+        r = q;
+        q = tmp;
+      }
+      printBothOpen("Tip %d - Vector %d\n", q->number, r->number);
+      computeFullTraversalInfoStlen(r, maxTips, rvec);
+    }
+    else
+    {
+      // vec/vec
+      printBothOpen("Vector %d - Vector %d\n", r->number, q->number);
+      computeFullTraversalInfoStlen(r, maxTips, rvec);
+      computeFullTraversalInfoStlen(q, maxTips, rvec); 
+    }
+  }
+}
+void determineFullTraversalStlen(nodeptr p, tree *tr)
+{
+  nodeptr q = p->back;
+  assert(isTip(p->number, tr->mxtips));
+  printBothOpen("Start stlen trav from %d\n", p->number);
+  computeFullTraversalInfoStlen(p, tr->mxtips, tr->rvec); 
+  printBothOpen("Start stlen trav from %d\n", q->number);
+  computeFullTraversalInfoStlen(q, tr->mxtips, tr->rvec); 
 }
 

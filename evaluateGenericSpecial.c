@@ -1462,6 +1462,8 @@ double evaluateGenericInitrav (tree *tr, nodeptr p)
   }
   else
   {
+    if(tr->useRecom)
+      determineFullTraversalStlen(p, tr);
     determineFullTraversal(p, tr);
 
 #ifdef _USE_PTHREADS 

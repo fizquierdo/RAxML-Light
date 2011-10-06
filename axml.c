@@ -5965,7 +5965,9 @@ int main (int argc, char *argv[])
     {
       accumulatedTime = 0.0;
 
+      printBothOpen("Get starting tree \n");
       getStartingTree(tr, adef);     
+      
 #ifdef _JOERG		  
       /* 
          at this point the code has parsed the input alignment 
@@ -5979,12 +5981,14 @@ int main (int argc, char *argv[])
 #else
       printBothOpen("Eval generic\n");
       evaluateGenericInitrav(tr, tr->start);	 
+      /*
 
       printBothOpen("Tree eval\n");
       treeEvaluate(tr, 1); 	 	 	 	 	 
 
       printBothOpen("compute BIG RAPID\n");
       computeBIGRAPID(tr, adef, TRUE); 	     
+      */
 #endif
     }            
 

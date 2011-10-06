@@ -3,8 +3,11 @@
 DATADIR=data
 NAME=TEST
 
-SET=50
-TREE=RAxML_parsimonyTree.50sim.0
+#SET=50
+#TREE=RAxML_parsimonyTree.50sim.0
+SET=7
+TREE=RAxML_parsimonyTree.7_s12345.0
+
 FACTOR=0.60
 
 # just clean dir
@@ -26,10 +29,15 @@ rm *${NAME}*
 if [ $1 = pro ] ; then
   valgrind ./raxmlLight -r $FACTOR -m GTRCAT -n ${NAME} -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE}
 else
+  echo "*** run recom"
   ./raxmlLight -r $FACTOR -m GTRCAT -n ${NAME} -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE}
   #FACTOR=1.1
   #./raxmlLight -r $FACTOR -m GTRCAT -n ${NAME}_hf -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE}
-  ./raxmlLight -m GTRCAT -n ${NAME}_std -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE}
-  echo "diff"
-  diff RAxML_result.${NAME} RAxML_result.${NAME}_std
+  echo "*** run std"
+  ./raxmlLight -m GTRCAT -n ${NAME}_std -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} > /dev/null
+  #echo "diff"
+  #diff RAxML_result.${NAME} RAxML_result.${NAME}_std
+  echo "diff of LHs"
+  grep "Likelihood" RAxML_info.${NAME}_std
+  grep "Likelihood" RAxML_info.${NAME}
 fi
