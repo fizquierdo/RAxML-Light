@@ -3,10 +3,13 @@
 DATADIR=data
 NAME=TEST
 
-SET=50
-TREE=RAxML_parsimonyTree.50sim.0
-#SET=7
-#TREE=RAxML_parsimonyTree.7_s12345.0
+if [ $1 = 50 ] ; then
+ SET=50
+ TREE=RAxML_parsimonyTree.50sim.0
+else
+ SET=7
+ TREE=RAxML_parsimonyTree.7_s12345.0
+fi
 
 FACTOR=0.60
 

@@ -382,14 +382,15 @@ static double evaluatePartialGTRCAT(int i, double ki, int counter,  traversalInf
 
 
 
-void computeFullTraversalInfo(nodeptr p, traversalInfo *ti, int *counter, int maxTips, int numBranches, recompVectors *rvec)
+void computeFullTraversalInfo(tree *tr, nodeptr p, traversalInfo *ti, int *counter, int maxTips, int numBranches, recompVectors *rvec)
 {
   if(isTip(p->number, maxTips))
     return; 
 
+  int slot = -1, unpin1 = -1, unpin2 = -1;
+  /* register the slot, unpin if required? */
   {     
     int i;
-    int slot = -1, unpin1 = -1, unpin2 = -1;
     nodeptr q = p->next->back;
     nodeptr r = p->next->next->back;
 
@@ -419,7 +420,7 @@ void computeFullTraversalInfo(nodeptr p, traversalInfo *ti, int *counter, int ma
       // strategy
       if(rvec != NULL)
       {
-        getxVector(tr, tInfo->pNumber, &slot);			  
+        getxVector(tr, p->number, &slot);			  
         ti[*counter].slot_p = slot;	    
       }
       *counter = *counter + 1;
@@ -437,7 +438,7 @@ void computeFullTraversalInfo(nodeptr p, traversalInfo *ti, int *counter, int ma
           q = tmp;
         }
 
-        computeFullTraversalInfo(r, ti, counter, maxTips, numBranches, rvec);	
+        computeFullTraversalInfo(tr, r, ti, counter, maxTips, numBranches, rvec);	
 
         ti[*counter].tipCase = TIP_INNER; 
         ti[*counter].pNumber = p->number;
@@ -458,13 +459,13 @@ void computeFullTraversalInfo(nodeptr p, traversalInfo *ti, int *counter, int ma
 
         if(rvec != NULL)
         {
-          getxVector(tr, tInfo->rNumber, &slot);			  
+          getxVector(tr, r->number, &slot);			  
           ti[*counter].slot_r = slot;	    
 
-          getxVector(tr, tInfo->pNumber, &slot);			  
+          getxVector(tr, p->number, &slot);			  
           ti[*counter].slot_p = slot;	    
           
-          unpin2 = tInfo->rNumber;
+          unpin2 = r->number;
         }
 
         *counter = *counter + 1;
@@ -481,31 +482,31 @@ void computeFullTraversalInfo(nodeptr p, traversalInfo *ti, int *counter, int ma
           assert(r_stlen >= 2 && r_stlen <= maxTips - 1);
           if(q_stlen > r_stlen)
           {
-            computeFullTraversalInfo(q, ti, counter, maxTips, numBranches, rvec);	       
-            computeFullTraversalInfo(r, ti, counter, maxTips, numBranches, rvec);
+            computeFullTraversalInfo(tr, q, ti, counter, maxTips, numBranches, rvec);	       
+            computeFullTraversalInfo(tr, r, ti, counter, maxTips, numBranches, rvec);
           }
           else
           {
-            computeFullTraversalInfo(r, ti, counter, maxTips, numBranches, rvec);	       
-            computeFullTraversalInfo(q, ti, counter, maxTips, numBranches, rvec);
+            computeFullTraversalInfo(tr, r, ti, counter, maxTips, numBranches, rvec);	       
+            computeFullTraversalInfo(tr, q, ti, counter, maxTips, numBranches, rvec);
           }
           //strategy
-          getxVector(tr, tInfo->qNumber, &slot);			  
+          getxVector(tr, q->number, &slot);			  
           ti[*counter].slot_q = slot;	    
 
-          getxVector(tr, tInfo->rNumber, &slot);			  
+          getxVector(tr, r->number, &slot);			  
           ti[*counter].slot_r = slot;	    
 
-          getxVector(tr, tInfo->pNumber, &slot);			  
+          getxVector(tr, p->number, &slot);			  
           ti[*counter].slot_p = slot;	    
 
-          unpin2 = tInfo->rNumber;
-          unpin1 = tInfo->qNumber;
+          unpin2 = r->number;
+          unpin1 = q->number;
         }
         else
         {
-          computeFullTraversalInfo(r, ti, counter, maxTips, numBranches, rvec);	       
-          computeFullTraversalInfo(q, ti, counter, maxTips, numBranches, rvec);
+          computeFullTraversalInfo(tr, r, ti, counter, maxTips, numBranches, rvec);	       
+          computeFullTraversalInfo(tr, q, ti, counter, maxTips, numBranches, rvec);
         }
 
         ti[*counter].tipCase = INNER_INNER; 
@@ -538,6 +539,7 @@ void computeFullTraversalInfo(nodeptr p, traversalInfo *ti, int *counter, int ma
 void determineFullTraversal(nodeptr p, tree *tr)
 {
   /*pre - compute the stlens*/
+  printBothOpen("Computing stlen values\n");
   if(tr->useRecom)
     determineFullTraversalStlen(p, tr);
 
@@ -552,9 +554,13 @@ void determineFullTraversal(nodeptr p, tree *tr)
 
   assert(isTip(p->number, tr->mxtips));
 
+  printBothOpen("saving strategy\n");
+  save_strategy_state(tr);
   tr->td[0].count = 1; 
-  computeFullTraversalInfo(q, &(tr->td[0].ti[0]),  &(tr->td[0].count), tr->mxtips, tr->numBranches, tr->rvec); 
-  computeFullTraversalInfo(p, &(tr->td[0].ti[0]),  &(tr->td[0].count), tr->mxtips, tr->numBranches, tr->rvec);
+  computeFullTraversalInfo(tr, q, &(tr->td[0].ti[0]),  &(tr->td[0].count), tr->mxtips, tr->numBranches, tr->rvec); 
+  computeFullTraversalInfo(tr, p, &(tr->td[0].ti[0]),  &(tr->td[0].count), tr->mxtips, tr->numBranches, tr->rvec);
+  printBothOpen("restoring strategy\n");
+  restore_strategy_state(tr);
 }
 
 

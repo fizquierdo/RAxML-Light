@@ -348,9 +348,12 @@ typedef struct
   size_t width;        /* #doubles required per vector */
   double **tmpvectors; /* size: numVectors, points to the vectors */
   int *iVector;        /* size: numVectors, stores node id || SLOT_UNUSED  */
+  int *iVector_prev;   /* size: numVectors, stores node id || SLOT_UNUSED  */
   int *iNode;          /* size: inner nodes, stores slot id || NODE_UNPINNED */
+  int *iNode_prev;          /* size: inner nodes, stores slot id || NODE_UNPINNED */
   int *stlen;          /* #tips behind the current orientation of the indexed inner node */ 
   int *unpinnable;     /* size:numVectors , TRUE if we dont need the vector */
+  int *unpinnable_prev; /* size:numVectors , TRUE if we dont need the vector */
   int maxVectorsUsed;
   double pinTime;
   boolean allSlotsBusy; 
@@ -1360,7 +1363,7 @@ extern nodeptr findAnyTip(nodeptr p, int numsp);
 
 extern void parseProteinModel(analdef *adef);
 
-extern void computeFullTraversalInfo(nodeptr p, traversalInfo *ti, int *counter, int maxTips, int numBranches, recompVectors *rvec);
+extern void computeFullTraversalInfo(tree *tr, nodeptr p, traversalInfo *ti, int *counter, int maxTips, int numBranches, recompVectors *rvec);
 
 extern void computeNextReplicate(tree *tr, long *seed, int *originalRateCategories, int *originalInvariant, boolean isRapid, boolean fixRates);
 /*extern void computeNextReplicate(tree *tr, analdef *adef, int *originalRateCategories, int *originalInvariant);*/

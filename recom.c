@@ -61,27 +61,64 @@ void allocRecompVectors(tree *tr, size_t width)
   }
   /* init vectors tracking */
   v->iVector = (int *) malloc((size_t)num_vectors * sizeof(int));
+  v->iVector_prev = (int *) malloc((size_t)num_vectors * sizeof(int));
   v->unpinPrio = (int *) malloc((size_t)num_vectors * sizeof(int));
   v->nextPrio = 0;
   v->unpinnable = (boolean *) malloc((size_t)num_vectors * sizeof(boolean));
+  v->unpinnable_prev = (boolean *) malloc((size_t)num_vectors * sizeof(boolean));
   for(i=0; i<num_vectors; i++)
   {
     v->iVector[i] = SLOT_UNUSED;
+    v->iVector_prev[i] = SLOT_UNUSED;
     v->unpinPrio[i] = SLOT_UNUSED;
     v->unpinnable[i] = FALSE;
+    v->unpinnable_prev[i] = FALSE;
   }
   v->usePrioList = FALSE;
   v->iNode = (int *) malloc((size_t)num_inner_nodes * sizeof(int));
+  v->iNode_prev = (int *) malloc((size_t)num_inner_nodes * sizeof(int));
   v->stlen = (int *) malloc((size_t)num_inner_nodes * sizeof(int));
   for(i=0; i<num_inner_nodes; i++)
   {
     v->iNode[i] = NODE_UNPINNED;
+    v->iNode_prev[i] = NODE_UNPINNED;
     v->stlen[i] = INNER_NODE_INIT_STLEN;
   }
   v->allSlotsBusy = FALSE;
   /* init nodes tracking */
   v->maxVectorsUsed = 0;
   tr->rvec = v;
+}
+/* running the strategy overwrites the current state*/
+void save_strategy_state(tree *tr)
+{
+  recompVectors *v = tr->rvec;
+  int num_inner_nodes, i;
+  num_inner_nodes = tr->mxtips - 2;
+  for(i=0; i < v->numVectors; i++)
+  {
+    v->iVector_prev[i] = v->iVector[i];
+    v->unpinnable_prev[i] = v->unpinnable;
+  }
+  for(i=0; i<num_inner_nodes; i++)
+  {
+    v->iNode_prev[i] = v->iNode[i];
+  }
+}
+void restore_strategy_state(tree *tr)
+{
+  recompVectors *v = tr->rvec;
+  int num_inner_nodes, i;
+  num_inner_nodes = tr->mxtips - 2;
+  for(i=0; i < v->numVectors; i++)
+  {
+    v->iVector[i] = v->iVector_prev[i];
+    v->unpinnable[i] = v->unpinnable_prev[i];
+  }
+  for(i=0; i<num_inner_nodes; i++)
+  {
+    v->iNode[i] = v->iNode_prev[i];
+  }
 }
 
 void freeRecompVectors(recompVectors *v)
@@ -91,9 +128,13 @@ void freeRecompVectors(recompVectors *v)
     free(v->tmpvectors[i]);
   free(v->tmpvectors);
   free(v->iVector);
+  free(v->iVector_prev);
   free(v->iNode);
+  free(v->iNode_prev);
   free(v->stlen);
   free(v->unpinPrio);
+  free(v->unpinnable);
+  free(v->unpinnable_prev);
   free(v);
 }
 
@@ -354,7 +395,7 @@ void getxVector(tree *tr, int nodenum, int *slot)
 int tipsPartialCountStlen(int maxTips, nodeptr p, recompVectors *rvec)
 {
   assert(rvec != NULL);
-  int ntips1, ntips2, ntips;
+  int ntips1, ntips2, ntips, index;
   if(isTip(p->number, maxTips))
   {
     return 1;
@@ -363,18 +404,34 @@ int tipsPartialCountStlen(int maxTips, nodeptr p, recompVectors *rvec)
   {
     nodeptr p1, p2; 
     p1 = p->next->back;
-    ntips1 = rvec->stlen[p1->number - maxTips - 1]; 
-    if(!p1->x || ntips1 == INNER_NODE_INIT_STLEN)
+    if(isTip(p1->number, maxTips))
     {
-      ntips1 = tipsPartialCountStlen(maxTips, p1, rvec);
+      ntips1 = 1; 
+    }
+    else
+    {
+      index = p1->number - maxTips - 1; 
+      assert(index >= 0 && index < maxTips - 2);
+      ntips1 = rvec->stlen[index]; 
+      if(!p1->x || ntips1 == INNER_NODE_INIT_STLEN)
+        ntips1 = tipsPartialCountStlen(maxTips, p1, rvec);
     }
     assert(ntips1 >= 1 && ntips1 <= maxTips - 1);
 
     p2 = p->next->next->back;
-    ntips2 = rvec->stlen[p2->number - maxTips - 1]; 
-    if(!p2->x || ntips2 == INNER_NODE_INIT_STLEN)
+    if(isTip(p2->number, maxTips))
     {
-      ntips2 = tipsPartialCountStlen(maxTips, p2, rvec);
+      ntips2 = 1; 
+    }
+    else
+    {
+      index = p2->number - maxTips - 1; 
+      assert(index >= 0 && index < maxTips - 2);
+      ntips2 = rvec->stlen[index]; 
+      if(!p2->x || ntips2 == INNER_NODE_INIT_STLEN)
+      {
+        ntips2 = tipsPartialCountStlen(maxTips, p2, rvec);
+      }
     }
     assert(ntips2 >= 1 && ntips2 <= maxTips - 1);
   }
