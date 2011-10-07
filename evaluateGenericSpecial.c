@@ -999,6 +999,8 @@ double evaluateIterative(tree *tr,  boolean writeVector)
             model;
 
   int slot = -1;
+  //printBothOpen("Evaluate iterative from p %d q %d \n", pNumber, qNumber);
+
   newviewIterative(tr);  
 
   for(model = 0; model < tr->NumberOfModels; model++)
@@ -1047,7 +1049,8 @@ double evaluateIterative(tree *tr,  boolean writeVector)
         {			  		 
           if(tr->useRecom)
           {
-            getxVector(tr, pNumber, &slot);			  
+            //getxVector(tr, pNumber, &slot);			  
+            slot = tr->td[0].ti[0].slot_p;
             x2_start = tr->rvec->tmpvectors[slot];
             assert(x2_start[0] != INVALID_VALUE);
           }
@@ -1067,7 +1070,7 @@ double evaluateIterative(tree *tr,  boolean writeVector)
         {		 
           if(tr->useRecom)
           {
-            getxVector(tr, qNumber, &slot);			  
+            slot = tr->td[0].ti[0].slot_q;
             x2_start = tr->rvec->tmpvectors[slot];
             assert(x2_start[0] != INVALID_VALUE);
           }
@@ -1075,6 +1078,8 @@ double evaluateIterative(tree *tr,  boolean writeVector)
           {
             x2_start = tr->partitionData[model].xVector[qNumber - tr->mxtips - 1];		  		  
           }
+            //printBothOpen("eval pre q: ");
+            //printVector(x2_start);
           tip = tr->partitionData[model].yVector[pNumber];
 
           if(tr->saveMemory)
@@ -1090,9 +1095,11 @@ double evaluateIterative(tree *tr,  boolean writeVector)
 
         if(tr->useRecom)
         {
-          getxVector(tr, pNumber, &slot);			  
+          //getxVector(tr, pNumber, &slot);			  
+          slot = tr->td[0].ti[0].slot_p;
           x1_start = tr->rvec->tmpvectors[slot];
-          getxVector(tr, qNumber, &slot);			  
+          //getxVector(tr, qNumber, &slot);			  
+          slot = tr->td[0].ti[0].slot_q;
           x2_start = tr->rvec->tmpvectors[slot];
           assert(x1_start[0] != INVALID_VALUE);
           assert(x2_start[0] != INVALID_VALUE);
@@ -1117,7 +1124,6 @@ double evaluateIterative(tree *tr,  boolean writeVector)
         z = pz[model];
       else
         z = pz[0];
-
 
       switch(tr->partitionData[model].dataType)
       { 	  

@@ -85,6 +85,7 @@ void allocRecompVectors(tree *tr, size_t width)
     v->stlen[i] = INNER_NODE_INIT_STLEN;
   }
   v->allSlotsBusy = FALSE;
+  v->allSlotsBusy_prev = FALSE;
   /* init nodes tracking */
   v->maxVectorsUsed = 0;
   tr->rvec = v;
@@ -92,21 +93,26 @@ void allocRecompVectors(tree *tr, size_t width)
 /* running the strategy overwrites the current state*/
 void save_strategy_state(tree *tr)
 {
+  if(!tr->useRecom)
+    return;
   recompVectors *v = tr->rvec;
   int num_inner_nodes, i;
   num_inner_nodes = tr->mxtips - 2;
   for(i=0; i < v->numVectors; i++)
   {
     v->iVector_prev[i] = v->iVector[i];
-    v->unpinnable_prev[i] = v->unpinnable;
+    v->unpinnable_prev[i] = v->unpinnable[i];
   }
   for(i=0; i<num_inner_nodes; i++)
   {
     v->iNode_prev[i] = v->iNode[i];
   }
+  v->allSlotsBusy_prev = v->allSlotsBusy;
 }
 void restore_strategy_state(tree *tr)
 {
+  if(!tr->useRecom)
+    return;
   recompVectors *v = tr->rvec;
   int num_inner_nodes, i;
   num_inner_nodes = tr->mxtips - 2;
@@ -119,6 +125,7 @@ void restore_strategy_state(tree *tr)
   {
     v->iNode[i] = v->iNode_prev[i];
   }
+  v->allSlotsBusy = v->allSlotsBusy_prev;
 }
 
 void freeRecompVectors(recompVectors *v)
@@ -318,20 +325,61 @@ void set_node_priority(tree *tr, nodeptr p)
     tr->rvec->usePrioList = FALSE;
 }
 /* end priority list */
+void showTreeNodes(tree *tr)
+{
+  if(!tr->useRecom) 
+    return;
+  int i;
+  nodeptr p, q;
+  printBothOpen("tree map\n");
+  for(i = tr->mxtips + 1; i <= tr->mxtips + tr->mxtips - 2; i++)
+  {
+    q = tr->nodep[i];
+    p = q; 
+    while(!p->x)
+      p = p->next;
+    printBothOpen("node %d b %d, nb %d nnb %d, stlen %d\n",  
+        p->number, 
+        p->back->number,  
+        p->next->back->number,  
+        p->next->next->back->number,
+        tr->rvec->stlen[p->number - tr->mxtips - 1]);
+  }
+  printBothOpen("\n");
+}
 void showUnpinnableNodes(tree *tr)
 {
-  int slot, count = 0;
+  int slot, nodenum, count = 0;
+  if (!tr->useRecom)
+    return;
   recompVectors *v = tr->rvec;
-  printBothOpen(" unpinnable: ");
+  printBothOpen("Nodes in slots, unpinnable u: ");
   for(slot=0; slot < v->numVectors; slot++)
   {
+    nodenum = v->iVector[slot];
+    if(nodenum == SLOT_UNUSED)
+    {
+      printBothOpen(" -");
+    }
+    else
+    {
+      printBothOpen(" %d", nodenum);
+      assert(v->iNode[nodenum - tr->mxtips - 1] == slot);
+    }
     if(v->unpinnable[slot])
     {
-      printBothOpen(" %d", v->iVector[slot]);
+      printBothOpen("u");
       count++;
     }
   }
   printBothOpen(" [%d/%d]\n", count, v->numVectors);
+  int i, num_inner_nodes = tr->mxtips - 2;
+  printBothOpen("Nodes id (len): ");
+  for(i=0; i<num_inner_nodes; i++)
+  {
+    printBothOpen("%d(%d) ", i + tr->mxtips + 1, v->stlen[i]);
+  }
+  printBothOpen("\n");
 }
 int findUnpinnableSlot(tree *tr)
 {
@@ -389,6 +437,7 @@ void getxVector(tree *tr, int nodenum, int *slot)
   *slot = tr->rvec->iNode[nodenum - tr->mxtips - 1];
   if(*slot == NODE_UNPINNED)
     *slot = pinNode(tr, nodenum);
+  assert(*slot >= 0 && *slot < tr->rvec->numVectors);
   tr->rvec->unpinnable[*slot] = FALSE;
   tr->rvec->pinTime += gettime() - tstart;
 }
@@ -553,7 +602,7 @@ void set_stlen(tree *tr, nodeptr p, int value)
 static void computeFullTraversalInfoStlen(nodeptr p, int maxTips, recompVectors *rvec) 
 {
   int value;
-  //printBothOpen("Visited node %d\n", p->number);
+  //printBothOpen("Visited node %d ", p->number);
   if(isTip(p->number, maxTips))
     return;
 
@@ -582,18 +631,17 @@ static void computeFullTraversalInfoStlen(nodeptr p, int maxTips, recompVectors 
         r = q;
         q = tmp;
       }
-     // printBothOpen("Tip %d - Vector %d\n", q->number, r->number);
       computeFullTraversalInfoStlen(r, maxTips, rvec);
 
       int r_stlen = rvec->stlen[r->number - maxTips - 1];
       assert(r_stlen != INNER_NODE_INIT_STLEN);
       assert(r_stlen >= 2 && r_stlen <= maxTips - 1);
       validate_stlen(p, maxTips, r_stlen + 1, rvec->stlen);
+     // printBothOpen("Tip %d - Vector %d : len %d\n", q->number, r->number, r_stlen + 1);
     }
     else
     {
       // vec/vec
-      //printBothOpen("Vector %d - Vector %d\n", r->number, q->number);
       int q_stlen, r_stlen;
       r_stlen = rvec->stlen[r->number - maxTips - 1];
       q_stlen = rvec->stlen[q->number - maxTips - 1];
@@ -606,6 +654,7 @@ static void computeFullTraversalInfoStlen(nodeptr p, int maxTips, recompVectors 
       computeFullTraversalInfoStlen(q, maxTips, rvec); 
 
       int val = rvec->stlen[q->number - maxTips - 1] + rvec->stlen[r->number - maxTips - 1];
+      //printBothOpen("Vector %d - Vector %d , stlen %d\n", r->number, q->number, val);
       validate_stlen(p, maxTips, val, rvec->stlen);
     }
   }
@@ -619,4 +668,31 @@ void determineFullTraversalStlen(nodeptr p, tree *tr)
   //printBothOpen("Start stlen trav from %d\n", q->number);
   computeFullTraversalInfoStlen(q, tr->mxtips, tr->rvec); 
 }
+void printVector(double *vector)
+{
+  int j;
+  if (vector == NULL)
+  {
+    printBothOpen(" is NULL\n");
+    return;
+  }
+  for(j=0; j<5; j++)
+    printBothOpen("%.5f ", vector[j]);
+  printBothOpen("\n");
+}
+  /* 
+   // print a traversal
+{
+  int i;
+  traversalInfo 
+    *ti   = tr->td[0].ti;
+  for(i = 1; i < tr->td[0].count; i++)
+  {
+    traversalInfo *tInfo = &ti[i];
+    printBothOpen("%d ", tInfo->pNumber);
+  }
+  printBothOpen("\n");
+}
+
+  */
 

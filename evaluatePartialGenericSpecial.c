@@ -387,6 +387,7 @@ void computeFullTraversalInfo(tree *tr, nodeptr p, traversalInfo *ti, int *count
   if(isTip(p->number, maxTips))
     return; 
 
+  //printBothOpen("compute full traversal info, visit p %d\n", p->number);
   int slot = -1, unpin1 = -1, unpin2 = -1;
   /* register the slot, unpin if required? */
   {     
@@ -418,7 +419,7 @@ void computeFullTraversalInfo(tree *tr, nodeptr p, traversalInfo *ti, int *count
         ti[*counter].rz[i] = z;	    
       }     
       // strategy
-      if(rvec != NULL)
+      if(tr->useRecom)
       {
         getxVector(tr, p->number, &slot);			  
         ti[*counter].slot_p = slot;	    
@@ -534,14 +535,19 @@ void computeFullTraversalInfo(tree *tr, nodeptr p, traversalInfo *ti, int *count
     unpinNode(tr, unpin1);
     unpinNode(tr, unpin2);
   }
+  //printBothOpen("Visited p %d\n", p->number);
+  //showUnpinnableNodes(tr);
 }
 
 void determineFullTraversal(nodeptr p, tree *tr)
 {
   /*pre - compute the stlens*/
-  printBothOpen("Computing stlen values\n");
+  //printBothOpen("Computing stlen values\n");
+  //showUnpinnableNodes(tr);
   if(tr->useRecom)
     determineFullTraversalStlen(p, tr);
+  //printBothOpen("DONE Computing stlen values, tree reoriented\n");
+  //showUnpinnableNodes(tr);
 
   nodeptr q = p->back;
   int k;
@@ -549,18 +555,32 @@ void determineFullTraversal(nodeptr p, tree *tr)
   tr->td[0].ti[0].pNumber = p->number;
   tr->td[0].ti[0].qNumber = q->number;
 
+  assert(isTip(p->number, tr->mxtips));
+  if(tr->useRecom)
+  {
+    int slot = -1;
+    getxVector(tr, q->number, &slot);			  
+    tr->td[0].ti[0].slot_q = slot;
+  }
+
   for(k = 0; k < tr->numBranches; k++)        
     tr->td[0].ti[0].qz[k] = q->z[k];    
 
-  assert(isTip(p->number, tr->mxtips));
 
-  printBothOpen("saving strategy\n");
+  //printBothOpen("saving strategy\n");
+  //showUnpinnableNodes(tr);
   save_strategy_state(tr);
   tr->td[0].count = 1; 
+
+  //printBothOpen("computing full traversal info\n");
   computeFullTraversalInfo(tr, q, &(tr->td[0].ti[0]),  &(tr->td[0].count), tr->mxtips, tr->numBranches, tr->rvec); 
   computeFullTraversalInfo(tr, p, &(tr->td[0].ti[0]),  &(tr->td[0].count), tr->mxtips, tr->numBranches, tr->rvec);
-  printBothOpen("restoring strategy\n");
+  //showUnpinnableNodes(tr);
+
+  //printBothOpen("restoring strategy\n");
   restore_strategy_state(tr);
+  //printBothOpen("DONE restoring strategy\n");
+  //showUnpinnableNodes(tr);
 }
 
 

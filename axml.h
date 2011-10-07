@@ -357,6 +357,7 @@ typedef struct
   int maxVectorsUsed;
   double pinTime;
   boolean allSlotsBusy; 
+  boolean allSlotsBusy_prev; 
   /* unpin prio */
   int *unpinPrio;      /* size:numVectors, slots present in this list have priority to be unpinned */
   int nextPrio;

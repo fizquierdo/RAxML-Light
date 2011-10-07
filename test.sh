@@ -31,6 +31,7 @@ fi
 rm *${NAME}*
 if [ $1 = pro ] ; then
   valgrind ./raxmlLight -r $FACTOR -m GTRCAT -n ${NAME} -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE}
+  #valgrind ./raxmlLight -m GTRCAT -n ${NAME}_std -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} > /dev/null
 else
   echo "*** run recom"
   ./raxmlLight -r $FACTOR -m GTRCAT -n ${NAME} -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE}
@@ -40,7 +41,7 @@ else
   ./raxmlLight -m GTRCAT -n ${NAME}_std -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} > /dev/null
   #echo "diff"
   #diff RAxML_result.${NAME} RAxML_result.${NAME}_std
-  echo "diff of LHs"
+  echo "diff of LHs std. recomp"
   grep "Likelihood" RAxML_info.${NAME}_std
   grep "Likelihood" RAxML_info.${NAME}
 fi

@@ -1218,7 +1218,8 @@ void getStartingTree(tree *tr, analdef *adef)
   tr->likelihood = unlikely;
 
   treeReadLen(INFILE, tr, FALSE, FALSE, FALSE, adef, FALSE);
-  printBothOpen("Tree correctly read, changing start to first node\n");
+  //printBothOpen("Tree correctly read, changing start to first node\n");
+  //showTreeNodes(tr);
 
   fclose(INFILE);
 
@@ -1226,6 +1227,7 @@ void getStartingTree(tree *tr, analdef *adef)
   /* redo the traversal due to orientations for the recomp */
   if(tr->useRecom)
     determineFullTraversal(tr->start, tr);  
+  //showTreeNodes(tr);
 }
 
 

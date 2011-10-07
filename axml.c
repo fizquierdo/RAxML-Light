@@ -5979,10 +5979,10 @@ int main (int argc, char *argv[])
 
       modOptJoerg(tr, adef);
 #else
-      /*
       printBothOpen("Eval generic\n");
       evaluateGenericInitrav(tr, tr->start);	 
 
+      /*
       printBothOpen("Tree eval\n");
       treeEvaluate(tr, 1); 	 	 	 	 	 
 

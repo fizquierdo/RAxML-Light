@@ -4929,11 +4929,15 @@ void newviewIterative (tree *tr)
             assert(0);
         }
 
+        //printBothOpen("listof p %d: ", tInfo->pNumber);
+        //printVector(x3_start);
         if(tr->useRecom)
         {
           assert(x3_start[0] != INVALID_VALUE);
-          unpinNode(tr, unpin1);
-          unpinNode(tr, unpin2);
+          //printBothOpen("unpin plan %d and %d\n", unpin1, unpin2);
+          //showUnpinnableNodes(tr);
+          //unpinNode(tr, unpin1);
+          //unpinNode(tr, unpin2);
         }
 
         tr->partitionData[model].globalScaler[tInfo->pNumber] = 
@@ -4943,6 +4947,9 @@ void newviewIterative (tree *tr)
         assert(tr->partitionData[model].globalScaler[tInfo->pNumber] < INT_MAX);
       }	
     }
+    //printBothOpen("Visited p %d\n", tInfo->pNumber);
+    //showUnpinnableNodes(tr);
+
   }
 }
 
