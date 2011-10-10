@@ -5229,11 +5229,22 @@ void allocNodex(tree *tr, int tid, int n)
 #ifndef  _FINE_GRAIN_MPI
   if(!tr->saveMemory)
   {     
-    tr->likelihoodArray = (double *)malloc_aligned(tr->innerNodes * memoryRequirements * sizeof(double));
-    assert(tr->likelihoodArray != NULL);
+    if(tr->useRecom)
+    {
+      assert(!tr->multiGene); /* TODOFER support multiGene option */
+      allocRecompVectors(tr, memoryRequirements);
+    }
+    else
+    {
+      tr->likelihoodArray = (double *)malloc_aligned(tr->innerNodes * memoryRequirements * sizeof(double));
+      assert(tr->likelihoodArray != NULL);
+    }
   }
   else
+  {
+    assert(!tr->useRecom);
     tr->likelihoodArray = (double *)NULL;
+  }
 #endif	
 
 
@@ -5981,8 +5992,8 @@ int main (int argc, char *argv[])
 #else
       printBothOpen("Eval generic\n");
       evaluateGenericInitrav(tr, tr->start);	 
-
       /*
+
       printBothOpen("Tree eval\n");
       treeEvaluate(tr, 1); 	 	 	 	 	 
 
