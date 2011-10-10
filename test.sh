@@ -6,6 +6,12 @@ NAME=TEST
 if [ $1 = 50 ] ; then
  SET=50
  TREE=RAxML_parsimonyTree.50sim.0
+elif [ $1 = 49 ] ; then
+ SET=49
+ TREE=intree49
+elif [ $1 = 1288 ] ; then
+ SET=1288
+ TREE=intree1288
 else
  SET=7
  TREE=RAxML_parsimonyTree.7_s12345.0
