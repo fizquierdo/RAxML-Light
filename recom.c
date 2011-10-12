@@ -15,9 +15,9 @@ boolean needsRecomp(tree *tr, nodeptr p)
   {
     if(!p->x || !isNodePinned(tr, p->number)) 
     {
-      if(isNodeScheduled(tr, p->number))
-        return FALSE;
-      else
+      //if(isNodeScheduled(tr, p->number))
+      //  return FALSE;
+      //else
         return TRUE;
     }
     else      

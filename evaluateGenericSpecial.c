@@ -1366,15 +1366,15 @@ double evaluateGeneric (tree *tr, nodeptr p)
       {
         getxVector(tr, q->number, &slot);
         tr->td[0].ti[0].slot_q = slot;
-        printBothOpen("Protecting q as\n");
-        printVector(tr->rvec->tmpvectors[slot], q->number);
+       // printBothOpen("Protecting q as\n");
+       // printVector(tr->rvec->tmpvectors[slot], q->number);
       }
       if(!isTip(p->number, tr->mxtips))
       {
         getxVector(tr, p->number, &slot);
         tr->td[0].ti[0].slot_p = slot;
-        printBothOpen("Protecting p as\n");
-        printVector(tr->rvec->tmpvectors[slot], p->number);
+        //printBothOpen("Protecting p as\n");
+        //printVector(tr->rvec->tmpvectors[slot], p->number);
       }
     }
 
@@ -1383,30 +1383,24 @@ double evaluateGeneric (tree *tr, nodeptr p)
       tr->td[0].ti[0].qz[i] =  q->z[i];
 
     save_strategy_state(tr);
-    printBothOpen("do %d and %d need recomp?\n", p->number, q->number);
-    showUnpinnableNodes(tr);
+    //printBothOpen("do %d and %d need recomp?\n", p->number, q->number);
+    //showUnpinnableNodes(tr);
     tr->td[0].count = 1;
-    if(needsRecomp(tr, p))
+    //if(needsRecomp(tr, p))
     {
       printBothOpen("%d needs recomp\n", p->number);
       computeTraversalInfo(tr, p, &(tr->td[0].ti[0]), &(tr->td[0].count), tr->mxtips, tr->numBranches);
     }
-    else
-    {
-      printBothOpen("%d needs no recomp\n", p->number);
-    }
-    if(needsRecomp(tr, q))
+    //if(needsRecomp(tr, q))
     {
       printBothOpen("%d needs recomp\n", q->number);
       computeTraversalInfo(tr, q, &(tr->td[0].ti[0]), &(tr->td[0].count), tr->mxtips, tr->numBranches);  
     }
-    else
-    {
-      printBothOpen("%d needs no recomp\n", q->number);
-    }
     printTraversal(tr);
 
     restore_strategy_state(tr);
+
+    /*
     if(tr->useRecom) {
       protectNodesInTraversal(tr);
       assert(isNodePinnedAndActive(tr, p->number));
@@ -1414,6 +1408,7 @@ double evaluateGeneric (tree *tr, nodeptr p)
      // protectNode(tr, p->number); // has been explicitely protected already, check TODOFER
      // protectNode(tr, q->number);
     }
+    */
 #ifdef _USE_PTHREADS 
     {
       int j;
@@ -1453,7 +1448,7 @@ double evaluateGeneric (tree *tr, nodeptr p)
     }
 #else
     printBothOpen("evaluateIterative from evaluateGeneric\n");
-    showUnpinnableNodes(tr);
+    //showUnpinnableNodes(tr);
     result = evaluateIterative(tr, FALSE);
     printBothOpen("done evaluateIterative from evaluateGeneric\n");
 #endif   
