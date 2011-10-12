@@ -462,7 +462,7 @@ int tipsPartialCountStlen(int maxTips, nodeptr p, recompVectors *rvec)
       index = p1->number - maxTips - 1; 
       assert(index >= 0 && index < maxTips - 2);
       ntips1 = rvec->stlen[index]; 
-      if(!p1->x || ntips1 == INNER_NODE_INIT_STLEN)
+      if(!p1->x_stlen || ntips1 == INNER_NODE_INIT_STLEN)
         ntips1 = tipsPartialCountStlen(maxTips, p1, rvec);
     }
     assert(ntips1 >= 1 && ntips1 <= maxTips - 1);
@@ -477,7 +477,7 @@ int tipsPartialCountStlen(int maxTips, nodeptr p, recompVectors *rvec)
       index = p2->number - maxTips - 1; 
       assert(index >= 0 && index < maxTips - 2);
       ntips2 = rvec->stlen[index]; 
-      if(!p2->x || ntips2 == INNER_NODE_INIT_STLEN)
+      if(!p2->x_stlen || ntips2 == INNER_NODE_INIT_STLEN)
       {
         ntips2 = tipsPartialCountStlen(maxTips, p2, rvec);
       }
@@ -585,7 +585,7 @@ void validate_stlen(nodeptr p, int maxTips, int value, int *stlen)
     printBothOpen("wrong value: stlen for n %d : %d\n", pnumber, value);
     stlen_ok = FALSE;
   }
-  if(!p->x)
+  if(!p->x_stlen)
   {
     printBothOpen("unexpected orientation p %d -b %d : l %d\n", pnumber, p->back->number, value);
     stlen_ok = FALSE;
@@ -602,7 +602,7 @@ void set_stlen(tree *tr, nodeptr p, int value)
 static void computeFullTraversalInfoStlen(nodeptr p, int maxTips, recompVectors *rvec) 
 {
   int value;
-  //printBothOpen("Visited node %d ", p->number);
+  //printBothOpen("Visited node %d \n", p->number);
   if(isTip(p->number, maxTips))
     return;
 
@@ -610,9 +610,9 @@ static void computeFullTraversalInfoStlen(nodeptr p, int maxTips, recompVectors 
   nodeptr r = p->next->next->back;
 
   /* set xnode info at this point */
-  p->x = 1;
-  p->next->x = 0;
-  p->next->next->x = 0;     
+  p->x_stlen = 1;
+  p->next->x_stlen = 0;
+  p->next->next->x_stlen = 0;     
 
   if(isTip(r->number, maxTips) && isTip(q->number, maxTips))
   {
@@ -645,9 +645,9 @@ static void computeFullTraversalInfoStlen(nodeptr p, int maxTips, recompVectors 
       int q_stlen, r_stlen;
       r_stlen = rvec->stlen[r->number - maxTips - 1];
       q_stlen = rvec->stlen[q->number - maxTips - 1];
-      if(r_stlen == INNER_NODE_INIT_STLEN || !r->x)
+      if(r_stlen == INNER_NODE_INIT_STLEN || !r->x_stlen)
         r_stlen = tipsPartialCountStlen(maxTips, r, rvec);
-      if(q_stlen == INNER_NODE_INIT_STLEN || !q->x)
+      if(q_stlen == INNER_NODE_INIT_STLEN || !q->x_stlen)
         q_stlen = tipsPartialCountStlen(maxTips, q, rvec);
 
       computeFullTraversalInfoStlen(r, maxTips, rvec);
@@ -662,15 +662,16 @@ static void computeFullTraversalInfoStlen(nodeptr p, int maxTips, recompVectors 
 void determineFullTraversalStlen(nodeptr p, tree *tr)
 {
   nodeptr q = p->back;
-  assert(isTip(p->number, tr->mxtips));
+  //assert(isTip(p->number, tr->mxtips));
   //printBothOpen("Start stlen trav from %d\n", p->number);
   computeFullTraversalInfoStlen(p, tr->mxtips, tr->rvec); 
   //printBothOpen("Start stlen trav from %d\n", q->number);
   computeFullTraversalInfoStlen(q, tr->mxtips, tr->rvec); 
 }
-void printVector(double *vector)
+void printVector(double *vector, int pnumber)
 {
   int j;
+  printBothOpen("vector for node %d \n", pnumber);
   if (vector == NULL)
   {
     printBothOpen(" is NULL\n");
@@ -680,12 +681,13 @@ void printVector(double *vector)
     printBothOpen("%.5f ", vector[j]);
   printBothOpen("\n");
 }
-  /* 
-   // print a traversal
+
+void printTraversal(tree *tr)
 {
   int i;
-  traversalInfo 
-    *ti   = tr->td[0].ti;
+  traversalInfo *ti   = tr->td[0].ti;
+
+  printBothOpen("Traversal: ");
   for(i = 1; i < tr->td[0].count; i++)
   {
     traversalInfo *tInfo = &ti[i];
@@ -694,5 +696,24 @@ void printVector(double *vector)
   printBothOpen("\n");
 }
 
-  */
+traverseTree(tree *tr, nodeptr p, int *counter)
+{
+  double t;
+  if (isTip(p->number,tr->mxtips))
+    return;
+  *counter += 1;
+
+  printBothOpen("\nEvaluating branch p %d b%d \n", p->number, p->back->number);
+  t = gettime();
+  evaluateGeneric(tr, p);
+  printBothOpen(" evalTime %f, LH %f \n", gettime() - t, tr->likelihood);
+
+  //t = gettime();
+  //evaluateGeneric(tr, p->back);
+  //fprintf(stderr, " evalTime %f, LH %f \n", gettime() - t, tr->likelihood);
+
+  traverseTree(tr, p->next->back, counter);
+  traverseTree(tr, p->next->next->back, counter);
+}
+          
 

@@ -145,7 +145,8 @@ boolean smooth (tree *tr, nodeptr p)
 {
   nodeptr  q;
 
-  if (! update(tr, p))               return FALSE; /*  Adjust branch */
+  printBothOpen("smoothing p %d, b %d\n", p->number, p->back->number);
+  //if (! update(tr, p))               return FALSE; /*  Adjust branch */
   if (! isTip(p->number, tr->rdta->numsp)) 
   {                                  /*  Adjust descendants */
     q = p->next;
@@ -186,6 +187,7 @@ boolean smoothTree (tree *tr, int maxtimes)
 {
   nodeptr  p, q;   
   int i, count = 0;
+  printBothOpen("smooth tree\n");
 
   p = tr->start;
   for(i = 0; i < tr->numBranches; i++)

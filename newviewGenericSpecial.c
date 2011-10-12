@@ -4332,6 +4332,8 @@ void computeTraversalInfo(tree *tr, nodeptr p, traversalInfo *ti, int *counter, 
   if(isTip(p->number, maxTips))
     return;
 
+  printBothOpen("computeTraversalInfo at %d\n ", p->number);
+  int slot = -1, unpin1 = -1, unpin2 = -1;
   {
     int i;
     nodeptr q = p->next->back;
@@ -4349,8 +4351,10 @@ void computeTraversalInfo(tree *tr, nodeptr p, traversalInfo *ti, int *counter, 
       ti[*counter].pNumber = p->number;
       ti[*counter].qNumber = q->number;
       ti[*counter].rNumber = r->number;
+      /*
       if(tr->rvec != NULL)
         set_stlen(tr, p, 2);
+        */
 
       for(i = 0; i < numBranches; i++)
       {
@@ -4363,6 +4367,11 @@ void computeTraversalInfo(tree *tr, nodeptr p, traversalInfo *ti, int *counter, 
         z = r->z[i];
         z = (z > zmin) ? log(z) : log(zmin);
         ti[*counter].rz[i] = z;
+      }
+      if(tr->useRecom)
+      {
+        getxVector(tr, p->number, &slot);
+        ti[*counter].slot_p = slot;
       }
       *counter = *counter + 1;
     }
@@ -4384,6 +4393,7 @@ void computeTraversalInfo(tree *tr, nodeptr p, traversalInfo *ti, int *counter, 
         {
           if (needsRecomp(tr, r))
             computeTraversalInfo(tr, r, ti, counter, maxTips, numBranches);
+          /*
           if(tr->useRecom)
           {
             if(!r->x)
@@ -4395,6 +4405,7 @@ void computeTraversalInfo(tree *tr, nodeptr p, traversalInfo *ti, int *counter, 
             assert(r_stlen + 1 >= 2 && r_stlen + 1 <= tr->mxtips - 1);
             set_stlen(tr, p, r_stlen + 1);
           }
+          */
           else
           {
             if (! p->x)
@@ -4419,6 +4430,17 @@ void computeTraversalInfo(tree *tr, nodeptr p, traversalInfo *ti, int *counter, 
           z = (z > zmin) ? log(z) : log(zmin);
           ti[*counter].rz[i] = z;
         }
+        if(tr->useRecom)
+        {
+          getxVector(tr, r->number, &slot);
+          ti[*counter].slot_r = slot;
+
+          getxVector(tr, p->number, &slot);
+          ti[*counter].slot_p = slot;
+
+          unpin2 = r->number;
+        }
+
 
         *counter = *counter + 1;
       }
@@ -4435,8 +4457,12 @@ void computeTraversalInfo(tree *tr, nodeptr p, traversalInfo *ti, int *counter, 
             {
               /* determine order */
               int q_stlen_fast, r_stlen_fast;
-              q_stlen_fast = tipsPartialCountStlen(tr->mxtips, q, tr->rvec);
-              r_stlen_fast = tipsPartialCountStlen(tr->mxtips, r, tr->rvec);
+              /*
+                 q_stlen_fast = tipsPartialCountStlen(tr->mxtips, q, tr->rvec);
+                 r_stlen_fast = tipsPartialCountStlen(tr->mxtips, r, tr->rvec);
+                 */
+              q_stlen_fast = tr->rvec->stlen[q->number - tr->mxtips - 1];
+              r_stlen_fast = tr->rvec->stlen[r->number - tr->mxtips - 1];
               if(q_stlen_fast > r_stlen_fast) 
               {
                 computeTraversalInfo(tr, q, ti, counter, maxTips, numBranches);
@@ -4447,6 +4473,18 @@ void computeTraversalInfo(tree *tr, nodeptr p, traversalInfo *ti, int *counter, 
                 computeTraversalInfo(tr, r, ti, counter, maxTips, numBranches);
                 computeTraversalInfo(tr, q, ti, counter, maxTips, numBranches);
               }
+              //strategy
+              getxVector(tr, q->number, &slot);
+              ti[*counter].slot_q = slot;
+
+              getxVector(tr, r->number, &slot);
+              ti[*counter].slot_r = slot;
+
+              getxVector(tr, p->number, &slot);
+              ti[*counter].slot_p = slot;
+
+              unpin2 = r->number;
+              unpin1 = q->number;
             }
             else
             {
@@ -4465,12 +4503,14 @@ void computeTraversalInfo(tree *tr, nodeptr p, traversalInfo *ti, int *counter, 
           }
           if (! p->x)
             getxnode(p);
+          /*
           if(tr->useRecom)
           {
             r_stlen = tr->rvec->stlen[r->number - tr->mxtips - 1];
             q_stlen = tr->rvec->stlen[q->number - tr->mxtips - 1];
             set_stlen(tr, p, r_stlen + q_stlen);
           }
+            */
         }
 
         ti[*counter].tipCase = INNER_INNER;
@@ -4495,9 +4535,11 @@ void computeTraversalInfo(tree *tr, nodeptr p, traversalInfo *ti, int *counter, 
       }
     }
   }
-
-
-
+  if(tr->useRecom)
+  {
+    unpinNode(tr, unpin1);
+    unpinNode(tr, unpin2);
+  }
 }
 
 
@@ -4644,6 +4686,7 @@ void newviewIterative (tree *tr)
   for(i = 1; i < tr->td[0].count; i++)
   {
     traversalInfo *tInfo = &ti[i];
+    printBothOpen("newviewIterative p %d \n", tInfo->pNumber);
 
     for(model = 0; model < tr->NumberOfModels; model++)
     {
@@ -4929,8 +4972,7 @@ void newviewIterative (tree *tr)
             assert(0);
         }
 
-        //printBothOpen("listof p %d: ", tInfo->pNumber);
-        //printVector(x3_start);
+        printVector(x3_start, tInfo->pNumber);
         if(tr->useRecom)
         {
           assert(x3_start[0] != INVALID_VALUE);
@@ -4958,6 +5000,13 @@ void newviewGeneric (tree *tr, nodeptr p)
 {  
   if(isTip(p->number, tr->mxtips))
     return;
+  /* stlens must be updated from the new p view */
+  printBothOpen("newviewGeneric at p %d - %d\n", p->number, p->back->number);
+  //showTreeNodes(tr);
+  if(tr->useRecom) 
+    determineFullTraversalStlen(p, tr);
+  //printBothOpen("stlen update at p %d - %d\n", p->number, p->back->number);
+  //showTreeNodes(tr);
 
   if(tr->multiGene)
   {	           
@@ -4975,6 +5024,8 @@ void newviewGeneric (tree *tr, nodeptr p)
   }
   else
   {
+    // TODOFER: need a clear picture of whether the traversal descrp. is updated
+    save_strategy_state(tr);
     tr->td[0].count = 1;
     computeTraversalInfo(tr, p, &(tr->td[0].ti[0]), &(tr->td[0].count), tr->mxtips, tr->numBranches);
     if(tr->useRecom)
@@ -4983,6 +5034,7 @@ void newviewGeneric (tree *tr, nodeptr p)
       protectNode(tr, p->number);
       protectNode(tr, p->back->number);
     }
+    restore_strategy_state(tr);
 
     if(tr->td[0].count > 1)
     {

@@ -999,7 +999,7 @@ double evaluateIterative(tree *tr,  boolean writeVector)
             model;
 
   int slot = -1;
-  //printBothOpen("Evaluate iterative from p %d q %d \n", pNumber, qNumber);
+  printBothOpen("Evaluate iterative from p %d q %d \n", pNumber, qNumber);
 
   newviewIterative(tr);  
 
@@ -1058,6 +1058,8 @@ double evaluateIterative(tree *tr,  boolean writeVector)
           {
             x2_start = tr->partitionData[model].xVector[pNumber - tr->mxtips -1];		  
           }
+          printBothOpen("eval pre p: ");
+          printVector(x2_start, pNumber);
           tip      = tr->partitionData[model].yVector[qNumber];	 
 
           if(tr->saveMemory)
@@ -1078,8 +1080,8 @@ double evaluateIterative(tree *tr,  boolean writeVector)
           {
             x2_start = tr->partitionData[model].xVector[qNumber - tr->mxtips - 1];		  		  
           }
-            //printBothOpen("eval pre q: ");
-            //printVector(x2_start);
+          printBothOpen("eval pre q: ");
+          printVector(x2_start, qNumber);
           tip = tr->partitionData[model].yVector[pNumber];
 
           if(tr->saveMemory)
@@ -1109,6 +1111,10 @@ double evaluateIterative(tree *tr,  boolean writeVector)
           x1_start = tr->partitionData[model].xVector[pNumber - tr->mxtips - 1];
           x2_start = tr->partitionData[model].xVector[qNumber - tr->mxtips - 1];
         }
+        printBothOpen("eval pre p: ");
+        printVector(x1_start, pNumber);
+        printBothOpen("eval pre q: ");
+        printVector(x2_start, qNumber);
 
         if(tr->saveMemory)
         {
@@ -1350,21 +1356,63 @@ double evaluateGeneric (tree *tr, nodeptr p)
   {
     tr->td[0].ti[0].pNumber = p->number;
     tr->td[0].ti[0].qNumber = q->number;          
+    if(tr->useRecom)
+    {
+      //update stlens
+      determineFullTraversalStlen(p, tr);
+      //protect basicss after recomputing!!
+      int slot = -1;
+      if(!isTip(q->number, tr->mxtips))
+      {
+        getxVector(tr, q->number, &slot);
+        tr->td[0].ti[0].slot_q = slot;
+        printBothOpen("Protecting q as\n");
+        printVector(tr->rvec->tmpvectors[slot], q->number);
+      }
+      if(!isTip(p->number, tr->mxtips))
+      {
+        getxVector(tr, p->number, &slot);
+        tr->td[0].ti[0].slot_p = slot;
+        printBothOpen("Protecting p as\n");
+        printVector(tr->rvec->tmpvectors[slot], p->number);
+      }
+    }
+
 
     for(i = 0; i < tr->numBranches; i++)    
       tr->td[0].ti[0].qz[i] =  q->z[i];
 
+    save_strategy_state(tr);
+    printBothOpen("do %d and %d need recomp?\n", p->number, q->number);
+    showUnpinnableNodes(tr);
     tr->td[0].count = 1;
     if(needsRecomp(tr, p))
-      computeTraversalInfo(tr, p, &(tr->td[0].ti[0]), &(tr->td[0].count), tr->mxtips, tr->numBranches);
-    if(needsRecomp(tr, q))
-      computeTraversalInfo(tr, q, &(tr->td[0].ti[0]), &(tr->td[0].count), tr->mxtips, tr->numBranches);  
-
-    if(tr->useRecom)
     {
+      printBothOpen("%d needs recomp\n", p->number);
+      computeTraversalInfo(tr, p, &(tr->td[0].ti[0]), &(tr->td[0].count), tr->mxtips, tr->numBranches);
+    }
+    else
+    {
+      printBothOpen("%d needs no recomp\n", p->number);
+    }
+    if(needsRecomp(tr, q))
+    {
+      printBothOpen("%d needs recomp\n", q->number);
+      computeTraversalInfo(tr, q, &(tr->td[0].ti[0]), &(tr->td[0].count), tr->mxtips, tr->numBranches);  
+    }
+    else
+    {
+      printBothOpen("%d needs no recomp\n", q->number);
+    }
+    printTraversal(tr);
+
+    restore_strategy_state(tr);
+    if(tr->useRecom) {
       protectNodesInTraversal(tr);
-      protectNode(tr, p->number);
-      protectNode(tr, q->number);
+      assert(isNodePinnedAndActive(tr, p->number));
+      assert(isNodePinnedAndActive(tr, q->number));
+     // protectNode(tr, p->number); // has been explicitely protected already, check TODOFER
+     // protectNode(tr, q->number);
     }
 #ifdef _USE_PTHREADS 
     {
@@ -1404,7 +1452,10 @@ double evaluateGeneric (tree *tr, nodeptr p)
         result += tr->perPartitionLH[model];		  
     }
 #else
+    printBothOpen("evaluateIterative from evaluateGeneric\n");
+    showUnpinnableNodes(tr);
     result = evaluateIterative(tr, FALSE);
+    printBothOpen("done evaluateIterative from evaluateGeneric\n");
 #endif   
 #endif
   }

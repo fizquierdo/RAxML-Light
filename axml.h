@@ -540,6 +540,7 @@ typedef  struct noderec
   int              support;
   int              number;
   char             x;
+  char             x_stlen; // orientation of the stlen value (subtree length)
 }
 node, *nodeptr;
 
