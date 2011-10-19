@@ -54,3 +54,4 @@ else
   grep "Likelihood" RAxML_info.${NAME}
   #grep "Likelihood" RAxML_info.${NAME}_T2
 fi
+

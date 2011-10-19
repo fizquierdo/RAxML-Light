@@ -1223,10 +1223,12 @@ void getStartingTree(tree *tr, analdef *adef)
 
   fclose(INFILE);
 
+  printRecomTree(tr, FALSE);
   tr->start = tr->nodep[1];
   /* redo the traversal due to orientations for the recomp */
   if(tr->useRecom)
     determineFullTraversal(tr->start, tr);  
+  printRecomTree(tr, FALSE);
   //showTreeNodes(tr);
 }
 

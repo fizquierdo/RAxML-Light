@@ -715,5 +715,70 @@ traverseTree(tree *tr, nodeptr p, int *counter)
   traverseTree(tr, p->next->back, counter);
   traverseTree(tr, p->next->next->back, counter);
 }
-          
 
+
+static char *Tree2StringRecomREC(char *treestr, tree *tr, nodeptr q, boolean printBranchLengths)
+{
+  char  *nameptr;            
+  double z;
+  nodeptr p = q;
+
+  if(isTip(p->number, tr->rdta->numsp)) 
+  {	       	  
+    nameptr = tr->nameList[p->number];     
+    sprintf(treestr, "%s", nameptr);
+    while (*treestr) treestr++;
+  }
+  else 
+  {                 	 
+    while(!p->x)
+      p = p->next;
+    *treestr++ = '(';
+    treestr = Tree2StringRecomREC(treestr, tr, q->next->back, printBranchLengths);
+    *treestr++ = ',';
+    treestr = Tree2StringRecomREC(treestr, tr, q->next->next->back, printBranchLengths);
+    if(q == tr->start->back) 
+    {
+      *treestr++ = ',';
+      treestr = Tree2StringRecomREC(treestr, tr, q->back, printBranchLengths);
+    }
+    *treestr++ = ')';                    
+    // write innernode as nodenum_b_nodenumback
+    sprintf(treestr, "%d", q->number);
+    while (*treestr) treestr++;
+    *treestr++ = 'b';                    
+    sprintf(treestr, "%d", p->back->number);
+    while (*treestr) treestr++;
+  }
+
+  if(q == tr->start->back) 
+  {	      	 
+    if(printBranchLengths)
+      sprintf(treestr, ":0.0;\n");
+    else
+      sprintf(treestr, ";\n");	 	  	
+  }
+  else 
+  {                   
+    if(printBranchLengths)	    
+    {
+      //sprintf(treestr, ":%8.20f", getBranchLength(tr, SUMMARIZE_LH, p));	      	   
+      assert(tr->fracchange != -1.0);
+      z = q->z[0];
+      if (z < zmin) 
+        z = zmin;      	 
+      sprintf(treestr, ":%8.20f", -log(z) * tr->fracchange);	      	   
+    }
+    else	    
+      sprintf(treestr, "%s", "\0");	    
+  }
+
+  while (*treestr) treestr++;
+  return  treestr;
+}
+
+void printRecomTree(tree *tr, boolean printBranchLengths)
+{
+   Tree2StringRecomREC(tr->tree_string, tr, tr->start->back, printBranchLengths);
+   fprintf(stderr,"%s\n", tr->tree_string);
+}

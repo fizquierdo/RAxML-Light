@@ -5997,20 +5997,22 @@ int main (int argc, char *argv[])
 
       modOptJoerg(tr, adef);
 #else
+      printRecomTree(tr, FALSE);
 
       printBothOpen("Eval generic\n");
       evaluateGenericInitrav(tr, tr->start);	 
+
+      /*
 
       // just traverse the tree once, check you get the same LH in all branches 
       int counter = 0;
       printBothOpen("traverse tree testing LH\n");
       traverseTree(tr, tr->start->back, &counter);
-      /*
       printBothOpen("Tree eval\n");
+      printRecomTree(tr, TRUE);
       showTreeNodes(tr);
       showUnpinnableNodes(tr);
       treeEvaluate(tr, 1); 	 	 	 	 	 
-
       printBothOpen("compute BIG RAPID\n");
       computeBIGRAPID(tr, adef, TRUE); 	     
       */
