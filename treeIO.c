@@ -1223,12 +1223,13 @@ void getStartingTree(tree *tr, analdef *adef)
 
   fclose(INFILE);
 
-  printRecomTree(tr, FALSE);
+  printRecomTree(tr, FALSE, "Starting topo");
   tr->start = tr->nodep[1];
   /* redo the traversal due to orientations for the recomp */
   if(tr->useRecom)
     determineFullTraversal(tr->start, tr);  
-  printRecomTree(tr, FALSE);
+  //printRecomTree(tr, TRUE, "Topo after change of start node, incl BL");
+  printRecomTree(tr, FALSE, "Topo after change of start node");
   //showTreeNodes(tr);
 }
 

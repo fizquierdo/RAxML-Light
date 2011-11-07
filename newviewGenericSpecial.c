@@ -4686,7 +4686,7 @@ void newviewIterative (tree *tr)
   for(i = 1; i < tr->td[0].count; i++)
   {
     traversalInfo *tInfo = &ti[i];
-    printBothOpen("newviewIterative p %d \n", tInfo->pNumber);
+    //printBothOpen("newviewIterative p %d \n", tInfo->pNumber);
 
     for(model = 0; model < tr->NumberOfModels; model++)
     {
@@ -4972,7 +4972,7 @@ void newviewIterative (tree *tr)
             assert(0);
         }
 
-        printVector(x3_start, tInfo->pNumber);
+        //printVector(x3_start, tInfo->pNumber);
         if(tr->useRecom)
         {
           assert(x3_start[0] != INVALID_VALUE);

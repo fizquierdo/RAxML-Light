@@ -17,7 +17,7 @@ else
  TREE=RAxML_parsimonyTree.7_s12345.0
 fi
 
-FACTOR=0.90
+FACTOR=0.70
 
 # just clean dir
 if [ $1 = clean ] ; then

@@ -5997,7 +5997,6 @@ int main (int argc, char *argv[])
 
       modOptJoerg(tr, adef);
 #else
-      printRecomTree(tr, FALSE);
 
       printBothOpen("Eval generic\n");
       evaluateGenericInitrav(tr, tr->start);	 

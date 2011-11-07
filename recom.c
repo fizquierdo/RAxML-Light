@@ -722,6 +722,7 @@ static char *Tree2StringRecomREC(char *treestr, tree *tr, nodeptr q, boolean pri
   char  *nameptr;            
   double z;
   nodeptr p = q;
+  int slot;
 
   if(isTip(p->number, tr->rdta->numsp)) 
   {	       	  
@@ -749,6 +750,37 @@ static char *Tree2StringRecomREC(char *treestr, tree *tr, nodeptr q, boolean pri
     *treestr++ = 'b';                    
     sprintf(treestr, "%d", p->back->number);
     while (*treestr) treestr++;
+    if(tr->useRecom)
+    {
+      *treestr++ = '_';                    
+      //assert(p->x_stlen);
+      if(!p->x_stlen)
+        printf("WARN: x_stlen not oriented for %d\n", p->number);
+      *treestr++ = 'l';                    
+      sprintf(treestr, "%d", tr->rvec->stlen[p->number - tr->mxtips - 1]);
+      while (*treestr) treestr++;
+      *treestr++ = '_';                    
+      *treestr++ = 'S';                    
+      slot = tr->rvec->iNode[p->number - tr->mxtips - 1];
+      if(slot == NODE_UNPINNED)
+      {
+        *treestr++ = '-';                    
+      }
+      else
+      {
+        assert(tr->rvec->iVector[slot] == p->number);
+        sprintf(treestr, "%d", slot);
+        while (*treestr) treestr++;
+        if(tr->rvec->unpinnable[slot])
+        {
+          *treestr++ = 'u';                    
+        }
+        else
+        {
+          *treestr++ = 'p';                    
+        }
+      }
+    }
   }
 
   if(q == tr->start->back) 
@@ -777,8 +809,16 @@ static char *Tree2StringRecomREC(char *treestr, tree *tr, nodeptr q, boolean pri
   return  treestr;
 }
 
-void printRecomTree(tree *tr, boolean printBranchLengths)
+void printRecomTree(tree *tr, boolean printBranchLengths, char *title)
 {
+   FILE *nwfile;
+   nwfile = myfopen("tmp.nw", "w+");
    Tree2StringRecomREC(tr->tree_string, tr, tr->start->back, printBranchLengths);
-   fprintf(stderr,"%s\n", tr->tree_string);
+   //fprintf(stderr,"%s\n", tr->tree_string);
+   fprintf(nwfile,"%s\n", tr->tree_string);
+   fclose(nwfile);
+   if(title)
+     printBothOpen("%s\n", title);
+   printBothOpen("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
+   system("bin/nw_display tmp.nw");
 }

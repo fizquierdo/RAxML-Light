@@ -542,11 +542,11 @@ void computeFullTraversalInfo(tree *tr, nodeptr p, traversalInfo *ti, int *count
 void determineFullTraversal(nodeptr p, tree *tr)
 {
   /*pre - compute the stlens*/
-  //printBothOpen("Computing stlen values\n");
+  printBothOpen("Computing stlen values\n");
   //showUnpinnableNodes(tr);
   if(tr->useRecom)
     determineFullTraversalStlen(p, tr);
-  //printBothOpen("DONE Computing stlen values, tree reoriented\n");
+  printRecomTree(tr, FALSE, "DONE Computing stlen values, tree reoriented");
   //showUnpinnableNodes(tr);
 
   nodeptr q = p->back;
@@ -567,20 +567,17 @@ void determineFullTraversal(nodeptr p, tree *tr)
     tr->td[0].ti[0].qz[k] = q->z[k];    
 
 
-  //printBothOpen("saving strategy\n");
-  //showUnpinnableNodes(tr);
+  printRecomTree(tr, FALSE, "Start saving strategy");
   save_strategy_state(tr);
   tr->td[0].count = 1; 
 
-  //printBothOpen("computing full traversal info\n");
+  printRecomTree(tr, FALSE, "computing full traversal info");
   computeFullTraversalInfo(tr, q, &(tr->td[0].ti[0]),  &(tr->td[0].count), tr->mxtips, tr->numBranches, tr->rvec); 
   computeFullTraversalInfo(tr, p, &(tr->td[0].ti[0]),  &(tr->td[0].count), tr->mxtips, tr->numBranches, tr->rvec);
-  //showUnpinnableNodes(tr);
 
-  //printBothOpen("restoring strategy\n");
+  printRecomTree(tr, FALSE, "end computing full traversal info");
   restore_strategy_state(tr);
-  //printBothOpen("DONE restoring strategy\n");
-  //showUnpinnableNodes(tr);
+  printRecomTree(tr, FALSE, "strategy restored");
 }
 
 

@@ -999,7 +999,9 @@ double evaluateIterative(tree *tr,  boolean writeVector)
             model;
 
   int slot = -1;
-  printBothOpen("Evaluate iterative from p %d q %d \n", pNumber, qNumber);
+  boolean showVectors = FALSE;
+  if(showVectors)
+    printBothOpen("Evaluate iterative from p %d q %d \n", pNumber, qNumber);
 
   newviewIterative(tr);  
 
@@ -1058,8 +1060,11 @@ double evaluateIterative(tree *tr,  boolean writeVector)
           {
             x2_start = tr->partitionData[model].xVector[pNumber - tr->mxtips -1];		  
           }
-          printBothOpen("eval pre p: ");
-          printVector(x2_start, pNumber);
+          if(showVectors)
+          {
+            printBothOpen("eval pre p: ");
+            printVector(x2_start, pNumber);
+          }
           tip      = tr->partitionData[model].yVector[qNumber];	 
 
           if(tr->saveMemory)
@@ -1080,8 +1085,11 @@ double evaluateIterative(tree *tr,  boolean writeVector)
           {
             x2_start = tr->partitionData[model].xVector[qNumber - tr->mxtips - 1];		  		  
           }
-          printBothOpen("eval pre q: ");
-          printVector(x2_start, qNumber);
+          if(showVectors)
+          {
+            printBothOpen("eval pre q: ");
+            printVector(x2_start, qNumber);
+          }
           tip = tr->partitionData[model].yVector[pNumber];
 
           if(tr->saveMemory)
@@ -1111,10 +1119,13 @@ double evaluateIterative(tree *tr,  boolean writeVector)
           x1_start = tr->partitionData[model].xVector[pNumber - tr->mxtips - 1];
           x2_start = tr->partitionData[model].xVector[qNumber - tr->mxtips - 1];
         }
-        printBothOpen("eval pre p: ");
-        printVector(x1_start, pNumber);
-        printBothOpen("eval pre q: ");
-        printVector(x2_start, qNumber);
+        if(showVectors)
+        {
+          printBothOpen("eval pre p: ");
+          printVector(x1_start, pNumber);
+          printBothOpen("eval pre q: ");
+          printVector(x2_start, qNumber);
+        }
 
         if(tr->saveMemory)
         {
@@ -1557,6 +1568,7 @@ double evaluateGenericInitrav (tree *tr, nodeptr p)
     }     
 #else
     result = evaluateIterative(tr, FALSE);
+    printRecomTree(tr, FALSE, "tree evaluated");
 #endif
 #endif
 
