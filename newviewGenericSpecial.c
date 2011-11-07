@@ -4332,7 +4332,7 @@ void computeTraversalInfo(tree *tr, nodeptr p, traversalInfo *ti, int *counter, 
   if(isTip(p->number, maxTips))
     return;
 
-  printBothOpen("computeTraversalInfo at %d\n ", p->number);
+  //printBothOpen("computeTraversalInfo at %d\n ", p->number);
   int slot = -1, unpin1 = -1, unpin2 = -1;
   {
     int i;
@@ -5001,7 +5001,7 @@ void newviewGeneric (tree *tr, nodeptr p)
   if(isTip(p->number, tr->mxtips))
     return;
   /* stlens must be updated from the new p view */
-  printBothOpen("newviewGeneric at p %d - %d\n", p->number, p->back->number);
+  //printBothOpen("newviewGeneric at p %d - %d\n", p->number, p->back->number);
   //showTreeNodes(tr);
   if(tr->useRecom) 
     determineFullTraversalStlen(p, tr);
