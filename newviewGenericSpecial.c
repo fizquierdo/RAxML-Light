@@ -4686,7 +4686,7 @@ void newviewIterative (tree *tr)
   for(i = 1; i < tr->td[0].count; i++)
   {
     traversalInfo *tInfo = &ti[i];
-    //printBothOpen("newviewIterative p %d \n", tInfo->pNumber);
+    printBothOpen("newviewIterative on p %d \n", tInfo->pNumber);
 
     for(model = 0; model < tr->NumberOfModels; model++)
     {
@@ -4768,6 +4768,8 @@ void newviewIterative (tree *tr)
             {
               //getxVector(tr, tInfo->pNumber, &slot);			  
               slot = tInfo->slot_p; 
+              unpinAtomicSlot(tr, slot);
+              pinAtomicNode(tr, tInfo->pNumber, slot);
               x3_start = tr->rvec->tmpvectors[slot];
               assert(x3_start != NULL);
               assert(tr->rvec->width == 4 * width);
@@ -4791,12 +4793,17 @@ void newviewIterative (tree *tr)
             {
               //getxVector(tr, tInfo->rNumber, &slot);			  
               slot = tInfo->slot_r; 
+              unpinAtomicSlot(tr, slot);
+              pinAtomicNode(tr, tInfo->rNumber, slot);
               x2_start = tr->rvec->tmpvectors[slot];
-              assert(x2_start[0] != INVALID_VALUE);
+              //assert(x2_start[0] != INVALID_VALUE);
 
               //getxVector(tr, tInfo->pNumber, &slot);			  
               slot = tInfo->slot_p; 
+              unpinAtomicSlot(tr, slot);
+              pinAtomicNode(tr, tInfo->pNumber, slot);
               x3_start = tr->rvec->tmpvectors[slot];
+
               unpin2 = tInfo->rNumber;
             }
             else
@@ -4818,14 +4825,20 @@ void newviewIterative (tree *tr)
             {
               //getxVector(tr, tInfo->qNumber, &slot);			  
               slot = tInfo->slot_q; 
+              unpinAtomicSlot(tr, slot);
+              pinAtomicNode(tr, tInfo->qNumber, slot);
               x1_start = tr->rvec->tmpvectors[slot];
 
               //getxVector(tr, tInfo->rNumber, &slot);			  
               slot = tInfo->slot_r; 
+              unpinAtomicSlot(tr, slot);
+              pinAtomicNode(tr, tInfo->rNumber, slot);
               x2_start = tr->rvec->tmpvectors[slot];
 
               //getxVector(tr, tInfo->pNumber, &slot);			  
               slot = tInfo->slot_p; 
+              unpinAtomicSlot(tr, slot);
+              pinAtomicNode(tr, tInfo->pNumber, slot);
               x3_start = tr->rvec->tmpvectors[slot];
 
               unpin2 = tInfo->rNumber;
@@ -4972,14 +4985,14 @@ void newviewIterative (tree *tr)
             assert(0);
         }
 
-        //printVector(x3_start, tInfo->pNumber);
+        printVector(x3_start, tInfo->pNumber);
         if(tr->useRecom)
         {
           assert(x3_start[0] != INVALID_VALUE);
-          //printBothOpen("unpin plan %d and %d\n", unpin1, unpin2);
+          printBothOpen("unpin plan %d and %d\n", unpin1, unpin2);
           //showUnpinnableNodes(tr);
-          //unpinNode(tr, unpin1);
-          //unpinNode(tr, unpin2);
+          unpinNode(tr, unpin1);
+          unpinNode(tr, unpin2);
         }
 
         tr->partitionData[model].globalScaler[tInfo->pNumber] = 
@@ -4989,7 +5002,8 @@ void newviewIterative (tree *tr)
         assert(tr->partitionData[model].globalScaler[tInfo->pNumber] < INT_MAX);
       }	
     }
-    //printBothOpen("Visited p %d\n", tInfo->pNumber);
+    printBothOpen("Visited p %d\n", tInfo->pNumber);
+    printRecomTree(tr, FALSE, "after visit");
     //showUnpinnableNodes(tr);
 
   }

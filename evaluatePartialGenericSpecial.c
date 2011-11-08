@@ -571,11 +571,12 @@ void determineFullTraversal(nodeptr p, tree *tr)
   save_strategy_state(tr);
   tr->td[0].count = 1; 
 
-  printRecomTree(tr, FALSE, "computing full traversal info");
+  printRecomTree(tr, FALSE, "computing full traversal info, running strategy");
   computeFullTraversalInfo(tr, q, &(tr->td[0].ti[0]),  &(tr->td[0].count), tr->mxtips, tr->numBranches, tr->rvec); 
   computeFullTraversalInfo(tr, p, &(tr->td[0].ti[0]),  &(tr->td[0].count), tr->mxtips, tr->numBranches, tr->rvec);
 
   printRecomTree(tr, FALSE, "end computing full traversal info");
+  printTraversal(tr);
   restore_strategy_state(tr);
   printRecomTree(tr, FALSE, "strategy restored");
 }

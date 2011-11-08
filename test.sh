@@ -48,7 +48,8 @@ else
   #FACTOR=1.1
   #./raxmlLight -r $FACTOR -m GTRCAT -n ${NAME}_hf -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE}
   echo "*** run std"
-  (./raxmlLight -m GTRCAT -n ${NAME}_std -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} 2> err_std) > /dev/null
+  #(./raxmlLight -m GTRCAT -n ${NAME}_std -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} 2> err_std) > /dev/null 
+  (./raxmlLight -m GTRCAT -n ${NAME}_std -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} 2> err_std) > info_std 
   echo "diff of LHs std. recomp"
   grep "Likelihood" RAxML_info.${NAME}_std
   grep "Likelihood" RAxML_info.${NAME}

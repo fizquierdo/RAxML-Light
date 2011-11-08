@@ -733,6 +733,7 @@ typedef  struct  {
   recompVectors *rvec;
   float vectorRecomFraction;
   boolean useRecom;
+  boolean verbose;
   /* recomp END */
 
   boolean useGappedImplementation;

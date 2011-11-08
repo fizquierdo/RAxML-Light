@@ -721,8 +721,10 @@ void remove_and_traverse(tree *tr,nodeptr p, nodeptr p1, nodeptr p2, int mintrav
   /* avoid duplication of code, and wrap up the priority List nicely */
 
   nodeptr return_p;
+  /*
   if(tr->useRecom)
-    set_node_priority(tr, p); /* uncomment to deactivate the prio list usage */
+    set_node_priority(tr, p); // uncomment to deactivate the prio list usage 
+  */
 
   return_p = removeNodeBIG(tr, p,  tr->numBranches);
   assert(p != NULL);

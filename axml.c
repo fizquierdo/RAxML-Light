@@ -5984,6 +5984,7 @@ int main (int argc, char *argv[])
       accumulatedTime = 0.0;
 
       printBothOpen("Get starting tree \n");
+      tr->verbose = TRUE;
       getStartingTree(tr, adef);     
       
 #ifdef _JOERG		  
@@ -6000,22 +6001,20 @@ int main (int argc, char *argv[])
 
       printBothOpen("Eval generic\n");
       evaluateGenericInitrav(tr, tr->start);	 
-
-
       // just traverse the tree once, check you get the same LH in all branches 
-      int counter = 0;
       /*
+      int counter = 0;
       printRecomTree(tr, TRUE, "start traverse tree test");
       printBothOpen("traverse tree testing LH\n");
       traverseTree(tr, tr->start->back, &counter);
       printRecomTree(tr, TRUE, "end traverse tree test");
-      */
       //showTreeNodes(tr);
       //showUnpinnableNodes(tr);
-      /*
       printRecomTree(tr, TRUE, "start tree eval");
       treeEvaluate(tr, 1); 	 	 	 	 	 
       printRecomTree(tr, TRUE, "end tree eval");
+      */
+      /*
       printBothOpen("compute BIG RAPID\n");
       computeBIGRAPID(tr, adef, TRUE); 	     
       */

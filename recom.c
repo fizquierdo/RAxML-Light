@@ -195,6 +195,10 @@ boolean isNodePinnedAndActive(tree *tr, int nodenum)
 void pinAtomicNode(tree *tr, int nodenum, int slot)
 {
   recompVectors *v = tr->rvec;
+  /*
+  int prev_nodenum;
+  prev_node =  v->iVector[slot];
+  */
   v->iVector[slot] = nodenum;
   v->iNode[nodenum - tr->mxtips - 1] = slot;
   v->unpinnable[slot] = FALSE;
@@ -225,7 +229,7 @@ void unpinNode(tree *tr, int nodenum)
   assert(slot >= 0 && slot < v->numVectors);
   v->unpinnable[slot] = TRUE;
 }
-static void unpinAtomicSlot(tree *tr, int slot)
+void unpinAtomicSlot(tree *tr, int slot)
 {
   int i, nodenum;
   recompVectors *v = tr->rvec;
@@ -235,8 +239,11 @@ static void unpinAtomicSlot(tree *tr, int slot)
     v->iNode[nodenum - tr->mxtips - 1] = NODE_UNPINNED;
   else
     printBothOpen("WARNING unpinning a node that was not pinned\n");
+
+  /*
   for(i=0; i < v->width; i++)
     v->tmpvectors[slot][i] = INVALID_VALUE;
+    */
 }
 void unpinAllSlots(tree *tr)
 {
@@ -691,7 +698,10 @@ void printTraversal(tree *tr)
   for(i = 1; i < tr->td[0].count; i++)
   {
     traversalInfo *tInfo = &ti[i];
-    printBothOpen("%d ", tInfo->pNumber);
+    if(tr->useRecom)
+      printBothOpen("%d->S%d ", tInfo->pNumber, tInfo->slot_p);
+    else
+      printBothOpen("%d ", tInfo->pNumber);
   }
   printBothOpen("\n");
 }
@@ -768,7 +778,10 @@ static char *Tree2StringRecomREC(char *treestr, tree *tr, nodeptr q, boolean pri
       }
       else
       {
-        assert(tr->rvec->iVector[slot] == p->number);
+        //assert(tr->rvec->iVector[slot] == p->number);
+        if(tr->rvec->iVector[slot] != p->number)
+          printBothOpen("WARN: slot %d contains nodenum %d, displaying node %d\n", 
+                        slot, tr->rvec->iVector[slot], p->number);
         sprintf(treestr, "%d", slot);
         while (*treestr) treestr++;
         if(tr->rvec->unpinnable[slot])
@@ -811,14 +824,16 @@ static char *Tree2StringRecomREC(char *treestr, tree *tr, nodeptr q, boolean pri
 
 void printRecomTree(tree *tr, boolean printBranchLengths, char *title)
 {
-   FILE *nwfile;
-   nwfile = myfopen("tmp.nw", "w+");
-   Tree2StringRecomREC(tr->tree_string, tr, tr->start->back, printBranchLengths);
-   //fprintf(stderr,"%s\n", tr->tree_string);
-   fprintf(nwfile,"%s\n", tr->tree_string);
-   fclose(nwfile);
-   if(title)
-     printBothOpen("%s\n", title);
-   printBothOpen("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
-   system("bin/nw_display tmp.nw");
+  if(!tr->verbose)
+    return;
+  FILE *nwfile;
+  nwfile = myfopen("tmp.nw", "w+");
+  Tree2StringRecomREC(tr->tree_string, tr, tr->start->back, printBranchLengths);
+  //fprintf(stderr,"%s\n", tr->tree_string);
+  fprintf(nwfile,"%s\n", tr->tree_string);
+  fclose(nwfile);
+  if(title)
+    printBothOpen("%s\n", title);
+  printBothOpen("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
+  system("bin/nw_display tmp.nw");
 }

@@ -1003,7 +1003,9 @@ double evaluateIterative(tree *tr,  boolean writeVector)
   if(showVectors)
     printBothOpen("Evaluate iterative from p %d q %d \n", pNumber, qNumber);
 
+  printRecomTree(tr, FALSE, "before newview iterative");
   newviewIterative(tr);  
+  printRecomTree(tr, FALSE, "after newview iterative");
 
   for(model = 0; model < tr->NumberOfModels; model++)
   {            
