@@ -4474,17 +4474,25 @@ void computeTraversalInfo(tree *tr, nodeptr p, traversalInfo *ti, int *counter, 
                 computeTraversalInfo(tr, q, ti, counter, maxTips, numBranches);
               }
               //strategy
+              /*
               getxVector(tr, q->number, &slot);
               ti[*counter].slot_q = slot;
+              printBothOpen("slot q %d\n", slot);
 
               getxVector(tr, r->number, &slot);
               ti[*counter].slot_r = slot;
+              assert(slot != ti[*counter].slot_q);
+              printBothOpen("slot r %d\n", slot);
 
               getxVector(tr, p->number, &slot);
               ti[*counter].slot_p = slot;
+              printBothOpen("slot p %d\n", slot);
+              assert(slot != ti[*counter].slot_q);
+              assert(slot != ti[*counter].slot_r);
 
               unpin2 = r->number;
               unpin1 = q->number;
+              */
             }
             else
             {
@@ -4503,6 +4511,8 @@ void computeTraversalInfo(tree *tr, nodeptr p, traversalInfo *ti, int *counter, 
           }
           if (! p->x)
             getxnode(p);
+
+
           /*
           if(tr->useRecom)
           {
@@ -4517,6 +4527,27 @@ void computeTraversalInfo(tree *tr, nodeptr p, traversalInfo *ti, int *counter, 
         ti[*counter].pNumber = p->number;
         ti[*counter].qNumber = q->number;
         ti[*counter].rNumber = r->number;
+
+          if(tr->useRecom)
+          {
+              getxVector(tr, q->number, &slot);
+              ti[*counter].slot_q = slot;
+              //printBothOpen("slot q %d\n", slot);
+
+              getxVector(tr, r->number, &slot);
+              ti[*counter].slot_r = slot;
+              assert(slot != ti[*counter].slot_q);
+              //printBothOpen("slot r %d\n", slot);
+
+              getxVector(tr, p->number, &slot);
+              ti[*counter].slot_p = slot;
+              //printBothOpen("slot p %d\n", slot);
+              assert(slot != ti[*counter].slot_q);
+              assert(slot != ti[*counter].slot_r);
+
+              unpin2 = r->number;
+              unpin1 = q->number;
+          }
 
         for(i = 0; i < numBranches; i++)
         {
@@ -4686,7 +4717,7 @@ void newviewIterative (tree *tr)
   for(i = 1; i < tr->td[0].count; i++)
   {
     traversalInfo *tInfo = &ti[i];
-    printBothOpen("newviewIterative on p %d \n", tInfo->pNumber);
+    //printBothOpen("newviewIterative on p %d \n", tInfo->pNumber);
 
     for(model = 0; model < tr->NumberOfModels; model++)
     {
@@ -4823,23 +4854,30 @@ void newviewIterative (tree *tr)
           case INNER_INNER:		 		 
             if(tr->useRecom)
             {
+              // TODOFER wrap this up
               //getxVector(tr, tInfo->qNumber, &slot);			  
               slot = tInfo->slot_q; 
               unpinAtomicSlot(tr, slot);
               pinAtomicNode(tr, tInfo->qNumber, slot);
               x1_start = tr->rvec->tmpvectors[slot];
+              printRecomTree(tr, FALSE, "q pinned");
+              //printBothOpen("slot q %d\n", slot);
 
               //getxVector(tr, tInfo->rNumber, &slot);			  
               slot = tInfo->slot_r; 
               unpinAtomicSlot(tr, slot);
               pinAtomicNode(tr, tInfo->rNumber, slot);
               x2_start = tr->rvec->tmpvectors[slot];
+              printRecomTree(tr, FALSE, "r pinned");
+              //printBothOpen("slot r %d\n", slot);
 
               //getxVector(tr, tInfo->pNumber, &slot);			  
               slot = tInfo->slot_p; 
               unpinAtomicSlot(tr, slot);
               pinAtomicNode(tr, tInfo->pNumber, slot);
               x3_start = tr->rvec->tmpvectors[slot];
+              printRecomTree(tr, FALSE, "p pinned");
+              //printBothOpen("slot p %d\n", slot);
 
               unpin2 = tInfo->rNumber;
               unpin1 = tInfo->qNumber;
@@ -4985,11 +5023,12 @@ void newviewIterative (tree *tr)
             assert(0);
         }
 
-        printVector(x3_start, tInfo->pNumber);
+        //printVector(x3_start, tInfo->pNumber);
         if(tr->useRecom)
         {
           assert(x3_start[0] != INVALID_VALUE);
-          printBothOpen("unpin plan %d and %d\n", unpin1, unpin2);
+          //printBothOpen("unpin plan %d and %d\n", unpin1, unpin2);
+          //printRecomTree(tr, FALSE, "tree to unpin");
           //showUnpinnableNodes(tr);
           unpinNode(tr, unpin1);
           unpinNode(tr, unpin2);
@@ -5002,8 +5041,8 @@ void newviewIterative (tree *tr)
         assert(tr->partitionData[model].globalScaler[tInfo->pNumber] < INT_MAX);
       }	
     }
-    printBothOpen("Visited p %d\n", tInfo->pNumber);
-    printRecomTree(tr, FALSE, "after visit");
+    //printBothOpen("Visited p %d\n", tInfo->pNumber);
+    //printRecomTree(tr, FALSE, "after visit");
     //showUnpinnableNodes(tr);
 
   }
@@ -5016,11 +5055,13 @@ void newviewGeneric (tree *tr, nodeptr p)
     return;
   /* stlens must be updated from the new p view */
   //printBothOpen("newviewGeneric at p %d - %d\n", p->number, p->back->number);
+  printRecomTree(tr, FALSE, "get stlen updated");
   //showTreeNodes(tr);
   if(tr->useRecom) 
     determineFullTraversalStlen(p, tr);
   //printBothOpen("stlen update at p %d - %d\n", p->number, p->back->number);
   //showTreeNodes(tr);
+  printRecomTree(tr, FALSE, "got stlen updated");
 
   if(tr->multiGene)
   {	           
@@ -5042,13 +5083,17 @@ void newviewGeneric (tree *tr, nodeptr p)
     save_strategy_state(tr);
     tr->td[0].count = 1;
     computeTraversalInfo(tr, p, &(tr->td[0].ti[0]), &(tr->td[0].count), tr->mxtips, tr->numBranches);
+    //printTraversal(tr);
+    /*
     if(tr->useRecom)
     {
       protectNodesInTraversal(tr);
       protectNode(tr, p->number);
       protectNode(tr, p->back->number);
     }
+    */
     restore_strategy_state(tr);
+    printRecomTree(tr, FALSE, "got traversal computed, tree restored");
 
     if(tr->td[0].count > 1)
     {

@@ -542,7 +542,7 @@ void computeFullTraversalInfo(tree *tr, nodeptr p, traversalInfo *ti, int *count
 void determineFullTraversal(nodeptr p, tree *tr)
 {
   /*pre - compute the stlens*/
-  printBothOpen("Computing stlen values\n");
+  //printBothOpen("Computing stlen values\n");
   //showUnpinnableNodes(tr);
   if(tr->useRecom)
     determineFullTraversalStlen(p, tr);
@@ -576,7 +576,7 @@ void determineFullTraversal(nodeptr p, tree *tr)
   computeFullTraversalInfo(tr, p, &(tr->td[0].ti[0]),  &(tr->td[0].count), tr->mxtips, tr->numBranches, tr->rvec);
 
   printRecomTree(tr, FALSE, "end computing full traversal info");
-  printTraversal(tr);
+  //printTraversal(tr);
   restore_strategy_state(tr);
   printRecomTree(tr, FALSE, "strategy restored");
 }

@@ -146,7 +146,7 @@ boolean smooth (tree *tr, nodeptr p)
   nodeptr  q;
 
   //printBothOpen("smoothing p %d, b %d\n", p->number, p->back->number);
-  //if (! update(tr, p))               return FALSE; /*  Adjust branch */
+  if (! update(tr, p))               return FALSE; /*  Adjust branch */
   if (! isTip(p->number, tr->rdta->numsp)) 
   {                                  /*  Adjust descendants */
     q = p->next;
@@ -2117,6 +2117,7 @@ boolean treeEvaluate (tree *tr, double smoothFactor)       /* Evaluate a user tr
 
   assert(result); 
 
+  printRecomTree(tr, TRUE, "evaluateGeneric at start");
   evaluateGeneric(tr, tr->start);   
 
 

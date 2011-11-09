@@ -1372,15 +1372,19 @@ double evaluateGeneric (tree *tr, nodeptr p)
     if(tr->useRecom)
     {
       //update stlens
+      //TODOFER check if we really do a full trav. or not 
+      //printBothOpen("recompute the stlen again from %d \n", p->number);
       determineFullTraversalStlen(p, tr);
+      printRecomTree(tr, TRUE, "tree after stlen aupdate");
       //protect basicss after recomputing!!
       int slot = -1;
+      //TODOFER check if this protection is really neccessary 
       if(!isTip(q->number, tr->mxtips))
       {
         getxVector(tr, q->number, &slot);
         tr->td[0].ti[0].slot_q = slot;
-       // printBothOpen("Protecting q as\n");
-       // printVector(tr->rvec->tmpvectors[slot], q->number);
+        //printBothOpen("Protecting q as\n");
+        //printVector(tr->rvec->tmpvectors[slot], q->number);
       }
       if(!isTip(p->number, tr->mxtips))
       {
@@ -1389,6 +1393,7 @@ double evaluateGeneric (tree *tr, nodeptr p)
         //printBothOpen("Protecting p as\n");
         //printVector(tr->rvec->tmpvectors[slot], p->number);
       }
+      printRecomTree(tr, TRUE, "tree after manual protection of starting branch");
     }
 
 
@@ -1399,17 +1404,17 @@ double evaluateGeneric (tree *tr, nodeptr p)
     //printBothOpen("do %d and %d need recomp?\n", p->number, q->number);
     //showUnpinnableNodes(tr);
     tr->td[0].count = 1;
-    //if(needsRecomp(tr, p))
+    if(needsRecomp(tr, p))
     {
-      printBothOpen("%d needs recomp\n", p->number);
+      //printBothOpen("%d needs recomp\n", p->number);
       computeTraversalInfo(tr, p, &(tr->td[0].ti[0]), &(tr->td[0].count), tr->mxtips, tr->numBranches);
     }
-    //if(needsRecomp(tr, q))
+    if(needsRecomp(tr, q))
     {
-      printBothOpen("%d needs recomp\n", q->number);
+      //printBothOpen("%d needs recomp\n", q->number);
       computeTraversalInfo(tr, q, &(tr->td[0].ti[0]), &(tr->td[0].count), tr->mxtips, tr->numBranches);  
     }
-    printTraversal(tr);
+    //printTraversal(tr);
 
     restore_strategy_state(tr);
 
@@ -1460,10 +1465,10 @@ double evaluateGeneric (tree *tr, nodeptr p)
         result += tr->perPartitionLH[model];		  
     }
 #else
-    printBothOpen("evaluateIterative from evaluateGeneric\n");
+    //printBothOpen("evaluateIterative from evaluateGeneric\n");
     //showUnpinnableNodes(tr);
     result = evaluateIterative(tr, FALSE);
-    printBothOpen("done evaluateIterative from evaluateGeneric\n");
+    //printBothOpen("done evaluateIterative from evaluateGeneric\n");
 #endif   
 #endif
   }
