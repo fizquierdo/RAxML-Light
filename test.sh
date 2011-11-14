@@ -17,7 +17,7 @@ else
  TREE=RAxML_parsimonyTree.7_s12345.0
 fi
 
-FACTOR=0.70
+FACTOR=0.20
 
 # just clean dir
 if [ $1 = clean ] ; then
@@ -44,12 +44,12 @@ if [ $1 = pro ] ; then
 else
   echo "*** run recom"
   ./raxmlLight -r $FACTOR -m GTRCAT -n ${NAME} -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} 2> err
-  ./raxmlLight-PTHREADS -r $FACTOR -T 2 -m GTRCAT -n ${NAME}_T2 -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE}
+  ./raxmlLight-PTHREADS -r $FACTOR -T 2 -m GTRCAT -n ${NAME}_T2 -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} 
   FACTOR=1.1
   #./raxmlLight -r $FACTOR -m GTRCAT -n ${NAME}_hf -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE}
   echo "*** run std"
   #(./raxmlLight -m GTRCAT -n ${NAME}_std -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} 2> err_std) > /dev/null 
-  (./raxmlLight -m GTRCAT -n ${NAME}_std -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} 2> err_std) > info_std 
+  ./raxmlLight -m GTRCAT -n ${NAME}_std -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} 2> err_std 
   echo "diff of LHs std. recomp"
   grep "Likelihood" RAxML_info.${NAME}_std
   grep "Likelihood" RAxML_info.${NAME}

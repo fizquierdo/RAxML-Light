@@ -6001,7 +6001,7 @@ int main (int argc, char *argv[])
       printBothOpen("Eval generic\n");
       evaluateGenericInitrav(tr, tr->start);	 
       printRecomTree(tr, TRUE, "start tree eval");
-      treeEvaluate(tr, 1); 	 	 	 	 	 
+      treeEvaluate(tr, 2); 	 	 	 	 	 
       printRecomTree(tr, TRUE, "end tree eval");
       printBothOpen("compute BIG RAPID\n");
       computeBIGRAPID(tr, adef, TRUE); 	     

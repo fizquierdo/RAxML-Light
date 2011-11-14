@@ -1057,6 +1057,7 @@ static void getVects(tree *tr, unsigned char **tipX1, unsigned char **tipX2, dou
   *tipX1 = (unsigned char*)NULL,
     *tipX2 = (unsigned char*)NULL;
 
+
   if(isTip(pNumber, tr->mxtips) || isTip(qNumber, tr->mxtips))
   {
     if(!( isTip(pNumber, tr->mxtips) && isTip(qNumber, tr->mxtips)) )
@@ -1068,6 +1069,13 @@ static void getVects(tree *tr, unsigned char **tipX1, unsigned char **tipX2, dou
         if(tr->useRecom)
         {
           getxVector(tr, pNumber, &slot);			  
+          /*
+          slot = tr->td[0].ti[0].slot_p;
+          printBothOpen("getting vec slot %d\n",slot);
+          unpinAtomicSlot(tr, slot);
+          pinAtomicNode(tr, pNumber, slot);
+          */
+
           *x2_start = tr->rvec->tmpvectors[slot];
         }
         else
@@ -1087,6 +1095,11 @@ static void getVects(tree *tr, unsigned char **tipX1, unsigned char **tipX2, dou
         if(tr->useRecom)
         {
           getxVector(tr, qNumber, &slot);			  
+          /*
+          slot = tr->td[0].ti[0].slot_q;
+          unpinAtomicSlot(tr, slot);
+          pinAtomicNode(tr, qNumber, slot);
+          */
           *x2_start = tr->rvec->tmpvectors[slot];
         }
         else
@@ -1115,8 +1128,20 @@ static void getVects(tree *tr, unsigned char **tipX1, unsigned char **tipX2, dou
     if(tr->useRecom)
     {
       getxVector(tr, pNumber, &slot);			  
+         // printBothOpen("getting vec slot %d\n",slot = tr->td[0].ti[0].slot_p);
+      /*
+          slot = tr->td[0].ti[0].slot_p;
+          unpinAtomicSlot(tr, slot);
+          pinAtomicNode(tr, pNumber, slot);
+          */
       *x1_start = tr->rvec->tmpvectors[slot];
+
       getxVector(tr, qNumber, &slot);			  
+      /*
+          slot = tr->td[0].ti[0].slot_q;
+          unpinAtomicSlot(tr, slot);
+          pinAtomicNode(tr, qNumber, slot);
+          */
       *x2_start = tr->rvec->tmpvectors[slot];
     }
     else
@@ -1168,6 +1193,8 @@ void makenewzIterative(tree *tr)
     newviewIterativeMulti(tr);
   else
     newviewIterative(tr);
+
+  printRecomTree(tr, FALSE, "makenewzIterative after newviewIterative");
 
   for(model = 0; model < tr->NumberOfModels; model++)
   {
@@ -1590,16 +1617,21 @@ void makenewzGeneric(tree *tr, nodeptr p, nodeptr q, double *z0, int maxiter, do
 
     tr->td[0].count = 1;
 
-    if(needsRecomp(tr,p))
+    //save_strategy_state(tr);
+    //if(needsRecomp(tr,p))
       computeTraversalInfo(tr, p, &(tr->td[0].ti[0]), &(tr->td[0].count), tr->mxtips, tr->numBranches);
-    if(needsRecomp(tr,q))
+    //if(needsRecomp(tr,q))
       computeTraversalInfo(tr, q, &(tr->td[0].ti[0]), &(tr->td[0].count), tr->mxtips, tr->numBranches);
+    //restore_strategy_state(tr);
+    //printTraversal(tr);
+    /*
     if(tr->useRecom)
     {
       protectNodesInTraversal(tr);
       protectNode(tr, p->number);
       protectNode(tr, q->number);
     }
+    */
   }
 
 
