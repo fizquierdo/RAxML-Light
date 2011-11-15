@@ -5037,79 +5037,82 @@ static void threadFixModelIndices(tree *tr, tree *localTree, int tid, int n)
     assert(countOffset == myLength);
   }
 
-  for(i = 0; i < (size_t)localTree->innerNodes; i++)
+  //if(!localTree->useRecom)
   {
-    for(model = 0, offset = 0, countOffset = 0; model < (size_t)localTree->NumberOfModels; model++)
+    for(i = 0; i < (size_t)localTree->innerNodes; i++)
     {
-      size_t width = localTree->partitionData[model].width;
-
-
-
-      /*localTree->partitionData[model].yVector[i+1]   = &localTree->y_ptr[i * myLength + countOffset];*/
-
-      if(!localTree->saveMemory)
+      for(model = 0, offset = 0, countOffset = 0; model < (size_t)localTree->NumberOfModels; model++)
       {
-        localTree->partitionData[model].xVector[i]   = &localTree->likelihoodArray[i * memoryRequirements + offset];
-        localTree->partitionData[model].pVector[i]   = (parsimonyVector *)localTree->partitionData[model].xVector[i];
+        size_t width = localTree->partitionData[model].width;
+
+
+
+        /*localTree->partitionData[model].yVector[i+1]   = &localTree->y_ptr[i * myLength + countOffset];*/
+
+        if(!localTree->saveMemory)
+        {
+          localTree->partitionData[model].xVector[i]   = &localTree->likelihoodArray[i * memoryRequirements + offset];
+          localTree->partitionData[model].pVector[i]   = (parsimonyVector *)localTree->partitionData[model].xVector[i];
+        }
+        else
+        {
+          localTree->partitionData[model].xVector[i]   = (double*)NULL;
+          localTree->partitionData[model].pVector[i]   = (parsimonyVector *)NULL;
+          /* DYNAMIC: SOS what do we do here? Only allow operating on pre-defined starting trees?*/
+        }       
+
+
+        countOffset += width;
+
+        offset += (size_t)(tr->discreteRateCategories) * (size_t)(tr->partitionData[model].states) * width;
+
       }
-      else
-      {
-        localTree->partitionData[model].xVector[i]   = (double*)NULL;
-        localTree->partitionData[model].pVector[i]   = (parsimonyVector *)NULL;
-        /* DYNAMIC: SOS what do we do here? Only allow operating on pre-defined starting trees?*/
-      }       
-
-
-      countOffset += width;
-
-      offset += (size_t)(tr->discreteRateCategories) * (size_t)(tr->partitionData[model].states) * width;
-
+      assert(countOffset == myLength);
     }
-    assert(countOffset == myLength);
-  }
 
-  for(model = 0, globalCounter = 0; model < (size_t)localTree->NumberOfModels; model++)
-  {
-    for(localCounter = 0, i = (size_t)localTree->partitionData[model].lower;  i < (size_t)localTree->partitionData[model].upper; i++)
+    for(model = 0, globalCounter = 0; model < (size_t)localTree->NumberOfModels; model++)
     {
-      if(i % (size_t)n == (size_t)tid)
+      for(localCounter = 0, i = (size_t)localTree->partitionData[model].lower;  i < (size_t)localTree->partitionData[model].upper; i++)
       {
-        localTree->partitionData[model].wgt[localCounter]          = tr->cdta->aliaswgt[globalCounter];	      	     
-        localTree->partitionData[model].rateCategory[localCounter] = tr->cdta->rateCategory[globalCounter];	      
+        if(i % (size_t)n == (size_t)tid)
+        {
+          localTree->partitionData[model].wgt[localCounter]          = tr->cdta->aliaswgt[globalCounter];	      	     
+          localTree->partitionData[model].rateCategory[localCounter] = tr->cdta->rateCategory[globalCounter];	      
 
-        for(j = 1; j <= (size_t)localTree->mxtips; j++)
-          localTree->partitionData[model].yVector[j][localCounter] = tr->yVector[j][globalCounter]; 	     
+          for(j = 1; j <= (size_t)localTree->mxtips; j++)
+            localTree->partitionData[model].yVector[j][localCounter] = tr->yVector[j][globalCounter]; 	     
 
-        localCounter++;
+          localCounter++;
+        }
+        globalCounter++;
       }
-      globalCounter++;
     }
-  }
 
-  for(model = 0; model < (size_t)localTree->NumberOfModels; model++)
-  {
-    int        
-      undetermined = getUndetermined(localTree->partitionData[model].dataType);
-
-    size_t
-      width =  localTree->partitionData[model].width;
-
-
-
-    localTree->partitionData[model].gapVectorLength = ((int)width / 32) + 1;
-
-    printf("s1\n");
-
-    memset(localTree->partitionData[model].gapVector, 0, localTree->partitionData[model].initialGapVectorSize);
-
-    printf("s2\n");
-
-    if(localTree->saveMemory)
+    for(model = 0; model < (size_t)localTree->NumberOfModels; model++)
     {
-      for(j = 1; j <= (size_t)(localTree->mxtips); j++)
-        for(i = 0; i < width; i++)
-          if(localTree->partitionData[model].yVector[j][i] == undetermined)
-            localTree->partitionData[model].gapVector[localTree->partitionData[model].gapVectorLength * j + i / 32] |= mask32[i % 32];
+      int        
+        undetermined = getUndetermined(localTree->partitionData[model].dataType);
+
+      size_t
+        width =  localTree->partitionData[model].width;
+
+
+
+      localTree->partitionData[model].gapVectorLength = ((int)width / 32) + 1;
+
+      printf("s1\n");
+
+      memset(localTree->partitionData[model].gapVector, 0, localTree->partitionData[model].initialGapVectorSize);
+
+      printf("s2\n");
+
+      if(localTree->saveMemory)
+      {
+        for(j = 1; j <= (size_t)(localTree->mxtips); j++)
+          for(i = 0; i < width; i++)
+            if(localTree->partitionData[model].yVector[j][i] == undetermined)
+              localTree->partitionData[model].gapVector[localTree->partitionData[model].gapVectorLength * j + i / 32] |= mask32[i % 32];
+      }
     }
   }
 }
@@ -5178,6 +5181,11 @@ static void initPartition(tree *tr, tree *localTree, int tid)
     }
 
     assert(totalLength == localTree->originalCrunchedLength);
+    /* recomp */
+    localTree->vectorRecomFraction = tr->vectorRecomFraction;
+    localTree->useRecom = tr->useRecom;
+    localTree->rvec = tr->rvec;
+    localTree->verbose = tr->verbose;
   }
 
   for(model = 0; model < localTree->NumberOfModels; model++)
@@ -5982,8 +5990,8 @@ int main (int argc, char *argv[])
     else
     {
       accumulatedTime = 0.0;
-      tr->verbose = FALSE;
       printBothOpen("Get starting tree \n");
+      tr->verbose = FALSE;
       getStartingTree(tr, adef);     
       
 #ifdef _JOERG		  
@@ -6001,7 +6009,7 @@ int main (int argc, char *argv[])
       printBothOpen("Eval generic\n");
       evaluateGenericInitrav(tr, tr->start);	 
       printRecomTree(tr, TRUE, "start tree eval");
-      treeEvaluate(tr, 2); 	 	 	 	 	 
+      treeEvaluate(tr, 1); 	 	 	 	 	 
       printRecomTree(tr, TRUE, "end tree eval");
       printBothOpen("compute BIG RAPID\n");
       computeBIGRAPID(tr, adef, TRUE); 	     

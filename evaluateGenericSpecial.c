@@ -1561,6 +1561,7 @@ double evaluateGenericInitrav (tree *tr, nodeptr p)
           tr->perPartitionLH[j] = partitionResult;
         }
       }
+      printRecomTree(tr, FALSE, "tree evaluated");
 
     }
 #else
@@ -1598,6 +1599,7 @@ void onlyInitrav(tree *tr, nodeptr p)
   else
   {
     determineFullTraversal(p, tr);  
+    //printBothOpen("computed full traversal\n");
 
 #ifdef _USE_PTHREADS  
     masterBarrier(THREAD_NEWVIEW, tr);  	 
@@ -1609,6 +1611,7 @@ void onlyInitrav(tree *tr, nodeptr p)
     newviewIterative(tr);   
 #endif   
 #endif
+    //printBothOpen("computed newview\n");
   }
 }
 

@@ -15,9 +15,16 @@ elif [ $1 = 1288 ] ; then
 else
  SET=7
  TREE=RAxML_parsimonyTree.7_s12345.0
+
+ #SET=1288
+ #TREE=intree1288
+
+ #SET=50
+ #TREE=RAxML_parsimonyTree.50sim.0
 fi
 
-FACTOR=0.20
+FACTOR=0.80
+NUM_THREADS=4
 
 # just clean dir
 if [ $1 = clean ] ; then
@@ -38,22 +45,16 @@ fi
 #run
 rm *${NAME}*
 if [ $1 = pro ] ; then
-  valgrind ./raxmlLight -r $FACTOR -m GTRCAT -n ${NAME} -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE}
+  #valgrind ./raxmlLight -r $FACTOR -m GTRCAT -n ${NAME} -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE}
   #valgrind ./raxmlLight -m GTRCAT -n ${NAME}_std -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} > /dev/null
-  #valgrind ./raxmlLight-PTHREADS -r $FACTOR -T 2 -m GTRCAT -n ${NAME}_T2 -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE}
+  #valgrind ./raxmlLight-PTHREADS -r $FACTOR -T $NUM_THREADS -m GTRCAT -n ${NAME}_T2 -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE}
+  valgrind ./raxmlLight-PTHREADS -T $NUM_THREADS -m GTRCAT -n ${NAME}_T${NUM_THREADS} -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE}
 else
   echo "*** run recom"
-  ./raxmlLight -r $FACTOR -m GTRCAT -n ${NAME} -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} 2> err
-  ./raxmlLight-PTHREADS -r $FACTOR -T 2 -m GTRCAT -n ${NAME}_T2 -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} 
-  FACTOR=1.1
-  #./raxmlLight -r $FACTOR -m GTRCAT -n ${NAME}_hf -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE}
-  echo "*** run std"
-  #(./raxmlLight -m GTRCAT -n ${NAME}_std -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} 2> err_std) > /dev/null 
-  ./raxmlLight -m GTRCAT -n ${NAME}_std -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} 2> err_std 
-  echo "diff of LHs std. recomp"
-  grep "Likelihood" RAxML_info.${NAME}_std
-  grep "Likelihood" RAxML_info.${NAME}
-  grep "Likelihood" RAxML_info.${NAME}_T2
-  diff RAxML_result.${NAME}_std RAxML_result.${NAME}
+  #./raxmlLight -r $FACTOR -m GTRCAT -n ${NAME} -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} 
+  ./raxmlLight-PTHREADS -r $FACTOR -T $NUM_THREADS -m GTRCAT -n ${NAME}_T${NUM_THREADS} -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} 
+  #./raxmlLight-PTHREADS -T $NUM_THREADS -m GTRCAT -n ${NAME}_T${NUM_THREADS} -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} 
+  #echo "*** run std"
+  (./raxmlLight -m GTRCAT -n ${NAME}_std -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} 2> err_std) > info_std 
 fi
 

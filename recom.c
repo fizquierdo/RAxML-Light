@@ -236,9 +236,13 @@ void unpinAtomicSlot(tree *tr, int slot)
   nodenum = v->iVector[slot];
   v->iVector[slot] = SLOT_UNUSED;
   if(nodenum != SLOT_UNUSED)
+  {
     v->iNode[nodenum - tr->mxtips - 1] = NODE_UNPINNED;
+  }
   else
-    printBothOpen("WARNING unpinning a node that was not pinned\n");
+  {
+    //printBothOpen("WARNING unpinning a node that was not pinned\n");
+  }
 
   /*
   for(i=0; i < v->width; i++)
