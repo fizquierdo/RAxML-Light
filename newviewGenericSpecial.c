@@ -4714,6 +4714,9 @@ void newviewIterative (tree *tr)
 
 
 
+#ifndef _USE_PTHREADS
+  countTraversal(tr);
+#endif
   for(i = 1; i < tr->td[0].count; i++)
   {
     traversalInfo *tInfo = &ti[i];

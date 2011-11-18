@@ -727,8 +727,18 @@ typedef struct {
 
 } checkPointState;
 
+typedef struct{
+  unsigned long int numTraversals;
+  unsigned long int tt;
+  unsigned long int ti;
+  unsigned long int ii;
+  unsigned int *travlenFreq;
+}traversalCounter;
+
 
 typedef  struct  {
+  traversalCounter *travCounter;
+
   /* INIT recomp */
   recompVectors *rvec;
   float vectorRecomFraction;

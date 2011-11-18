@@ -5185,6 +5185,7 @@ static void initPartition(tree *tr, tree *localTree, int tid)
     localTree->vectorRecomFraction = tr->vectorRecomFraction;
     localTree->useRecom = tr->useRecom;
     localTree->rvec = tr->rvec;
+    localTree->travCounter = tr->travCounter;
     localTree->verbose = tr->verbose;
   }
 
@@ -5824,6 +5825,67 @@ unsigned int precomputed16_bitcount (unsigned int n)
     +  bits_in_16bits [(n >> 16) & 0xffffu] ;
 }
 
+/* code to track traversal descriptor stats */
+void countTraversal(tree *tr)
+{
+  traversalInfo 
+    *ti   = tr->td[0].ti;
+  int i, j;
+  nodeptr p, q;
+  traversalCounter *tc = tr->travCounter; 
+  tc->numTraversals += 1;
+
+  //printBothOpen("trav #%d(%d):",tc->numTraversals, tr->td[0].count);
+  //for(i = 1; i <= tr->td[0].count; i++)
+  for(i = 1; i < tr->td[0].count; i++)
+  {
+    traversalInfo *tInfo = &ti[i];
+    //printBothOpen(" %d q%d r%d |",  tInfo->pNumber, tInfo->qNumber, tInfo->rNumber);
+    //printBothOpen("%d",  tInfo->pNumber);
+    switch(tInfo->tipCase)
+    {
+      case TIP_TIP: 
+        tc->tt++; 
+        //printBothOpen("T");
+        break;		  
+      case TIP_INNER: 
+        tc->ti++; 
+        //printBothOpen("M");
+        break;		  
+      case INNER_INNER: 
+        tc->ii++; 
+        //printBothOpen("I");
+        break;		  
+      default: 
+        assert(FALSE);
+    }
+    //printBothOpen(" ");
+  }
+  //printBothOpen(" so far T %d, M %d, I %d \n", tc->tt, tc->ti,tc->ii);
+  tc->travlenFreq[tr->td[0].count] += 1;
+}
+static void printTraversalInfo(tree *tr)
+{
+  int k;
+  printBothOpen("Traversals : %d \n", tr->travCounter->numTraversals);
+  printBothOpen("Traversals tt: %d \n", tr->travCounter->tt);
+  printBothOpen("Traversals ti: %d \n", tr->travCounter->ti);
+  printBothOpen("Traversals ii: %d \n", tr->travCounter->ii);
+  printBothOpen("all: %d \n", tr->travCounter->tt + tr->travCounter->ii + tr->travCounter->ti);
+  printBothOpen("Traversals len freq  : \n");
+  int total_steps = 0;
+  for(k=0; k<tr->mxtips; k++)
+  {
+    total_steps += tr->travCounter->travlenFreq[k] * (k - 1);
+    if(tr->travCounter->travlenFreq[k] > 0)
+      printBothOpen("len %d : %d\n", k, tr->travCounter->travlenFreq[k]);
+  }
+  printBothOpen("all steps: %d \n", total_steps);
+}
+
+/*end code to track traversal descriptor stats */
+
+
 
 int main (int argc, char *argv[])
 {
@@ -5955,6 +6017,24 @@ int main (int argc, char *argv[])
 #endif
 #endif
 
+    /* alloc the traversal counter */
+    {
+      traversalCounter *tc;
+      tc = (traversalCounter *) malloc(sizeof(traversalCounter));
+      tc->travlenFreq = (unsigned int *)malloc(tr->mxtips * sizeof(int));
+      {
+        int k;
+        for(k=0; k<tr->mxtips; k++)
+          tc->travlenFreq[k] = 0;
+      }
+      tc->tt = 0;
+      tc->ti = 0;
+      tc->ii = 0;
+      tc->numTraversals = 0;
+      tr->travCounter = tc;
+    }
+    /* end alloc traversal counter */
+
     makeMissingData(tr);
 
     printModelAndProgramInfo(tr, adef, argc, argv);
@@ -6013,6 +6093,8 @@ int main (int argc, char *argv[])
       printRecomTree(tr, TRUE, "end tree eval");
       printBothOpen("compute BIG RAPID\n");
       computeBIGRAPID(tr, adef, TRUE); 	     
+      printTraversalInfo(tr);
+
 #endif
     }            
 
