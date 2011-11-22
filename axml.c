@@ -6073,6 +6073,9 @@ int main (int argc, char *argv[])
       printBothOpen("Get starting tree \n");
       tr->verbose = FALSE;
       getStartingTree(tr, adef);     
+      printBothOpen("Traversal freq after starting tree \n");
+      printTraversalInfo(tr);
+      printBothOpen("\n");
       
 #ifdef _JOERG		  
       /* 
@@ -6088,12 +6091,20 @@ int main (int argc, char *argv[])
 
       printBothOpen("Eval generic\n");
       evaluateGenericInitrav(tr, tr->start);	 
+      printBothOpen("Traversal freq after EvalGenericInit \n");
+      printTraversalInfo(tr);
+      printBothOpen("\n");
+
       printRecomTree(tr, TRUE, "start tree eval");
       treeEvaluate(tr, 1); 	 	 	 	 	 
-      printRecomTree(tr, TRUE, "end tree eval");
-      printBothOpen("compute BIG RAPID\n");
-      computeBIGRAPID(tr, adef, TRUE); 	     
+      printBothOpen("Traversal freq after treeEvaluate \n");
       printTraversalInfo(tr);
+      printBothOpen("\n");
+
+      printRecomTree(tr, TRUE, "end tree eval");
+      //printBothOpen("compute BIG RAPID\n");
+      //computeBIGRAPID(tr, adef, TRUE); 	     
+      //printTraversalInfo(tr);
 
 #endif
     }            

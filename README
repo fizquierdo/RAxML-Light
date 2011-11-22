@@ -1,1 +1,5 @@
 RAxML-Light 
+
+for MPI, this should be checked:
+#define TRAVERSAL_LENGTH 5
+in fineGrainMPI.c
