@@ -6102,9 +6102,9 @@ int main (int argc, char *argv[])
       printBothOpen("\n");
 
       printRecomTree(tr, TRUE, "end tree eval");
-      //printBothOpen("compute BIG RAPID\n");
-      //computeBIGRAPID(tr, adef, TRUE); 	     
-      //printTraversalInfo(tr);
+      printBothOpen("compute BIG RAPID\n");
+      computeBIGRAPID(tr, adef, TRUE); 	     
+      printTraversalInfo(tr);
 
 #endif
     }            

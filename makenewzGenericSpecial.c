@@ -1618,9 +1618,9 @@ void makenewzGeneric(tree *tr, nodeptr p, nodeptr q, double *z0, int maxiter, do
     tr->td[0].count = 1;
 
     //save_strategy_state(tr);
-    //if(needsRecomp(tr,p))
+    if(needsRecomp(tr,p))
       computeTraversalInfo(tr, p, &(tr->td[0].ti[0]), &(tr->td[0].count), tr->mxtips, tr->numBranches);
-    //if(needsRecomp(tr,q))
+    if(needsRecomp(tr,q))
       computeTraversalInfo(tr, q, &(tr->td[0].ti[0]), &(tr->td[0].count), tr->mxtips, tr->numBranches);
     //restore_strategy_state(tr);
     //printTraversal(tr);

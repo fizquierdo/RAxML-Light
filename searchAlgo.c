@@ -1541,10 +1541,11 @@ void computeBIGRAPID (tree *tr, analdef *adef, boolean estimateModel)
   if(adef->useCheckpoint && ckp.state == SLOW_SPRS)
     goto START_SLOW_SPRS;
 
-  printBothOpen("Starting fast search\n");
+  printBothOpen("Starting fast search %f\n", tr->likelihood);
   while(impr)
   {              
 START_FAST_SPRS:
+    printBothOpen("while fast search %f\n", tr->likelihood);
     if(adef->useCheckpoint && ckp.state == FAST_SPRS)
     {
       optimizeRateCategoryInvocations = ckp.optimizeRateCategoryInvocations;   	
@@ -1689,7 +1690,9 @@ START_FAST_SPRS:
     {	    		  	   
       recallBestTree(bt, i, tr);
 
+      printBothOpen("while fast search, beofre treeEvaluate %f\n", tr->likelihood);
       treeEvaluate(tr, 0.25);
+      printBothOpen("while fast search, after treeEvaluate %f\n", tr->likelihood);
 
 
 
@@ -1740,6 +1743,7 @@ cleanup_fast:
   while(1)
   {	 
 START_SLOW_SPRS:
+    printBothOpen("while slow search %f\n", tr->likelihood);
     if(adef->useCheckpoint && ckp.state == SLOW_SPRS)
     {
       optimizeRateCategoryInvocations = ckp.optimizeRateCategoryInvocations;   
