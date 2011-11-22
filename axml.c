@@ -6095,16 +6095,19 @@ int main (int argc, char *argv[])
       printTraversalInfo(tr);
       printBothOpen("\n");
 
+      tr->verbose = TRUE;
       printRecomTree(tr, TRUE, "start tree eval");
       treeEvaluate(tr, 1); 	 	 	 	 	 
       printBothOpen("Traversal freq after treeEvaluate \n");
       printTraversalInfo(tr);
       printBothOpen("\n");
 
+      /*
       printRecomTree(tr, TRUE, "end tree eval");
       printBothOpen("compute BIG RAPID\n");
-      computeBIGRAPID(tr, adef, TRUE); 	     
+      computeBIGRAPIe(tr, adef, TRUE); 	     
       printTraversalInfo(tr);
+      */
 
 #endif
     }            

@@ -6,6 +6,15 @@ NAME=TEST
 if [ $1 = 50 ] ; then
  SET=50
  TREE=RAxML_parsimonyTree.50sim.0
+elif [ $1 = 20 ] ; then
+ SET=20
+ TREE=intree20
+elif [ $1 = 10 ] ; then
+ SET=10
+ TREE=intree10
+elif [ $1 = 15 ] ; then
+ SET=15
+ TREE=intree15
 elif [ $1 = 150 ] ; then
  SET=150
  TREE=intree150
@@ -23,7 +32,7 @@ else
  #TREE=RAxML_parsimonyTree.50sim.0
 fi
 
-FACTOR=0.50
+FACTOR=0.70
 NUM_THREADS=4
 
 # just clean dir
@@ -51,9 +60,9 @@ if [ $1 = pro ] ; then
   valgrind ./raxmlLight-PTHREADS -T $NUM_THREADS -m GTRCAT -n ${NAME}_T${NUM_THREADS} -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE}
 else
   echo "*** run recom"
-  ./raxmlLight -r $FACTOR -m GTRCAT -n ${NAME} -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} > /dev/null
+  ./raxmlLight -r $FACTOR -m GTRCAT -n ${NAME} -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} 2> err_recom
   cp RAxML_info.${NAME} brm_recom
-  ./raxmlLight -m GTRCAT -n ${NAME}_std -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} > /dev/null
+  (./raxmlLight -m GTRCAT -n ${NAME}_std -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} 2> err_std) > info_std
   cp RAxML_info.${NAME}_std brm_std
   tail -n 27 RAxML_info.${NAME}*
   #./raxmlLight-PTHREADS -r $FACTOR -T $NUM_THREADS -m GTRCAT -n ${NAME}_T${NUM_THREADS} -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} 

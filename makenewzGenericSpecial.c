@@ -1068,13 +1068,11 @@ static void getVects(tree *tr, unsigned char **tipX1, unsigned char **tipX2, dou
         *tipX1 = tr->partitionData[model].yVector[qNumber];
         if(tr->useRecom)
         {
-          getxVector(tr, pNumber, &slot);			  
-          /*
+          //getxVector(tr, pNumber, &slot);			  
           slot = tr->td[0].ti[0].slot_p;
-          printBothOpen("getting vec slot %d\n",slot);
-          unpinAtomicSlot(tr, slot);
-          pinAtomicNode(tr, pNumber, slot);
-          */
+          //printBothOpen("getting vec slot %d\n",slot);
+          //unpinAtomicSlot(tr, slot);
+         // pinAtomicNode(tr, pNumber, slot);
 
           *x2_start = tr->rvec->tmpvectors[slot];
         }
@@ -1094,12 +1092,12 @@ static void getVects(tree *tr, unsigned char **tipX1, unsigned char **tipX2, dou
         *tipX1 = tr->partitionData[model].yVector[pNumber];
         if(tr->useRecom)
         {
-          getxVector(tr, qNumber, &slot);			  
-          /*
-          slot = tr->td[0].ti[0].slot_q;
-          unpinAtomicSlot(tr, slot);
-          pinAtomicNode(tr, qNumber, slot);
-          */
+          //getxVector(tr, qNumber, &slot);			  
+         slot = tr->td[0].ti[0].slot_q;
+         //assert(slot == tr->rvec->iVector[qNumber - tr->mxtips -1]);
+         // unpinAtomicSlot(tr, slot);
+         // pinAtomicNode(tr, qNumber, slot);
+
           *x2_start = tr->rvec->tmpvectors[slot];
         }
         else
@@ -1127,21 +1125,18 @@ static void getVects(tree *tr, unsigned char **tipX1, unsigned char **tipX2, dou
 
     if(tr->useRecom)
     {
-      getxVector(tr, pNumber, &slot);			  
+      //getxVector(tr, pNumber, &slot);			  
          // printBothOpen("getting vec slot %d\n",slot = tr->td[0].ti[0].slot_p);
-      /*
+      
           slot = tr->td[0].ti[0].slot_p;
-          unpinAtomicSlot(tr, slot);
-          pinAtomicNode(tr, pNumber, slot);
-          */
+         // unpinAtomicSlot(tr, slot);
+         // pinAtomicNode(tr, pNumber, slot);
       *x1_start = tr->rvec->tmpvectors[slot];
 
-      getxVector(tr, qNumber, &slot);			  
-      /*
+      //getxVector(tr, qNumber, &slot);			  
           slot = tr->td[0].ti[0].slot_q;
-          unpinAtomicSlot(tr, slot);
-          pinAtomicNode(tr, qNumber, slot);
-          */
+        //  unpinAtomicSlot(tr, slot);
+        //  pinAtomicNode(tr, qNumber, slot);
       *x2_start = tr->rvec->tmpvectors[slot];
     }
     else
@@ -1614,15 +1609,45 @@ void makenewzGeneric(tree *tr, nodeptr p, nodeptr q, double *z0, int maxiter, do
           tr->executeModel[i] = TRUE;
       }
     }
+    if(tr->useRecom)
+    {
+      //update stlens
+      //TODOFER check if we really do a full trav. or not 
+      //printBothOpen("recompute the stlen again from %d \n", p->number);
+      determineFullTraversalStlen(p, tr);
+      //printRecomTree(tr, TRUE, "tree after stlen aupdate");
+      //protect basicss after recomputing!!
+      int slot = -1;
+      //TODOFER check if this protection is really neccessary 
+      if(!isTip(q->number, tr->mxtips))
+      {
+        getxVector(tr, q->number, &slot);
+        tr->td[0].ti[0].slot_q = slot;
+        //printBothOpen("Protecting q as\n");
+        //printVector(tr->rvec->tmpvectors[slot], q->number);
+      }
+      if(!isTip(p->number, tr->mxtips))
+      {
+        getxVector(tr, p->number, &slot);
+        tr->td[0].ti[0].slot_p = slot;
+        //printBothOpen("Protecting p as\n");
+        //printVector(tr->rvec->tmpvectors[slot], p->number);
+      }
+      printRecomTree(tr, TRUE, "tree after manual protection of starting branch");
+    }
 
     tr->td[0].count = 1;
+    save_strategy_state(tr);
 
-    //save_strategy_state(tr);
     if(needsRecomp(tr,p))
+    {
       computeTraversalInfo(tr, p, &(tr->td[0].ti[0]), &(tr->td[0].count), tr->mxtips, tr->numBranches);
+    }
     if(needsRecomp(tr,q))
+    {
       computeTraversalInfo(tr, q, &(tr->td[0].ti[0]), &(tr->td[0].count), tr->mxtips, tr->numBranches);
-    //restore_strategy_state(tr);
+    }
+    restore_strategy_state(tr);
     //printTraversal(tr);
     /*
     if(tr->useRecom)

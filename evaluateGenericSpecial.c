@@ -999,6 +999,7 @@ double evaluateIterative(tree *tr,  boolean writeVector)
             model;
 
   int slot = -1;
+  int unpin1, unpin2;
   boolean showVectors = FALSE;
   if(showVectors)
     printBothOpen("Evaluate iterative from p %d q %d \n", pNumber, qNumber);
