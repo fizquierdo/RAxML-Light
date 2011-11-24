@@ -47,8 +47,8 @@ if [ $1 = cmp ] ; then
   rm *.o
   rm raxmlLight
   make -f Makefile.SSE3.gcc
-  rm *.o
-  make -f Makefile.SSE3.PTHREADS.gcc
+  #rm *.o
+  #make -f Makefile.SSE3.PTHREADS.gcc
 fi
 
 #run
@@ -62,9 +62,10 @@ else
   echo "*** run recom"
   ./raxmlLight -r $FACTOR -m GTRCAT -n ${NAME} -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} 2> err_recom
   cp RAxML_info.${NAME} brm_recom
-  (./raxmlLight -m GTRCAT -n ${NAME}_std -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} 2> err_std) > info_std
+  echo "*** run std"
+  (./raxmlLight -m GTRCAT -n ${NAME}_std -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} 2> err_std) > /dev/null
   cp RAxML_info.${NAME}_std brm_std
-  tail -n 27 RAxML_info.${NAME}*
+  #tail -n 27 RAxML_info.${NAME}*
   #./raxmlLight-PTHREADS -r $FACTOR -T $NUM_THREADS -m GTRCAT -n ${NAME}_T${NUM_THREADS} -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} 
   #./raxmlLight-PTHREADS -T $NUM_THREADS -m GTRCAT -n ${NAME}_T${NUM_THREADS} -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} 
   #echo "*** run std"
