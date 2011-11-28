@@ -4720,7 +4720,13 @@ void newviewIterative (tree *tr)
   for(i = 1; i < tr->td[0].count; i++)
   {
     traversalInfo *tInfo = &ti[i];
-    //printBothOpen("newviewIterative on p %d \n", tInfo->pNumber);
+    if(tr->verbose == TRUE && tr->td[0].count < 9)
+    {
+      printBothOpen("newviewIterative on p %db%d \n", tInfo->pNumber, tInfo->qNumber);
+      printTraversal(tr);
+    }
+    
+
 
     for(model = 0; model < tr->NumberOfModels; model++)
     {
@@ -4863,7 +4869,7 @@ void newviewIterative (tree *tr)
               unpinAtomicSlot(tr, slot);
               pinAtomicNode(tr, tInfo->qNumber, slot);
               x1_start = tr->rvec->tmpvectors[slot];
-              printRecomTree(tr, FALSE, "q pinned");
+              //printRecomTree(tr, FALSE, "q pinned");
               //printBothOpen("slot q %d\n", slot);
 
               //getxVector(tr, tInfo->rNumber, &slot);			  
@@ -4871,7 +4877,7 @@ void newviewIterative (tree *tr)
               unpinAtomicSlot(tr, slot);
               pinAtomicNode(tr, tInfo->rNumber, slot);
               x2_start = tr->rvec->tmpvectors[slot];
-              printRecomTree(tr, FALSE, "r pinned");
+              //printRecomTree(tr, FALSE, "r pinned");
               //printBothOpen("slot r %d\n", slot);
 
               //getxVector(tr, tInfo->pNumber, &slot);			  
@@ -4879,7 +4885,7 @@ void newviewIterative (tree *tr)
               unpinAtomicSlot(tr, slot);
               pinAtomicNode(tr, tInfo->pNumber, slot);
               x3_start = tr->rvec->tmpvectors[slot];
-              printRecomTree(tr, FALSE, "p pinned");
+              //printRecomTree(tr, FALSE, "p pinned");
               //printBothOpen("slot p %d\n", slot);
 
               unpin2 = tInfo->rNumber;
@@ -5057,14 +5063,14 @@ void newviewGeneric (tree *tr, nodeptr p)
   if(isTip(p->number, tr->mxtips))
     return;
   /* stlens must be updated from the new p view */
-  //printBothOpen("newviewGeneric at p %d - %d\n", p->number, p->back->number);
-  printRecomTree(tr, FALSE, "get stlen updated");
+  printBothOpen("newviewGeneric at p %d - %d\n", p->number, p->back->number);
+  //printRecomTree(tr, FALSE, "get stlen updated");
   //showTreeNodes(tr);
   if(tr->useRecom) 
     determineFullTraversalStlen(p, tr);
   //printBothOpen("stlen update at p %d - %d\n", p->number, p->back->number);
   //showTreeNodes(tr);
-  printRecomTree(tr, FALSE, "got stlen updated");
+  //printRecomTree(tr, FALSE, "got stlen updated");
 
   if(tr->multiGene)
   {	           
@@ -5096,7 +5102,7 @@ void newviewGeneric (tree *tr, nodeptr p)
     }
     */
     restore_strategy_state(tr);
-    printRecomTree(tr, FALSE, "got traversal computed, tree restored");
+    //printRecomTree(tr, FALSE, "got traversal computed, tree restored");
 
     if(tr->td[0].count > 1)
     {

@@ -1000,13 +1000,14 @@ double evaluateIterative(tree *tr,  boolean writeVector)
 
   int slot = -1;
   int unpin1, unpin2;
+
   boolean showVectors = FALSE;
   if(showVectors)
     printBothOpen("Evaluate iterative from p %d q %d \n", pNumber, qNumber);
 
-  printRecomTree(tr, FALSE, "before newview iterative");
+  //printRecomTree(tr, FALSE, "before newview iterative");
   newviewIterative(tr);  
-  printRecomTree(tr, FALSE, "after newview iterative");
+  //printRecomTree(tr, FALSE, "after newview iterative");
 
   for(model = 0; model < tr->NumberOfModels; model++)
   {            
@@ -1223,6 +1224,12 @@ double evaluateIterative(tree *tr,  boolean writeVector)
       tr->perPartitionLH[model] = partitionLikelihood; 	  
     }
   }
+  /* now the root can be unpinned too */
+  if(tr->useRecom)
+  {
+    unpinNode(tr, pNumber);
+    unpinNode(tr, qNumber);
+  }
 
   return result;
 }
@@ -1376,7 +1383,7 @@ double evaluateGeneric (tree *tr, nodeptr p)
       //TODOFER check if we really do a full trav. or not 
       //printBothOpen("recompute the stlen again from %d \n", p->number);
       determineFullTraversalStlen(p, tr);
-      printRecomTree(tr, TRUE, "tree after stlen aupdate");
+      //printRecomTree(tr, TRUE, "tree after stlen aupdate");
       //protect basicss after recomputing!!
       int slot = -1;
       //TODOFER check if this protection is really neccessary 
@@ -1394,7 +1401,7 @@ double evaluateGeneric (tree *tr, nodeptr p)
         //printBothOpen("Protecting p as\n");
         //printVector(tr->rvec->tmpvectors[slot], p->number);
       }
-      printRecomTree(tr, TRUE, "tree after manual protection of starting branch");
+      //printRecomTree(tr, TRUE, "tree after manual protection of starting branch");
     }
 
 
@@ -1577,7 +1584,7 @@ double evaluateGenericInitrav (tree *tr, nodeptr p)
     }     
 #else
     result = evaluateIterative(tr, FALSE);
-    printRecomTree(tr, FALSE, "tree evaluated");
+    //printRecomTree(tr, FALSE, "tree evaluated");
 #endif
 #endif
 

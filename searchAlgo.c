@@ -145,8 +145,12 @@ boolean smooth (tree *tr, nodeptr p)
 {
   nodeptr  q;
 
-  //printBothOpen("smoothing p %d, b %d\n", p->number, p->back->number);
+  printBothOpen("smoothing p %d, b %d\n", p->number, p->back->number);
+  if(p->number == 17)
+    printRecomTree(tr, FALSE, "tree start smooth");
   if (! update(tr, p))               return FALSE; /*  Adjust branch */
+  if(p->number == 17)
+  printRecomTree(tr, FALSE, "tree after update smooth");
   if (! isTip(p->number, tr->rdta->numsp)) 
   {                                  /*  Adjust descendants */
     q = p->next;
@@ -160,7 +164,11 @@ boolean smooth (tree *tr, nodeptr p)
       newviewGenericMasked(tr, p);	
     else
       newviewGeneric(tr, p);     
+
   }
+    //validation
+   // evaluateGeneric(tr, p);
+  //printBothOpen("finisehd smoothing p %d, b %d, lh %f\n", p->number, p->back->number, tr->likelihood);
 
   return TRUE;
 } 
@@ -187,7 +195,7 @@ boolean smoothTree (tree *tr, int maxtimes)
 {
   nodeptr  p, q;   
   int i, count = 0;
-  //printBothOpen("smooth tree\n");
+  printBothOpen("smooth tree maxtimes %d\n", maxtimes);
 
   p = tr->start;
   for(i = 0; i < tr->numBranches; i++)
@@ -195,6 +203,7 @@ boolean smoothTree (tree *tr, int maxtimes)
 
   while (--maxtimes >= 0) 
   {    
+    printBothOpen("smooth maxtimes left %d\n", maxtimes);
     for(i = 0; i < tr->numBranches; i++)	
       tr->partitionSmoothed[i] = TRUE;		
 

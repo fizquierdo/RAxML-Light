@@ -22,11 +22,11 @@ elif [ $1 = 1288 ] ; then
  SET=1288
  TREE=intree1288
 else
- SET=7
- TREE=RAxML_parsimonyTree.7_s12345.0
+ #SET=7
+ #TREE=RAxML_parsimonyTree.7_s12345.0
 
- #SET=1288
- #TREE=intree1288
+ SET=10
+ TREE=intree10
 
  #SET=50
  #TREE=RAxML_parsimonyTree.50sim.0
@@ -60,7 +60,7 @@ if [ $1 = pro ] ; then
   valgrind ./raxmlLight-PTHREADS -T $NUM_THREADS -m GTRCAT -n ${NAME}_T${NUM_THREADS} -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE}
 else
   echo "*** run recom"
-  ./raxmlLight -r $FACTOR -m GTRCAT -n ${NAME} -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} 2> err_recom
+  ./raxmlLight -r $FACTOR -m GTRCAT -n ${NAME} -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} 
   cp RAxML_info.${NAME} brm_recom
   echo "*** run std"
   (./raxmlLight -m GTRCAT -n ${NAME}_std -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} 2> err_std) > /dev/null

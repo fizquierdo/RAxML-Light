@@ -6070,8 +6070,8 @@ int main (int argc, char *argv[])
     else
     {
       accumulatedTime = 0.0;
-      printBothOpen("Get starting tree \n");
       tr->verbose = FALSE;
+      printBothOpen("Get starting tree \n");
       getStartingTree(tr, adef);     
       printBothOpen("Traversal freq after starting tree \n");
       printTraversalInfo(tr);
@@ -6093,11 +6093,12 @@ int main (int argc, char *argv[])
       evaluateGenericInitrav(tr, tr->start);	 
       printBothOpen("Traversal freq after EvalGenericInit \n");
       printTraversalInfo(tr);
+      printBothOpen("LH %f \n", tr->likelihood);
       printBothOpen("\n");
 
       tr->verbose = TRUE;
-      printRecomTree(tr, TRUE, "start tree eval");
-      treeEvaluate(tr, 1); 	 	 	 	 	 
+      printRecomTree(tr, FALSE, "start tree eval");
+      treeEvaluate(tr, 0.05); 	 	 	 	 	 
       printBothOpen("Traversal freq after treeEvaluate \n");
       printTraversalInfo(tr);
       printBothOpen("\n");
