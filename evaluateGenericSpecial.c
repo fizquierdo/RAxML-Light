@@ -1227,6 +1227,7 @@ double evaluateIterative(tree *tr,  boolean writeVector)
   /* now the root can be unpinned too */
   if(tr->useRecom)
   {
+    /* TODOFER check if this is required or not*/
     unpinNode(tr, pNumber);
     unpinNode(tr, qNumber);
   }

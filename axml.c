@@ -6096,19 +6096,17 @@ int main (int argc, char *argv[])
       printBothOpen("LH %f \n", tr->likelihood);
       printBothOpen("\n");
 
-      tr->verbose = TRUE;
+      tr->verbose = FALSE;
       printRecomTree(tr, FALSE, "start tree eval");
-      treeEvaluate(tr, 0.05); 	 	 	 	 	 
+      treeEvaluate(tr, 1); 	 	 	 	 	 
       printBothOpen("Traversal freq after treeEvaluate \n");
       printTraversalInfo(tr);
       printBothOpen("\n");
 
-      /*
       printRecomTree(tr, TRUE, "end tree eval");
       printBothOpen("compute BIG RAPID\n");
-      computeBIGRAPIe(tr, adef, TRUE); 	     
+      computeBIGRAPID(tr, adef, TRUE); 	     
       printTraversalInfo(tr);
-      */
 
 #endif
     }            

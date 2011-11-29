@@ -452,6 +452,21 @@ void getxVector(tree *tr, int nodenum, int *slot)
   tr->rvec->unpinnable[*slot] = FALSE;
   tr->rvec->pinTime += gettime() - tstart;
 }
+void getxVectorReport(tree *tr, int nodenum, int *slot, boolean *slotNeedsRecomp)
+{
+  double tstart = gettime();
+  assert(*slotNeedsRecomp == FALSE);
+  *slot = tr->rvec->iNode[nodenum - tr->mxtips - 1];
+  if(*slot == NODE_UNPINNED)
+  {
+    *slot = pinNode(tr, nodenum);
+    *slotNeedsRecomp = TRUE;
+  }
+  assert(*slot >= 0 && *slot < tr->rvec->numVectors);
+  tr->rvec->unpinnable[*slot] = FALSE;
+  tr->rvec->pinTime += gettime() - tstart;
+}
+
 int tipsPartialCountStlen(int maxTips, nodeptr p, recompVectors *rvec)
 {
   assert(rvec != NULL);

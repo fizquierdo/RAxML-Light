@@ -1126,14 +1126,14 @@ static void getVects(tree *tr, unsigned char **tipX1, unsigned char **tipX2, dou
     if(tr->useRecom)
     {
       //getxVector(tr, pNumber, &slot);			  
-          printBothOpen("got vec slot p %d\n",tr->td[0].ti[0].slot_p);
+         // printBothOpen("got vec slot p %d\n",tr->td[0].ti[0].slot_p);
           slot = tr->td[0].ti[0].slot_p;
          // unpinAtomicSlot(tr, slot);
          // pinAtomicNode(tr, pNumber, slot);
       *x1_start = tr->rvec->tmpvectors[slot];
 
       //getxVector(tr, qNumber, &slot);			  
-          printBothOpen("got vec slot q %d\n",tr->td[0].ti[0].slot_q);
+          //printBothOpen("got vec slot q %d\n",tr->td[0].ti[0].slot_q);
           slot = tr->td[0].ti[0].slot_q;
         //  unpinAtomicSlot(tr, slot);
         //  pinAtomicNode(tr, qNumber, slot);
@@ -1202,12 +1202,13 @@ void makenewzIterative(tree *tr)
 
       getVects(tr, &tipX1, &tipX2, &x1_start, &x2_start, &tipCase, model, &x1_gapColumn, &x2_gapColumn, &x1_gap, &x2_gap);
 
+      /*
       printBothOpen("Vectors p %d, q %d\n", tr->td[0].ti[0].pNumber, tr->td[0].ti[0].qNumber);
       if(!isTip(tr->td[0].ti[0].pNumber, tr->mxtips))
         printVector(x1_start, tr->td[0].ti[0].pNumber);
       if(!isTip(tr->td[0].ti[0].qNumber, tr->mxtips))
         printVector(x2_start, tr->td[0].ti[0].qNumber);
-
+      */
 
       switch(tr->partitionData[model].dataType)
       {
@@ -1565,7 +1566,7 @@ void makenewzGeneric(tree *tr, nodeptr p, nodeptr q, double *z0, int maxiter, do
 {
   int i;
   boolean originalExecute[NUM_BRANCHES];
-  printBothOpen("make newz at p%db%d %.10f \n", p->number, p->back->number, p->z[0]);
+  //printBothOpen("make newz at p%db%d %.10f \n", p->number, p->back->number, p->z[0]);
 
   if(tr->multiGene)
   {
@@ -1622,79 +1623,48 @@ void makenewzGeneric(tree *tr, nodeptr p, nodeptr q, double *z0, int maxiter, do
           tr->executeModel[i] = TRUE;
       }
     }
+    boolean pRecomp = FALSE, qRecomp = FALSE;
     if(tr->useRecom)
     {
-      assert(p->back->number == q->number);
+      //assert(p->back->number == q->number);
       //update stlens
-      //TODOFER check if we really do a full trav. or not 
-      //printBothOpen("recompute the stlen again from %d \n", p->number);
+      // TODOFER make sure you dont do a full each time
       determineFullTraversalStlen(p, tr);
       //printRecomTree(tr, TRUE, "tree after stlen aupdate");
       //protect basicss after recomputing!!
       int slot = -1;
-      //TODOFER check if this protection is really neccessary 
       if(!isTip(q->number, tr->mxtips))
       {
-        getxVector(tr, q->number, &slot);
+        getxVectorReport(tr, q->number, &slot, &qRecomp);
         tr->td[0].ti[0].slot_q = slot;
-        printBothOpen("Protecting q %d with slot %d\n", q->number, slot);
-        printVector(tr->rvec->tmpvectors[slot], q->number);
       }
       if(!isTip(p->number, tr->mxtips))
       {
-        getxVector(tr, p->number, &slot);
+        getxVectorReport(tr, p->number, &slot, &pRecomp);
         tr->td[0].ti[0].slot_p = slot;
-        printBothOpen("Protecting p %d with slot %d\n", p->number, slot);
-        printVector(tr->rvec->tmpvectors[slot], p->number);
       }
-      if(p->number == 17)
-        printRecomTree(tr, TRUE, "tree after manual protection of starting branch");
-    }
-    else
-    {
-      if(!isTip(p->number, tr->mxtips))
-        printVector(tr->partitionData[0].xVector[p->number - tr->mxtips - 1], p->number);
-      if(!isTip(q->number, tr->mxtips))
-        printVector(tr->partitionData[0].xVector[q->number - tr->mxtips - 1], q->number);
     }
 
     tr->td[0].count = 1;
 
     save_strategy_state(tr);
-    if (p->number == 17) /* TODOFER find why only this case fails with ds 10, try other ds...*/
-    {
-      assert(p->x);
-      assert(p->next->back->number == 7);
-      if(!isTip(p->next->back->number, tr->mxtips))
-      assert(p->next->back->x);
-      if(!isTip(p->next->next->back->number, tr->mxtips))
-      assert(p->next->next->back->x);
-    }
-    if(needsRecomp(tr,p) || (tr->useRecom && p->number == 17))
+    if(needsRecomp(tr,p) || pRecomp)
     {
       computeTraversalInfo(tr, p, &(tr->td[0].ti[0]), &(tr->td[0].count), tr->mxtips, tr->numBranches);
     }
-    if(needsRecomp(tr,q))
+    if(needsRecomp(tr,q) || qRecomp)
     {
       computeTraversalInfo(tr, q, &(tr->td[0].ti[0]), &(tr->td[0].count), tr->mxtips, tr->numBranches);
     }
     restore_strategy_state(tr);
-    printBothOpen("make newz trav\n");
-    printTraversal(tr);
-    /*
-    if(tr->useRecom)
-    {
-      //protectNodesInTraversal(tr);
-      //protectNode(tr, p->number);
-      //protectNode(tr, q->number);
-    }
-    */
+    //printBothOpen("make newz trav\n");
+    //printTraversal(tr);
   }
 
 
 
   topLevelMakenewz(tr, z0, maxiter, result);
-  printBothOpen("done toplevelmakenewz at p%db%d : %.10f\n", p->number, p->back->number, result);
+  //printBothOpen("done toplevelmakenewz at p%db%d : %.10f\n", p->number, p->back->number, result);
 
 
   for(i = 0; i < tr->numBranches; i++)

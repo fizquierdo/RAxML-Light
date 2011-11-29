@@ -12,9 +12,9 @@ elif [ $1 = 20 ] ; then
 elif [ $1 = 10 ] ; then
  SET=10
  TREE=intree10
-elif [ $1 = 15 ] ; then
- SET=15
- TREE=intree15
+elif [ $1 = 8 ] ; then
+ SET=8
+ TREE=intree8
 elif [ $1 = 150 ] ; then
  SET=150
  TREE=intree150
@@ -22,18 +22,18 @@ elif [ $1 = 1288 ] ; then
  SET=1288
  TREE=intree1288
 else
- #SET=7
- #TREE=RAxML_parsimonyTree.7_s12345.0
+ SET=7
+ TREE=RAxML_parsimonyTree.7_s12345.0
 
- SET=10
- TREE=intree10
+ SET=8
+ TREE=intree8
 
  #SET=50
  #TREE=RAxML_parsimonyTree.50sim.0
 fi
 
 FACTOR=0.70
-NUM_THREADS=4
+NUM_THREADS=2
 
 # just clean dir
 if [ $1 = clean ] ; then
@@ -47,8 +47,8 @@ if [ $1 = cmp ] ; then
   rm *.o
   rm raxmlLight
   make -f Makefile.SSE3.gcc
-  #rm *.o
-  #make -f Makefile.SSE3.PTHREADS.gcc
+  rm *.o
+  make -f Makefile.SSE3.PTHREADS.gcc
 fi
 
 #run
@@ -66,7 +66,9 @@ else
   (./raxmlLight -m GTRCAT -n ${NAME}_std -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} 2> err_std) > /dev/null
   cp RAxML_info.${NAME}_std brm_std
   #tail -n 27 RAxML_info.${NAME}*
-  #./raxmlLight-PTHREADS -r $FACTOR -T $NUM_THREADS -m GTRCAT -n ${NAME}_T${NUM_THREADS} -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} 
+  echo "*** run pthreads"
+  ./raxmlLight-PTHREADS -r $FACTOR -T $NUM_THREADS -m GTRCAT -n ${NAME}_T${NUM_THREADS} -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} 
+  cp RAxML_info.${NAME}_std brm_treads
   #./raxmlLight-PTHREADS -T $NUM_THREADS -m GTRCAT -n ${NAME}_T${NUM_THREADS} -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} 
   #echo "*** run std"
   #(./raxmlLight -m GTRCAT -n ${NAME}_std -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} 2> err_std) > info_std 

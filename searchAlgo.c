@@ -145,12 +145,10 @@ boolean smooth (tree *tr, nodeptr p)
 {
   nodeptr  q;
 
-  printBothOpen("smoothing p %d, b %d\n", p->number, p->back->number);
-  if(p->number == 17)
-    printRecomTree(tr, FALSE, "tree start smooth");
+  //printBothOpen("smoothing p %d, b %d\n", p->number, p->back->number);
+  //printRecomTree(tr, FALSE, "tree start smooth");
   if (! update(tr, p))               return FALSE; /*  Adjust branch */
-  if(p->number == 17)
-  printRecomTree(tr, FALSE, "tree after update smooth");
+  //printRecomTree(tr, FALSE, "tree after update smooth");
   if (! isTip(p->number, tr->rdta->numsp)) 
   {                                  /*  Adjust descendants */
     q = p->next;
@@ -166,10 +164,6 @@ boolean smooth (tree *tr, nodeptr p)
       newviewGeneric(tr, p);     
 
   }
-    //validation
-   // evaluateGeneric(tr, p);
-  //printBothOpen("finisehd smoothing p %d, b %d, lh %f\n", p->number, p->back->number, tr->likelihood);
-
   return TRUE;
 } 
 
@@ -195,7 +189,7 @@ boolean smoothTree (tree *tr, int maxtimes)
 {
   nodeptr  p, q;   
   int i, count = 0;
-  printBothOpen("smooth tree maxtimes %d\n", maxtimes);
+  //printBothOpen("smooth tree maxtimes %d\n", maxtimes);
 
   p = tr->start;
   for(i = 0; i < tr->numBranches; i++)
@@ -203,7 +197,7 @@ boolean smoothTree (tree *tr, int maxtimes)
 
   while (--maxtimes >= 0) 
   {    
-    printBothOpen("smooth maxtimes left %d\n", maxtimes);
+    //printBothOpen("smooth maxtimes left %d\n", maxtimes);
     for(i = 0; i < tr->numBranches; i++)	
       tr->partitionSmoothed[i] = TRUE;		
 
@@ -1554,7 +1548,7 @@ void computeBIGRAPID (tree *tr, analdef *adef, boolean estimateModel)
   while(impr)
   {              
 START_FAST_SPRS:
-    printBothOpen("while fast search %f\n", tr->likelihood);
+    //printBothOpen("while fast search %f\n", tr->likelihood);
     if(adef->useCheckpoint && ckp.state == FAST_SPRS)
     {
       optimizeRateCategoryInvocations = ckp.optimizeRateCategoryInvocations;   	
@@ -1699,9 +1693,7 @@ START_FAST_SPRS:
     {	    		  	   
       recallBestTree(bt, i, tr);
 
-      printBothOpen("while fast search, beofre treeEvaluate %f\n", tr->likelihood);
       treeEvaluate(tr, 0.25);
-      printBothOpen("while fast search, after treeEvaluate %f\n", tr->likelihood);
 
 
 
@@ -2130,7 +2122,7 @@ boolean treeEvaluate (tree *tr, double smoothFactor)       /* Evaluate a user tr
 
   assert(result); 
 
-  printRecomTree(tr, TRUE, "evaluateGeneric at start");
+  //printRecomTree(tr, TRUE, "evaluateGeneric at start");
   evaluateGeneric(tr, tr->start);   
 
 

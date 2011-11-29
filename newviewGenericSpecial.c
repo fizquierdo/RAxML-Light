@@ -4720,7 +4720,7 @@ void newviewIterative (tree *tr)
   for(i = 1; i < tr->td[0].count; i++)
   {
     traversalInfo *tInfo = &ti[i];
-    if(tr->verbose == TRUE && tr->td[0].count < 9)
+    if(tr->verbose == TRUE)
     {
       printBothOpen("newviewIterative on p %db%d \n", tInfo->pNumber, tInfo->qNumber);
       printTraversal(tr);
@@ -5063,7 +5063,7 @@ void newviewGeneric (tree *tr, nodeptr p)
   if(isTip(p->number, tr->mxtips))
     return;
   /* stlens must be updated from the new p view */
-  printBothOpen("newviewGeneric at p %d - %d\n", p->number, p->back->number);
+  //printBothOpen("newviewGeneric at p %d - %d\n", p->number, p->back->number);
   //printRecomTree(tr, FALSE, "get stlen updated");
   //showTreeNodes(tr);
   if(tr->useRecom) 
@@ -5088,19 +5088,10 @@ void newviewGeneric (tree *tr, nodeptr p)
   }
   else
   {
-    // TODOFER: need a clear picture of whether the traversal descrp. is updated
     save_strategy_state(tr);
     tr->td[0].count = 1;
     computeTraversalInfo(tr, p, &(tr->td[0].ti[0]), &(tr->td[0].count), tr->mxtips, tr->numBranches);
     //printTraversal(tr);
-    /*
-    if(tr->useRecom)
-    {
-      protectNodesInTraversal(tr);
-      protectNode(tr, p->number);
-      protectNode(tr, p->back->number);
-    }
-    */
     restore_strategy_state(tr);
     //printRecomTree(tr, FALSE, "got traversal computed, tree restored");
 
