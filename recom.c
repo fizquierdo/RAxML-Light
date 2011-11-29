@@ -226,8 +226,10 @@ void unpinNode(tree *tr, int nodenum)
   int slot = -1, i;
   assert(nodenum > tr->mxtips);
   slot = tr->rvec->iNode[nodenum-tr->mxtips-1];
-  assert(slot >= 0 && slot < v->numVectors);
-  v->unpinnable[slot] = TRUE;
+  //assert(slot >= 0 && slot < v->numVectors);
+  /* does this make sense? */
+  if(slot >= 0 && slot < v->numVectors)
+    v->unpinnable[slot] = TRUE;
 }
 void unpinAtomicSlot(tree *tr, int slot)
 {
