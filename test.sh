@@ -32,7 +32,7 @@ else
  #TREE=RAxML_parsimonyTree.50sim.0
 fi
 
-FACTOR=0.90
+FACTOR=0.70
 NUM_THREADS=4
 
 # just clean dir
@@ -63,14 +63,10 @@ else
   ./raxmlLight -r $FACTOR -m GTRCAT -n ${NAME} -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} 
   cp RAxML_info.${NAME} brm_recom
   echo "*** run std"
-  (./raxmlLight -m GTRCAT -n ${NAME}_std -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} 2> err_std) > /dev/null
+  #(./raxmlLight -m GTRCAT -n ${NAME}_std -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} 2> err_std) > /dev/null
   cp RAxML_info.${NAME}_std brm_std
-  #tail -n 27 RAxML_info.${NAME}*
-  #echo "*** run pthreads"
+  echo "*** run pthreads"
   #./raxmlLight-PTHREADS -r $FACTOR -T $NUM_THREADS -m GTRCAT -n ${NAME}_T${NUM_THREADS} -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} 
-  #cp RAxML_info.${NAME}_T${NUM_THREADS} brm_treads
-  #./raxmlLight-PTHREADS -T $NUM_THREADS -m GTRCAT -n ${NAME}_T${NUM_THREADS} -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} 
-  #echo "*** run std"
-  #(./raxmlLight -m GTRCAT -n ${NAME}_std -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} 2> err_std) > info_std 
+  cp RAxML_info.${NAME}_T${NUM_THREADS} brm_treads
 fi
 

@@ -626,17 +626,17 @@ void set_stlen(tree *tr, nodeptr p, int value)
 {
   validate_stlen(p, tr->mxtips, value, tr->rvec->stlen);
 }
-/* pre-compute the node stlens (this needs to be known prior to running the strategy) */
-static void computeFullTraversalInfoStlen(nodeptr p, int maxTips, recompVectors *rvec) 
+void computeTraversalInfoStlen(nodeptr p, int maxTips, recompVectors *rvec, int *count) 
 {
   int value;
   //printBothOpen("Visited node %d \n", p->number);
-  if(isTip(p->number, maxTips))
+  if(isTip(p->number, maxTips) || p->x_stlen)
     return;
 
   nodeptr q = p->next->back;
   nodeptr r = p->next->next->back;
 
+  *count += 1;
   /* set xnode info at this point */
   p->x_stlen = 1;
   p->next->x_stlen = 0;
@@ -659,7 +659,58 @@ static void computeFullTraversalInfoStlen(nodeptr p, int maxTips, recompVectors 
         r = q;
         q = tmp;
       }
-      computeFullTraversalInfoStlen(r, maxTips, rvec);
+      computeTraversalInfoStlen(r, maxTips, rvec, count);
+
+      int r_stlen = rvec->stlen[r->number - maxTips - 1];
+      assert(r_stlen != INNER_NODE_INIT_STLEN);
+      assert(r_stlen >= 2 && r_stlen <= maxTips - 1);
+      validate_stlen(p, maxTips, r_stlen + 1, rvec->stlen);
+     // printBothOpen("Tip %d - Vector %d : len %d\n", q->number, r->number, r_stlen + 1);
+    }
+    else
+    {
+      computeTraversalInfoStlen(r, maxTips, rvec, count);
+      computeTraversalInfoStlen(q, maxTips, rvec, count); 
+      int val = rvec->stlen[q->number - maxTips - 1] + rvec->stlen[r->number - maxTips - 1];
+      validate_stlen(p, maxTips, val, rvec->stlen);
+    }
+  }
+}
+/* pre-compute the node stlens (this needs to be known prior to running the strategy) */
+static void computeFullTraversalInfoStlen(nodeptr p, int maxTips, recompVectors *rvec, int *count) 
+{
+  int value;
+  //printBothOpen("Visited node %d \n", p->number);
+  if(isTip(p->number, maxTips))
+    return;
+
+  nodeptr q = p->next->back;
+  nodeptr r = p->next->next->back;
+
+  *count += 1;
+  /* set xnode info at this point */
+  p->x_stlen = 1;
+  p->next->x_stlen = 0;
+  p->next->next->x_stlen = 0;     
+
+  if(isTip(r->number, maxTips) && isTip(q->number, maxTips))
+  {
+    //printBothOpen("Tip %d - Tip %d\n", r->number, q->number);
+    validate_stlen(p, maxTips, 2, rvec->stlen);
+  }
+  else
+  {
+    if(isTip(r->number, maxTips) || isTip(q->number, maxTips))
+    {
+      // tip/vec
+      nodeptr tmp;
+      if(isTip(r->number, maxTips))
+      {
+        tmp = r;
+        r = q;
+        q = tmp;
+      }
+      computeFullTraversalInfoStlen(r, maxTips, rvec, count);
 
       int r_stlen = rvec->stlen[r->number - maxTips - 1];
       assert(r_stlen != INNER_NODE_INIT_STLEN);
@@ -670,6 +721,7 @@ static void computeFullTraversalInfoStlen(nodeptr p, int maxTips, recompVectors 
     else
     {
       // vec/vec
+      /*
       int q_stlen, r_stlen;
       r_stlen = rvec->stlen[r->number - maxTips - 1];
       q_stlen = rvec->stlen[q->number - maxTips - 1];
@@ -677,9 +729,10 @@ static void computeFullTraversalInfoStlen(nodeptr p, int maxTips, recompVectors 
         r_stlen = tipsPartialCountStlen(maxTips, r, rvec);
       if(q_stlen == INNER_NODE_INIT_STLEN || !q->x_stlen)
         q_stlen = tipsPartialCountStlen(maxTips, q, rvec);
+        */
 
-      computeFullTraversalInfoStlen(r, maxTips, rvec);
-      computeFullTraversalInfoStlen(q, maxTips, rvec); 
+      computeFullTraversalInfoStlen(r, maxTips, rvec, count);
+      computeFullTraversalInfoStlen(q, maxTips, rvec, count); 
 
       int val = rvec->stlen[q->number - maxTips - 1] + rvec->stlen[r->number - maxTips - 1];
       //printBothOpen("Vector %d - Vector %d , stlen %d\n", r->number, q->number, val);
@@ -690,13 +743,15 @@ static void computeFullTraversalInfoStlen(nodeptr p, int maxTips, recompVectors 
 void determineFullTraversalStlen(nodeptr p, tree *tr)
 {
   double travTime = gettime();
+  int count = 0;
   nodeptr q = p->back;
   //assert(isTip(p->number, tr->mxtips));
   //printBothOpen("Start stlen trav from %d\n", p->number);
-  computeFullTraversalInfoStlen(p, tr->mxtips, tr->rvec); 
+  computeFullTraversalInfoStlen(p, tr->mxtips, tr->rvec, &count); 
   //printBothOpen("Start stlen trav from %d\n", q->number);
-  computeFullTraversalInfoStlen(q, tr->mxtips, tr->rvec); 
+  computeFullTraversalInfoStlen(q, tr->mxtips, tr->rvec, &count); 
   tr->stlenTime += (gettime() - travTime);
+  //printBothOpen("full trav: %d/%d visits\n", count, tr->mxtips - 2);
 }
 void printVector(double *vector, int pnumber)
 {

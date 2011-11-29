@@ -5065,11 +5065,12 @@ void newviewGeneric (tree *tr, nodeptr p)
   /* stlens must be updated from the new p view */
   //printBothOpen("newviewGeneric at p %d - %d\n", p->number, p->back->number);
   //printRecomTree(tr, FALSE, "get stlen updated");
-  //showTreeNodes(tr);
   if(tr->useRecom) 
-    determineFullTraversalStlen(p, tr);
+  {
+      int count = 0;
+      computeTraversalInfoStlen(p, tr->mxtips, tr->rvec, &count); 
+  }
   //printBothOpen("stlen update at p %d - %d\n", p->number, p->back->number);
-  //showTreeNodes(tr);
   //printRecomTree(tr, FALSE, "got stlen updated");
 
   if(tr->multiGene)

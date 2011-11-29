@@ -1383,7 +1383,10 @@ double evaluateGeneric (tree *tr, nodeptr p)
       //update stlens
       //TODOFER check if we really do a full trav. or not 
       //printBothOpen("recompute the stlen again from %d \n", p->number);
-      determineFullTraversalStlen(p, tr);
+      //determineFullTraversalStlen(p, tr);
+      int count = 0;
+      computeTraversalInfoStlen(p, tr->mxtips, tr->rvec, &count); 
+      computeTraversalInfoStlen(q, tr->mxtips, tr->rvec, &count); 
       //printRecomTree(tr, TRUE, "tree after stlen aupdate");
       //protect basicss after recomputing!!
       int slot = -1;

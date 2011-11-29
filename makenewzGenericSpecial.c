@@ -1628,8 +1628,11 @@ void makenewzGeneric(tree *tr, nodeptr p, nodeptr q, double *z0, int maxiter, do
     {
       //assert(p->back->number == q->number);
       //update stlens
-      // TODOFER make sure you dont do a full each time
-      determineFullTraversalStlen(p, tr);
+      //determineFullTraversalStlen(p, tr);
+      // TODOFER make it as a single fucntion in recom.c 
+      int count = 0;
+      computeTraversalInfoStlen(p, tr->mxtips, tr->rvec, &count); 
+      computeTraversalInfoStlen(q, tr->mxtips, tr->rvec, &count); 
       //printRecomTree(tr, TRUE, "tree after stlen aupdate");
       //protect basicss after recomputing!!
       int slot = -1;
