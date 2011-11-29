@@ -6034,6 +6034,7 @@ int main (int argc, char *argv[])
       tr->travCounter = tc;
     }
     /* end alloc traversal counter */
+    tr->stlenTime = 0.0;
 
     makeMissingData(tr);
 
@@ -6107,6 +6108,7 @@ int main (int argc, char *argv[])
       printBothOpen("compute BIG RAPID\n");
       computeBIGRAPID(tr, adef, TRUE); 	     
       printTraversalInfo(tr);
+      printBothOpen("stelen update time %f \n", tr->stlenTime);
 
 #endif
     }            

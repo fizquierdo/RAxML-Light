@@ -689,12 +689,14 @@ static void computeFullTraversalInfoStlen(nodeptr p, int maxTips, recompVectors 
 }
 void determineFullTraversalStlen(nodeptr p, tree *tr)
 {
+  double travTime = gettime();
   nodeptr q = p->back;
   //assert(isTip(p->number, tr->mxtips));
   //printBothOpen("Start stlen trav from %d\n", p->number);
   computeFullTraversalInfoStlen(p, tr->mxtips, tr->rvec); 
   //printBothOpen("Start stlen trav from %d\n", q->number);
   computeFullTraversalInfoStlen(q, tr->mxtips, tr->rvec); 
+  tr->stlenTime += (gettime() - travTime);
 }
 void printVector(double *vector, int pnumber)
 {

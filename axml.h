@@ -744,6 +744,7 @@ typedef  struct  {
   float vectorRecomFraction;
   boolean useRecom;
   boolean verbose;
+  double stlenTime;
   /* recomp END */
 
   boolean useGappedImplementation;
