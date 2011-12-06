@@ -2661,6 +2661,24 @@ static void allocNodex (tree *tr)
   tr->perSiteLL       = (double *)malloc((size_t)tr->cdta->endsite * sizeof(double));
   assert(tr->perSiteLL != NULL);
 
+  /* recom */
+  if(tr->useRecom)
+  {
+    assert(!tr->multiGene); /* TODOFER support multiGene option */
+    allocRecompVectors(tr, memoryRequirements);
+  }
+  else
+  {
+    tr->rvec = NULL;
+    /* TODOFER check this is not allocated here anymore
+    if(!tr->multiGene)
+    {     
+      likelihoodArray = (double *)malloc_aligned(tr->innerNodes * memoryRequirements * sizeof(double));
+      assert(likelihoodArray != NULL);
+    }
+    */
+  }
+  /* E recom */
   
   tr->sumBuffer  = (double *)malloc_aligned(memoryRequirements * sizeof(double));
   assert(tr->sumBuffer != NULL);
@@ -2673,33 +2691,38 @@ static void allocNodex (tree *tr)
   /* C-OPT for initial testing tr->NumberOfModels will be 1 */
 
   for(model = 0; model < (size_t)tr->NumberOfModels; model++)
-    {
-      size_t lower = tr->partitionData[model].lower;
-      size_t width = tr->partitionData[model].upper - lower;
+  {
+    size_t lower = tr->partitionData[model].lower;
+    size_t width = tr->partitionData[model].upper - lower;
 
-      /* TODO all of this must be reset/adapted when fixModelIndices is called ! */
-
-     
-      tr->partitionData[model].sumBuffer       = &tr->sumBuffer[offset];
-      
-
-      tr->partitionData[model].perSiteLL    = &tr->perSiteLL[lower];        
+    /* TODO all of this must be reset/adapted when fixModelIndices is called ! */
 
 
-      tr->partitionData[model].wgt          = &tr->cdta->aliaswgt[lower];
-     
-      tr->partitionData[model].rateCategory = &tr->cdta->rateCategory[lower];
-
-      offset += (size_t)(tr->discreteRateCategories) * (size_t)(tr->partitionData[model].states) * width;      
-    }
+    tr->partitionData[model].sumBuffer       = &tr->sumBuffer[offset];
 
 
+    tr->partitionData[model].perSiteLL    = &tr->perSiteLL[lower];        
 
-  for(i = 0; i < tr->innerNodes; i++)
+
+    tr->partitionData[model].wgt          = &tr->cdta->aliaswgt[lower];
+
+    tr->partitionData[model].rateCategory = &tr->cdta->rateCategory[lower];
+
+    offset += (size_t)(tr->discreteRateCategories) * (size_t)(tr->partitionData[model].states) * width;      
+  }
+
+
+
+  /* recom */
+  if(!tr->useRecom)
+  /* E recom */
+  {
+    for(i = 0; i < tr->innerNodes; i++)
     {     
       for(model = 0; model < (size_t)tr->NumberOfModels; model++)	    		
-	tr->partitionData[model].xVector[i]   = (double*)NULL;	      	   	 
+        tr->partitionData[model].xVector[i]   = (double*)NULL;	      	   	 
     }
+  }
 }
 
 #endif
@@ -2756,6 +2779,10 @@ static void initAdef(analdef *adef)
   adef->slidingWindowSize      = 100;
   adef->writeBinaryFile        = FALSE;
   adef->readBinaryFile         = FALSE;
+  /* recomp */
+  /* vector recomputation deactivated by default */
+  adef->vectorRecomFraction    = NO_VEC_RECOMP;
+  /* E recomp */
 }
 
 
@@ -3430,6 +3457,8 @@ static void printREADME(void)
   printf("              In particular under CAT this can lead to parallel performance improvements of over 50 per cent\n");
 #endif
   printf("\n");
+  printf("      -r      Specify the fraction of ancestral node vectors (0.25 < R < 1) that will be allocated in RAM\n");
+  printf("\n");
   printf("      -R      read in a binary checkpoint file called RAxML_binaryCheckpoint.RUN_ID_number\n");
   printf("\n");
   printf("      -s      Specify the name of the alignment data file in PHYLIP format\n");
@@ -3569,10 +3598,10 @@ static void get_args(int argc, char *argv[], analdef *adef, tree *tr)
 
 #if (defined(_USE_PTHREADS) || (_FINE_GRAIN_MPI))
   while(!bad_opt &&
-	((c = mygetopt(argc,argv,"T:P:R:e:c:f:i:m:t:w:s:n:o:q:G:vhMSDBQX", &optind, &optarg))!=-1))
+	((c = mygetopt(argc,argv,"T:P:R:e:c:f:i:m:t:w:s:n:o:q:r:G:vhMSDBQX", &optind, &optarg))!=-1))
 #else
     while(!bad_opt &&
-	  ((c = mygetopt(argc,argv,"T:P:R:e:c:f:i:m:t:w:s:n:o:q:G:vhMSDBX", &optind, &optarg))!=-1))
+	  ((c = mygetopt(argc,argv,"T:P:R:e:c:f:i:m:t:w:s:n:o:q:r:G:vhMSDBX", &optind, &optarg))!=-1))
 #endif
     {
     switch(c)
@@ -3644,6 +3673,10 @@ static void get_args(int argc, char *argv[], analdef *adef, tree *tr)
       case 'q':
 	strcpy(modelFileName,optarg);
 	adef->useMultipleModel = TRUE;
+        break;
+
+     case 'r':
+        sscanf(optarg, "%f", &adef->vectorRecomFraction);
         break;
       
       case 'v':
@@ -5069,6 +5102,7 @@ static void threadFixModelIndices(tree *tr, tree *localTree, int tid, int n)
 	  size_t 
 	    width = localTree->partitionData[model].width;	  	  
 	  	 
+    /* TODOFER check this for the recomp case */
 	  localTree->partitionData[model].xVector[i]   = (double*)NULL;
 	      	 
 	  countOffset += width;
@@ -5211,6 +5245,13 @@ static void initPartition(tree *tr, tree *localTree, int tid)
 	}
 
       assert(totalLength == localTree->originalCrunchedLength);
+      /* recomp */
+      localTree->vectorRecomFraction = tr->vectorRecomFraction;
+      localTree->useRecom = tr->useRecom;
+      localTree->rvec = tr->rvec;
+      localTree->travCounter = tr->travCounter;
+      localTree->verbose = tr->verbose;
+      /* E recomp */
     }
 
   for(model = 0; model < localTree->NumberOfModels; model++)
@@ -5281,6 +5322,15 @@ void allocNodex(tree *tr, int tid, int n)
       assert(tr->perSiteLL != NULL);
     }
   
+
+    /* recom */
+    if(tr->useRecom)
+    {
+      assert(!tr->multiGene); /* TODOFER support multiGene option */
+      allocRecompVectors(tr, memoryRequirements);
+    }
+    /* E recom */
+
   tr->sumBuffer  = (double *)malloc_aligned(memoryRequirements * sizeof(double));
   assert(tr->sumBuffer != NULL);
    
@@ -6082,6 +6132,68 @@ static void multiprocessorScheduling(tree *tr)
 
 #endif
 
+/* recomp */
+/* code to track traversal descriptor stats */
+void countTraversal(tree *tr)
+{
+  traversalInfo 
+    *ti   = tr->td[0].ti;
+  int i, j;
+  nodeptr p, q;
+  traversalCounter *tc = tr->travCounter; 
+  tc->numTraversals += 1;
+
+  //printBothOpen("trav #%d(%d):",tc->numTraversals, tr->td[0].count);
+  //for(i = 1; i <= tr->td[0].count; i++)
+  for(i = 1; i < tr->td[0].count; i++)
+  {
+    traversalInfo *tInfo = &ti[i];
+    //printBothOpen(" %d q%d r%d |",  tInfo->pNumber, tInfo->qNumber, tInfo->rNumber);
+    //printBothOpen("%d",  tInfo->pNumber);
+    switch(tInfo->tipCase)
+    {
+      case TIP_TIP: 
+        tc->tt++; 
+        //printBothOpen("T");
+        break;		  
+      case TIP_INNER: 
+        tc->ti++; 
+        //printBothOpen("M");
+        break;		  
+      case INNER_INNER: 
+        tc->ii++; 
+        //printBothOpen("I");
+        break;		  
+      default: 
+        assert(FALSE);
+    }
+    //printBothOpen(" ");
+  }
+  //printBothOpen(" so far T %d, M %d, I %d \n", tc->tt, tc->ti,tc->ii);
+  tc->travlenFreq[tr->td[0].count] += 1;
+}
+static void printTraversalInfo(tree *tr)
+{
+  int k;
+  printBothOpen("Traversals : %d \n", tr->travCounter->numTraversals);
+  printBothOpen("Traversals tt: %d \n", tr->travCounter->tt);
+  printBothOpen("Traversals ti: %d \n", tr->travCounter->ti);
+  printBothOpen("Traversals ii: %d \n", tr->travCounter->ii);
+  printBothOpen("all: %d \n", tr->travCounter->tt + tr->travCounter->ii + tr->travCounter->ti);
+  printBothOpen("Traversals len freq  : \n");
+  int total_steps = 0;
+  for(k=0; k<tr->mxtips; k++)
+  {
+    total_steps += tr->travCounter->travlenFreq[k] * (k - 1);
+    if(tr->travCounter->travlenFreq[k] > 0)
+      printBothOpen("len %d : %d\n", k, tr->travCounter->travlenFreq[k]);
+  }
+  printBothOpen("all steps: %d \n", total_steps);
+}
+
+/*end code to track traversal descriptor stats */
+/* E recomp */
+
 int main (int argc, char *argv[])
 {
   rawdata      *rdta;
@@ -6098,7 +6210,7 @@ int main (int argc, char *argv[])
 #endif 
 
 #if ! (defined(__ppc) || defined(__powerpc__) || defined(PPC))
-   _mm_setcsr( _mm_getcsr() | _MM_FLUSH_ZERO_ON);
+  _mm_setcsr( _mm_getcsr() | _MM_FLUSH_ZERO_ON);
 #endif 
 
 #ifdef _FINE_GRAIN_MPI
@@ -6120,145 +6232,201 @@ int main (int argc, char *argv[])
 
   /* initialize lookup table for fast bit counter */
 
-  
+
 #ifdef _FINE_GRAIN_MPI
   if(processID == 0)
-    {
+  {
 #endif
 
-      compute_bits_in_16bits();
+    compute_bits_in_16bits();
 
-      initAdef(adef);
-      get_args(argc,argv, adef, tr); 
-            
-      getinput(adef, rdta, cdta, tr);
-  
-      checkOutgroups(tr, adef);
-      makeFileNames();  
+    initAdef(adef);
+    get_args(argc,argv, adef, tr); 
 
-      makeweights(adef, rdta, cdta, tr);     
+    getinput(adef, rdta, cdta, tr);
 
-      makevalues(rdta, cdta, tr, adef);      
-      
-      tr->innerNodes = tr->mxtips;
-  
-      setRateHetAndDataIncrement(tr, adef);
-      
-      /*
-	if(adef->readBinaryFile)
-	fclose(byteFile);
-      */
-      
-      if(adef->writeBinaryFile)
-	{
-	  char 
-	    byteFileName[1024] = "";
-	  
-	  int 
-	    model;
+    checkOutgroups(tr, adef);
+    makeFileNames();  
 
-	  strcpy(byteFileName, workdir);
-	  strcat(byteFileName, seq_file);
-	  strcat(byteFileName, ".binary");
+    makeweights(adef, rdta, cdta, tr);     
 
-	  printBothOpen("\n\nBinary and compressed alignment file written to file %s\n\n", byteFileName);
-	  printBothOpen("Parsing completed, exiting now ... \n\n");
-	  
-	  for(model = 0; model < tr->NumberOfModels; model++)
-	    {	  	      
-	      const 
-		partitionLengths *pl = getPartitionLengths(&(tr->partitionData[model]));
-     
-	      tr->partitionData[model].frequencies       = (double*)malloc(pl->frequenciesLength * sizeof(double));
-	    }
+    makevalues(rdta, cdta, tr, adef);      
 
-	  baseFrequenciesGTR(tr->rdta, tr->cdta, tr); 
+    tr->innerNodes = tr->mxtips;
 
-	  for(model = 0; model < tr->NumberOfModels; model++)	    	    
-	    myBinFwrite(tr->partitionData[model].frequencies, sizeof(double), tr->partitionData[model].states);	      	   
+    setRateHetAndDataIncrement(tr, adef);
 
-	  fclose(byteFile);
-	  return 0;
-	}
+    /*
+       if(adef->readBinaryFile)
+       fclose(byteFile);
+       */
+
+    if(adef->writeBinaryFile)
+    {
+      char 
+        byteFileName[1024] = "";
+
+      int 
+        model;
+
+      strcpy(byteFileName, workdir);
+      strcat(byteFileName, seq_file);
+      strcat(byteFileName, ".binary");
+
+      printBothOpen("\n\nBinary and compressed alignment file written to file %s\n\n", byteFileName);
+      printBothOpen("Parsing completed, exiting now ... \n\n");
+
+      for(model = 0; model < tr->NumberOfModels; model++)
+      {	  	      
+        const 
+          partitionLengths *pl = getPartitionLengths(&(tr->partitionData[model]));
+
+        tr->partitionData[model].frequencies       = (double*)malloc(pl->frequenciesLength * sizeof(double));
+      }
+
+      baseFrequenciesGTR(tr->rdta, tr->cdta, tr); 
+
+      for(model = 0; model < tr->NumberOfModels; model++)	    	    
+        myBinFwrite(tr->partitionData[model].frequencies, sizeof(double), tr->partitionData[model].states);	      	   
+
+      fclose(byteFile);
+      return 0;
+    }
+    /* recomp */
+    if(adef->vectorRecomFraction >= MIN_RECOM_FRACTION && adef->vectorRecomFraction < MAX_RECOM_FRACTION)
+    {
+      tr->vectorRecomFraction = adef->vectorRecomFraction;
+      tr->useRecom = TRUE;
+    }
+    else
+    {
+      tr->useRecom = FALSE;
+      tr->rvec = NULL;
+    }
+    /* E recomp */
 
 #if (defined(_USE_PTHREADS) || (_FINE_GRAIN_MPI))
-      if(tr->manyPartitions)
-	multiprocessorScheduling(tr);
+    if(tr->manyPartitions)
+      multiprocessorScheduling(tr);
 #endif
 
 
 #ifdef _USE_PTHREADS
-      startPthreads(tr);
-      masterBarrier(THREAD_INIT_PARTITION, tr);       
+    startPthreads(tr);
+    masterBarrier(THREAD_INIT_PARTITION, tr);       
 #else      
 #ifdef _FINE_GRAIN_MPI
-      startFineGrainMpi(tr, adef);
+    startFineGrainMpi(tr, adef);
 #else
-      allocNodex(tr);    
+    allocNodex(tr);    
 #endif
 #endif
-       
-      makeMissingData(tr);
 
-      printModelAndProgramInfo(tr, adef, argc, argv);
+    /* recom */
+    /* TODOFER alloc the traversal counter */
+    {
+      traversalCounter *tc;
+      tc = (traversalCounter *) malloc(sizeof(traversalCounter));
+      tc->travlenFreq = (unsigned int *)malloc(tr->mxtips * sizeof(int));
+      {
+        int k;
+        for(k=0; k<tr->mxtips; k++)
+          tc->travlenFreq[k] = 0;
+      }
+      tc->tt = 0;
+      tc->ti = 0;
+      tc->ii = 0;
+      tc->numTraversals = 0;
+      tr->travCounter = tc;
+    }
+    /* end alloc traversal counter */
+    tr->stlenTime = 0.0;
+    /* E  recom */
 
-      printBothOpen("Memory Saving Option: %s\n", (tr->saveMemory == TRUE)?"ENABLED":"DISABLED");   	             
+    makeMissingData(tr);
 
-      initModel(tr, rdta, cdta, adef);                      
+    printModelAndProgramInfo(tr, adef, argc, argv);
 
-      if(tr->searchConvergenceCriterion)
-	{                     
-	  tr->bitVectors = initBitVector(tr, &(tr->vLength));
-	  tr->h = initHashTable(tr->mxtips * 4);        
-	}
-      
-      if(adef->useCheckpoint)
-	{
+    printBothOpen("Memory Saving Option: %s\n", (tr->saveMemory == TRUE)?"ENABLED":"DISABLED");   	             
+    /* recom */
+    if(tr->useRecom)
+      printBothOpen("Memory Saving through vector recomputation:  A %.2f fraction of the inner vectors will be allocated\n", tr->vectorRecomFraction);
+    /* E recom */
+
+    initModel(tr, rdta, cdta, adef);                      
+
+    if(tr->searchConvergenceCriterion)
+    {                     
+      tr->bitVectors = initBitVector(tr, &(tr->vLength));
+      tr->h = initHashTable(tr->mxtips * 4);        
+    }
+
+    if(adef->useCheckpoint)
+    {
 #ifdef _JOERG
-	  /* this is for a checkpoint-based restart, we don't need this here 
-	     so we will just exit gracefully */
+      /* this is for a checkpoint-based restart, we don't need this here 
+         so we will just exit gracefully */
 
-	  assert(0);
+      assert(0);
 #endif
 
-	  restart(tr, adef);
+      /* recom */
+      if(tr->useRecom)
+        assert(0); /* TODOFER add restart support, does it work out-of-the-box? */
+      /* E recom */
 
-	  computeBIGRAPID(tr, adef, TRUE); 
-	}
-      else
-	{
-	  accumulatedTime = 0.0;
-	 
-	  getStartingTree(tr, adef);     
+      restart(tr, adef);
+
+      computeBIGRAPID(tr, adef, TRUE); 
+    }
+    else
+    {
+      accumulatedTime = 0.0;
+
+      /* recom */
+      tr->verbose = FALSE;
+      printBothOpen("Get starting tree... \n");
+      getStartingTree(tr, adef);     
+      printBothOpen("Traversal freq after starting tree \n");
+      printTraversalInfo(tr);
+      printBothOpen("\n");
+      /* E recom */
+
+      getStartingTree(tr, adef);     
 #ifdef _JOERG		  
-	  /* 
-	     at this point the code has parsed the input alignment 
-	     and read the tree on which we want to estimate the best 
-	     model. We now just branch into the function on which you can work.
-	     This function will never return, hence, you don't need to worry 
-	     about the rest of the code below modOptJoerg().
-	  */
-	  
-	  modOptJoerg(tr, adef);
+      /* 
+         at this point the code has parsed the input alignment 
+         and read the tree on which we want to estimate the best 
+         model. We now just branch into the function on which you can work.
+         This function will never return, hence, you don't need to worry 
+         about the rest of the code below modOptJoerg().
+         */
+
+      modOptJoerg(tr, adef);
 #else
-	  evaluateGenericInitrav(tr, tr->start);	 
-	 	  	  
-	  treeEvaluate(tr, 1); 	 	 	 	 	 
-         
-	  computeBIGRAPID(tr, adef, TRUE); 	     
+         evaluateGenericInitrav(tr, tr->start);	 
+         treeEvaluate(tr, 1); 	 	 	 	 	 
+      /*
+         computeBIGRAPID(tr, adef, TRUE); 	     
+         */
+      /* recom */
+      printBothOpen("Traversal freq after search \n");
+      printTraversalInfo(tr);
+      printBothOpen("stlen update (recom specific orientations full trav) time %f \n", tr->stlenTime);
+      /* E recom */
 #endif
-	}            
-      
-      finalizeInfoFile(tr, adef);
+    }            
+
+    finalizeInfoFile(tr, adef);
 
 #ifdef _FINE_GRAIN_MPI
-      masterBarrierMPI(EXIT_GRACEFULLY, tr);
-    }
+    masterBarrierMPI(EXIT_GRACEFULLY, tr);
+  }
   else
-    {
-      compute_bits_in_16bits();
-      fineGrainWorker(tr);
-    }
+  {
+    compute_bits_in_16bits();
+    fineGrainWorker(tr);
+  }
 #endif
 
 #ifdef _FINE_GRAIN_MPI

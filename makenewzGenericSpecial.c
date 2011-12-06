@@ -1511,175 +1511,175 @@ static void topLevelMakenewz(tree *tr, double *z0, int _maxiter, double *result)
 
 
   for(i = 0; i < numBranches; i++)
-    {
-      z[i] = z0[i];
-      maxiter[i] = _maxiter;
-      outerConverged[i] = FALSE;
-      tr->curvatOK[i]       = TRUE;
-    }
+  {
+    z[i] = z0[i];
+    maxiter[i] = _maxiter;
+    outerConverged[i] = FALSE;
+    tr->curvatOK[i]       = TRUE;
+  }
 
   do
+  {
+    for(i = 0; i < numBranches; i++)
     {
-      for(i = 0; i < numBranches; i++)
-	{
-	  if(outerConverged[i] == FALSE && tr->curvatOK[i] == TRUE)
-	    {
-	      tr->curvatOK[i] = FALSE;
+      if(outerConverged[i] == FALSE && tr->curvatOK[i] == TRUE)
+      {
+        tr->curvatOK[i] = FALSE;
 
-	      zprev[i] = z[i];
+        zprev[i] = z[i];
 
-	      zstep[i] = (1.0 - zmax) * z[i] + zmin;
-	    }
-	}
+        zstep[i] = (1.0 - zmax) * z[i] + zmin;
+      }
+    }
 
-      for(i = 0; i < numBranches; i++)
-	{
-	  if(outerConverged[i] == FALSE && tr->curvatOK[i] == FALSE)
-	    {
-	      double lz;
+    for(i = 0; i < numBranches; i++)
+    {
+      if(outerConverged[i] == FALSE && tr->curvatOK[i] == FALSE)
+      {
+        double lz;
 
-	      if (z[i] < zmin) z[i] = zmin;
-	      else if (z[i] > zmax) z[i] = zmax;
-	      lz    = log(z[i]);
+        if (z[i] < zmin) z[i] = zmin;
+        else if (z[i] > zmax) z[i] = zmax;
+        lz    = log(z[i]);
 
-	      tr->coreLZ[i] = lz;
-	    }
-	}
+        tr->coreLZ[i] = lz;
+      }
+    }
 
-      if(tr->multiBranch)
-	{
-	  for(model = 0; model < tr->NumberOfModels; model++)
-	    {
-	      if(tr->executeModel[model])
-		tr->executeModel[model] = !tr->curvatOK[model];
+    if(tr->multiBranch)
+    {
+      for(model = 0; model < tr->NumberOfModels; model++)
+      {
+        if(tr->executeModel[model])
+          tr->executeModel[model] = !tr->curvatOK[model];
 
-	    }
-	}
-      else
-	{
-	  for(model = 0; model < tr->NumberOfModels; model++)
-	    tr->executeModel[model] = !tr->curvatOK[0];
-	}
+      }
+    }
+    else
+    {
+      for(model = 0; model < tr->NumberOfModels; model++)
+        tr->executeModel[model] = !tr->curvatOK[0];
+    }
 
 
 #ifdef _USE_PTHREADS
-      if(firstIteration)
-	{
-	  masterBarrier(THREAD_MAKENEWZ_FIRST, tr);
-	  firstIteration = FALSE;
-	}
-      else
-	masterBarrier(THREAD_MAKENEWZ, tr);
+    if(firstIteration)
+    {
+      masterBarrier(THREAD_MAKENEWZ_FIRST, tr);
+      firstIteration = FALSE;
+    }
+    else
+      masterBarrier(THREAD_MAKENEWZ, tr);
 
-      if(!tr->multiBranch)
-	{
-	  dlnLdlz[0] = 0.0;
-	  d2lnLdlz2[0] = 0.0;
-	  for(i = 0; i < NumberOfThreads; i++)
-	    {
-	      dlnLdlz[0]   += reductionBuffer[i];
-	      d2lnLdlz2[0] += reductionBufferTwo[i];
-	    }
-	}
-      else
-	{
-	  int j;
-	  for(j = 0; j < tr->NumberOfModels; j++)
-	    {
-	      dlnLdlz[j] = 0.0;
-	      d2lnLdlz2[j] = 0.0;
-	      for(i = 0; i < NumberOfThreads; i++)
-		{
-		  dlnLdlz[j]   += reductionBuffer[i * tr->NumberOfModels + j];
-		  d2lnLdlz2[j] += reductionBufferTwo[i * tr->NumberOfModels + j];
-		}
-	    }
-	}
+    if(!tr->multiBranch)
+    {
+      dlnLdlz[0] = 0.0;
+      d2lnLdlz2[0] = 0.0;
+      for(i = 0; i < NumberOfThreads; i++)
+      {
+        dlnLdlz[0]   += reductionBuffer[i];
+        d2lnLdlz2[0] += reductionBufferTwo[i];
+      }
+    }
+    else
+    {
+      int j;
+      for(j = 0; j < tr->NumberOfModels; j++)
+      {
+        dlnLdlz[j] = 0.0;
+        d2lnLdlz2[j] = 0.0;
+        for(i = 0; i < NumberOfThreads; i++)
+        {
+          dlnLdlz[j]   += reductionBuffer[i * tr->NumberOfModels + j];
+          d2lnLdlz2[j] += reductionBufferTwo[i * tr->NumberOfModels + j];
+        }
+      }
+    }
 #else
 #ifdef _FINE_GRAIN_MPI
-      if(firstIteration)
-	{
-	  masterBarrierMPI(THREAD_MAKENEWZ_FIRST, tr);
-	  firstIteration = FALSE;
-	}
-      else
-	masterBarrierMPI(THREAD_MAKENEWZ, tr);
+    if(firstIteration)
+    {
+      masterBarrierMPI(THREAD_MAKENEWZ_FIRST, tr);
+      firstIteration = FALSE;
+    }
+    else
+      masterBarrierMPI(THREAD_MAKENEWZ, tr);
 
-      if(!tr->multiBranch)
-	{
-	  int 
-	    model;	  	  
-	  	
-	  dlnLdlz[0]   = globalResult[0];
-	  d2lnLdlz2[0] = globalResult[1];	  	  	 
-	}
-      else
-	{
-	  int
-	    model;
-	  
-	  for(model = 0; model < tr->NumberOfModels; model++)
-	    {	     	     
-	      dlnLdlz[model]   = globalResult[model * 2 + 0];
-	      d2lnLdlz2[model] = globalResult[model * 2 + 1];	    
-	    }
-	}
+    if(!tr->multiBranch)
+    {
+      int 
+        model;	  	  
+
+      dlnLdlz[0]   = globalResult[0];
+      d2lnLdlz2[0] = globalResult[1];	  	  	 
+    }
+    else
+    {
+      int
+        model;
+
+      for(model = 0; model < tr->NumberOfModels; model++)
+      {	     	     
+        dlnLdlz[model]   = globalResult[model * 2 + 0];
+        d2lnLdlz2[model] = globalResult[model * 2 + 1];	    
+      }
+    }
 
 #else
-      if(firstIteration)
-	{
-	  makenewzIterative(tr);
-	  firstIteration = FALSE;
-	}
-      execCore(tr, dlnLdlz, d2lnLdlz2);
-#endif
-#endif
-     
-
-      for(i = 0; i < numBranches; i++)
-	{
-	  if(outerConverged[i] == FALSE && tr->curvatOK[i] == FALSE)
-	    {
-	      if ((d2lnLdlz2[i] >= 0.0) && (z[i] < zmax))
-		zprev[i] = z[i] = 0.37 * z[i] + 0.63;  /*  Bad curvature, shorten branch */
-	      else
-		tr->curvatOK[i] = TRUE;
-	    }
-	}
-
-      for(i = 0; i < numBranches; i++)
-	{
-	  if(tr->curvatOK[i] == TRUE && outerConverged[i] == FALSE)
-	    {
-	      if (d2lnLdlz2[i] < 0.0)
-		{
-		  double tantmp = -dlnLdlz[i] / d2lnLdlz2[i];
-		  if (tantmp < 100)
-		    {
-		      z[i] *= EXP(tantmp);
-		      if (z[i] < zmin)
-			z[i] = zmin;
-
-		      if (z[i] > 0.25 * zprev[i] + 0.75)
-			z[i] = 0.25 * zprev[i] + 0.75;
-		    }
-		  else
-		    z[i] = 0.25 * zprev[i] + 0.75;
-		}
-	      if (z[i] > zmax) z[i] = zmax;
-
-	      maxiter[i] = maxiter[i] - 1;
-	      if(maxiter[i] > 0 && (ABS(z[i] - zprev[i]) > zstep[i]))
-		outerConverged[i] = FALSE;
-	      else
-		outerConverged[i] = TRUE;
-	    }
-	}
-
-      loopConverged = TRUE;
-      for(i = 0; i < numBranches; i++)
-	loopConverged = loopConverged && outerConverged[i];
+    if(firstIteration)
+    {
+      makenewzIterative(tr);
+      firstIteration = FALSE;
     }
+    execCore(tr, dlnLdlz, d2lnLdlz2);
+#endif
+#endif
+
+
+    for(i = 0; i < numBranches; i++)
+    {
+      if(outerConverged[i] == FALSE && tr->curvatOK[i] == FALSE)
+      {
+        if ((d2lnLdlz2[i] >= 0.0) && (z[i] < zmax))
+          zprev[i] = z[i] = 0.37 * z[i] + 0.63;  /*  Bad curvature, shorten branch */
+        else
+          tr->curvatOK[i] = TRUE;
+      }
+    }
+
+    for(i = 0; i < numBranches; i++)
+    {
+      if(tr->curvatOK[i] == TRUE && outerConverged[i] == FALSE)
+      {
+        if (d2lnLdlz2[i] < 0.0)
+        {
+          double tantmp = -dlnLdlz[i] / d2lnLdlz2[i];
+          if (tantmp < 100)
+          {
+            z[i] *= EXP(tantmp);
+            if (z[i] < zmin)
+              z[i] = zmin;
+
+            if (z[i] > 0.25 * zprev[i] + 0.75)
+              z[i] = 0.25 * zprev[i] + 0.75;
+          }
+          else
+            z[i] = 0.25 * zprev[i] + 0.75;
+        }
+        if (z[i] > zmax) z[i] = zmax;
+
+        maxiter[i] = maxiter[i] - 1;
+        if(maxiter[i] > 0 && (ABS(z[i] - zprev[i]) > zstep[i]))
+          outerConverged[i] = FALSE;
+        else
+          outerConverged[i] = TRUE;
+      }
+    }
+
+    loopConverged = TRUE;
+    for(i = 0; i < numBranches; i++)
+      loopConverged = loopConverged && outerConverged[i];
+  }
   while (!loopConverged);
 
 
@@ -1709,76 +1709,76 @@ void makenewzGeneric(tree *tr, nodeptr p, nodeptr q, double *z0, int maxiter, do
   boolean originalExecute[NUM_BRANCHES];
 
   if(tr->multiGene)
-    {
-      int sum = 0;
+  {
+    int sum = 0;
 
-      for(i = 0; i < tr->numBranches; i++)      
-	{           
-	  if(mask)
-	    {
-	      if(tr->partitionConverged[i])
-		tr->executeModel[i] = FALSE;
-	      else
-		tr->executeModel[i] = TRUE;		
-	    }
-	}
-
-      assert(tr->numBranches == tr->NumberOfModels);      
-      for(i = 0; i < tr->numBranches; i++)   
-	sum += tr->executeModel[i];
-      assert(sum == 1);
-      assert(mask);
-      
-      for(i = 0; i < tr->NumberOfModels; i++)
-	{	 
-	  if(tr->executeModel[i])
-	    {
-	      tr->td[i].ti[0].pNumber = p->number;
-	      tr->td[i].ti[0].qNumber = q->number;
-	      tr->td[i].ti[0].qz[i] =  z0[i];
-	      tr->td[i].count = 1;
-
-	      if(!p->xs[i])
-		computeTraversalInfoMulti(p, &(tr->td[i].ti[0]), &(tr->td[i].count), tr->mxtips, i); 
-	      if(!q->xs[i])
-		computeTraversalInfoMulti(q, &(tr->td[i].ti[0]), &(tr->td[i].count), tr->mxtips, i);	     	     
-	    }	
-	  else
-	    tr->td[i].count = 0;
-	}  
+    for(i = 0; i < tr->numBranches; i++)      
+    {           
+      if(mask)
+      {
+        if(tr->partitionConverged[i])
+          tr->executeModel[i] = FALSE;
+        else
+          tr->executeModel[i] = TRUE;		
+      }
     }
+
+    assert(tr->numBranches == tr->NumberOfModels);      
+    for(i = 0; i < tr->numBranches; i++)   
+      sum += tr->executeModel[i];
+    assert(sum == 1);
+    assert(mask);
+
+    for(i = 0; i < tr->NumberOfModels; i++)
+    {	 
+      if(tr->executeModel[i])
+      {
+        tr->td[i].ti[0].pNumber = p->number;
+        tr->td[i].ti[0].qNumber = q->number;
+        tr->td[i].ti[0].qz[i] =  z0[i];
+        tr->td[i].count = 1;
+
+        if(!p->xs[i])
+          computeTraversalInfoMulti(p, &(tr->td[i].ti[0]), &(tr->td[i].count), tr->mxtips, i); 
+        if(!q->xs[i])
+          computeTraversalInfoMulti(q, &(tr->td[i].ti[0]), &(tr->td[i].count), tr->mxtips, i);	     	     
+      }	
+      else
+        tr->td[i].count = 0;
+    }  
+  }
   else
+  {
+    tr->td[0].ti[0].pNumber = p->number;
+    tr->td[0].ti[0].qNumber = q->number;
+    for(i = 0; i < tr->numBranches; i++)
     {
-      tr->td[0].ti[0].pNumber = p->number;
-      tr->td[0].ti[0].qNumber = q->number;
-      for(i = 0; i < tr->numBranches; i++)
-	{
-	  originalExecute[i] =  tr->executeModel[i];
-	  tr->td[0].ti[0].qz[i] =  z0[i];
-	  if(mask)
-	    {
-	      if(tr->partitionConverged[i])
-		tr->executeModel[i] = FALSE;
-	      else
-		tr->executeModel[i] = TRUE;
-	    }
-	}
-      
-      tr->td[0].count = 1;
-      
-      if(!p->x)
-	computeTraversalInfo(p, &(tr->td[0].ti[0]), &(tr->td[0].count), tr->mxtips, tr->numBranches);
-      if(!q->x)
-	computeTraversalInfo(q, &(tr->td[0].ti[0]), &(tr->td[0].count), tr->mxtips, tr->numBranches);
+      originalExecute[i] =  tr->executeModel[i];
+      tr->td[0].ti[0].qz[i] =  z0[i];
+      if(mask)
+      {
+        if(tr->partitionConverged[i])
+          tr->executeModel[i] = FALSE;
+        else
+          tr->executeModel[i] = TRUE;
+      }
     }
 
+    tr->td[0].count = 1;
 
-  
+    if(!p->x)
+      computeTraversalInfo(p, &(tr->td[0].ti[0]), &(tr->td[0].count), tr->mxtips, tr->numBranches, tr->rvec);
+    if(!q->x)
+      computeTraversalInfo(q, &(tr->td[0].ti[0]), &(tr->td[0].count), tr->mxtips, tr->numBranches, tr->rvec);
+  }
+
+
+
   topLevelMakenewz(tr, z0, maxiter, result);
- 
+
 
   for(i = 0; i < tr->numBranches; i++)
-      tr->executeModel[i] = TRUE;
+    tr->executeModel[i] = TRUE;
 }
 
 

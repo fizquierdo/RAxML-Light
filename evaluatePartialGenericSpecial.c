@@ -593,8 +593,16 @@ static double evaluatePartialGTRCAT(int i, double ki, int counter,  traversalInf
 
 
 
+/*
 void computeFullTraversalInfo(nodeptr p, traversalInfo *ti, int *counter, int maxTips, int numBranches)
+*/
+/* recom */
+void computeFullTraversalInfo(nodeptr p, traversalInfo *ti, int *counter, int maxTips, int numBranches, recompVectors *rvec)
 {
+  /* recom */
+  int slot = -1, unpin1 = -1, unpin2 = -1;
+  /* E recom */
+
   if(isTip(p->number, maxTips))
     return; 
 
@@ -610,93 +618,172 @@ void computeFullTraversalInfo(nodeptr p, traversalInfo *ti, int *counter, int ma
     p->next->next->x = 0;     
 
     if(isTip(r->number, maxTips) && isTip(q->number, maxTips))
-      {	  
-	ti[*counter].tipCase = TIP_TIP; 
-	ti[*counter].pNumber = p->number;
-	ti[*counter].qNumber = q->number;
-	ti[*counter].rNumber = r->number;
+    {	  
+      ti[*counter].tipCase = TIP_TIP; 
+      ti[*counter].pNumber = p->number;
+      ti[*counter].qNumber = q->number;
+      ti[*counter].rNumber = r->number;
 
-	for(i = 0; i < numBranches; i++)
-	  {
-	    double z;
-	    z = q->z[i];
-	    z = (z > zmin) ? log(z) : log(zmin);
-	    ti[*counter].qz[i] = z;
-
-	    z = r->z[i];
-	    z = (z > zmin) ? log(z) : log(zmin);
-	    ti[*counter].rz[i] = z;	    
-	  }     
-	*counter = *counter + 1;
-      }  
-    else
+      for(i = 0; i < numBranches; i++)
       {
-	if(isTip(r->number, maxTips) || isTip(q->number, maxTips))
-	  {		
-	    nodeptr tmp;
+        double z;
+        z = q->z[i];
+        z = (z > zmin) ? log(z) : log(zmin);
+        ti[*counter].qz[i] = z;
 
-	    if(isTip(r->number, maxTips))
-	      {
-		tmp = r;
-		r = q;
-		q = tmp;
-	      }
-	    
-	    computeFullTraversalInfo(r, ti, counter, maxTips, numBranches);	
-	    	   
-	    ti[*counter].tipCase = TIP_INNER; 
-	    ti[*counter].pNumber = p->number;
-	    ti[*counter].qNumber = q->number;
-	    ti[*counter].rNumber = r->number;
+        z = r->z[i];
+        z = (z > zmin) ? log(z) : log(zmin);
+        ti[*counter].rz[i] = z;	    
+      }     
+      /* recom */
+      if(rvec != NULL)
+      {
+        getxVector(rvec, p->number, &slot, maxTips);			  
+        ti[*counter].slot_p = slot;	    
+      }
+      /* E recom */
+      *counter = *counter + 1;
+    }  
+    else
+    {
+      if(isTip(r->number, maxTips) || isTip(q->number, maxTips))
+      {		
+        nodeptr tmp;
 
-	    for(i = 0; i < numBranches; i++)
-	      {
-		double z;
-		z = q->z[i];
-		z = (z > zmin) ? log(z) : log(zmin);
-		ti[*counter].qz[i] = z;
-		
-		z = r->z[i];
-		z = (z > zmin) ? log(z) : log(zmin);
-		ti[*counter].rz[i] = z;		
-	      }   
-	    
-	    *counter = *counter + 1;
-	  }
-	else
-	  {	 	  
-	    computeFullTraversalInfo(q, ti, counter, maxTips, numBranches);	       
-	    computeFullTraversalInfo(r, ti, counter, maxTips, numBranches);
-	   
-	    ti[*counter].tipCase = INNER_INNER; 
-	    ti[*counter].pNumber = p->number;
-	    ti[*counter].qNumber = q->number;
-	    ti[*counter].rNumber = r->number;
-	    for(i = 0; i < numBranches; i++)
-	      {
-		double z;
-		z = q->z[i];
-		z = (z > zmin) ? log(z) : log(zmin);
-		ti[*counter].qz[i] = z;
-		
-		z = r->z[i];
-		z = (z > zmin) ? log(z) : log(zmin);
-		ti[*counter].rz[i] = z;		
-	      }   
-	    
-	    *counter = *counter + 1;
-	  }
-      }    
+        if(isTip(r->number, maxTips))
+        {
+          tmp = r;
+          r = q;
+          q = tmp;
+        }
+
+        computeFullTraversalInfo(r, ti, counter, maxTips, numBranches, rvec);	
+
+        ti[*counter].tipCase = TIP_INNER; 
+        ti[*counter].pNumber = p->number;
+        ti[*counter].qNumber = q->number;
+        ti[*counter].rNumber = r->number;
+
+        for(i = 0; i < numBranches; i++)
+        {
+          double z;
+          z = q->z[i];
+          z = (z > zmin) ? log(z) : log(zmin);
+          ti[*counter].qz[i] = z;
+
+          z = r->z[i];
+          z = (z > zmin) ? log(z) : log(zmin);
+          ti[*counter].rz[i] = z;		
+        }   
+
+        /* recom */
+        if(rvec != NULL)
+        {
+          getxVector(rvec, r->number, &slot, maxTips);			  
+          ti[*counter].slot_r = slot;	    
+
+          getxVector(rvec, p->number, &slot, maxTips);			  
+          ti[*counter].slot_p = slot;	    
+          
+          unpin2 = r->number;
+        }
+        /* E recom */
+
+        *counter = *counter + 1;
+      }
+      else
+      {	 	  
+        /* recom */
+        if(rvec != NULL)
+        {
+          int q_stlen, r_stlen;
+          r_stlen = rvec->stlen[r->number - maxTips - 1];
+          q_stlen = rvec->stlen[q->number - maxTips - 1];
+          /* check that the stlen  reads / computed make sense at all*/
+          assert(q_stlen >= 2 && q_stlen <= maxTips - 1);
+          assert(r_stlen >= 2 && r_stlen <= maxTips - 1);
+          if(q_stlen > r_stlen)
+          {
+            computeFullTraversalInfo(q, ti, counter, maxTips, numBranches, rvec);	       
+            computeFullTraversalInfo(r, ti, counter, maxTips, numBranches, rvec);
+          }
+          else
+          {
+            computeFullTraversalInfo(r, ti, counter, maxTips, numBranches, rvec);	       
+            computeFullTraversalInfo(q, ti, counter, maxTips, numBranches, rvec);
+          }
+          getxVector(rvec, q->number, &slot, maxTips);			  
+          ti[*counter].slot_q = slot;	    
+
+          getxVector(rvec, r->number, &slot, maxTips);			  
+          ti[*counter].slot_r = slot;	    
+
+          getxVector(rvec, p->number, &slot, maxTips);			  
+          ti[*counter].slot_p = slot;	    
+
+          unpin2 = r->number;
+          unpin1 = q->number;
+        }
+        else
+        /* E recom */
+        {
+          computeFullTraversalInfo(q, ti, counter, maxTips, numBranches, rvec);	       
+          computeFullTraversalInfo(r, ti, counter, maxTips, numBranches, rvec);
+        }
+
+        ti[*counter].tipCase = INNER_INNER; 
+        ti[*counter].pNumber = p->number;
+        ti[*counter].qNumber = q->number;
+        ti[*counter].rNumber = r->number;
+        for(i = 0; i < numBranches; i++)
+        {
+          double z;
+          z = q->z[i];
+          z = (z > zmin) ? log(z) : log(zmin);
+          ti[*counter].qz[i] = z;
+
+          z = r->z[i];
+          z = (z > zmin) ? log(z) : log(zmin);
+          ti[*counter].rz[i] = z;		
+        }   
+
+        *counter = *counter + 1;
+      }
+    }    
   }
+  /* recom */
+  if(rvec != NULL)
+  {
+    /* ?TODOFER rename this func to make clear this marks as unpinnable, but does not unpin yet */ 
+    unpinNode(rvec, unpin1, maxTips);
+    unpinNode(rvec, unpin2, maxTips);
+  }
+  /* E recom */
 }
 
 void determineFullTraversal(nodeptr p, tree *tr)
 {
+  /* recom */
+  if(tr->useRecom)
+  {
+    determineFullTraversalStlen(p, tr);
+    assert(tr->rvec != NULL);
+  }
+  /* E recom */
+
   nodeptr q = p->back;
   int k;
 
   tr->td[0].ti[0].pNumber = p->number;
   tr->td[0].ti[0].qNumber = q->number;
+  /* recom */
+  if(tr->useRecom)
+  {
+    int slot = -1;
+    getxVector(tr->rvec, q->number, &slot, tr->mxtips);
+    tr->td[0].ti[0].slot_q = slot;
+  }
+  /* E recom */
 
   for(k = 0; k < tr->numBranches; k++)        
     tr->td[0].ti[0].qz[k] = q->z[k];    
@@ -704,8 +791,10 @@ void determineFullTraversal(nodeptr p, tree *tr)
   assert(isTip(p->number, tr->mxtips));
 
   tr->td[0].count = 1; 
-  computeFullTraversalInfo(q, &(tr->td[0].ti[0]),  &(tr->td[0].count), tr->mxtips, tr->numBranches); 
-  computeFullTraversalInfo(p, &(tr->td[0].ti[0]),  &(tr->td[0].count), tr->mxtips, tr->numBranches);
+  save_strategy_state(tr); /* recom */
+  computeFullTraversalInfo(q, &(tr->td[0].ti[0]),  &(tr->td[0].count), tr->mxtips, tr->numBranches, tr->rvec); 
+  computeFullTraversalInfo(p, &(tr->td[0].ti[0]),  &(tr->td[0].count), tr->mxtips, tr->numBranches, tr->rvec);
+  restore_strategy_state(tr); /* recom */
 }
 
 
