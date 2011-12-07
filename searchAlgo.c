@@ -111,30 +111,30 @@ boolean update(tree *tr, nodeptr p)
     makenewzGeneric(tr, p, q, z0, newzpercycle, z, TRUE);  
   else
     makenewzGeneric(tr, p, q, z0, newzpercycle, z, FALSE);
-  
+
   for(i = 0; i < tr->numBranches; i++)    
     smoothedPartitions[i]  = tr->partitionSmoothed[i];
-      
-  for(i = 0; i < tr->numBranches; i++)
-    {         
-      if(!tr->partitionConverged[i])
-	{	  
-	  _deltaz = deltaz;
-	    
-	  if(ABS(z[i] - z0[i]) > _deltaz)  
-	    {	      
-	      smoothedPartitions[i] = FALSE;       
-	    }	 
 
-	  
-	  
-	  p->z[i] = q->z[i] = z[i];	 
-	}
+  for(i = 0; i < tr->numBranches; i++)
+  {         
+    if(!tr->partitionConverged[i])
+    {	  
+      _deltaz = deltaz;
+
+      if(ABS(z[i] - z0[i]) > _deltaz)  
+      {	      
+        smoothedPartitions[i] = FALSE;       
+      }	 
+
+
+
+      p->z[i] = q->z[i] = z[i];	 
     }
-  
+  }
+
   for(i = 0; i < tr->numBranches; i++)    
     tr->partitionSmoothed[i]  = smoothedPartitions[i];
-  
+
   return TRUE;
 }
 
@@ -144,23 +144,23 @@ boolean update(tree *tr, nodeptr p)
 boolean smooth (tree *tr, nodeptr p)
 {
   nodeptr  q;
-  
+
   if (! update(tr, p))               return FALSE; /*  Adjust branch */
   if (! isTip(p->number, tr->rdta->numsp)) 
-    {                                  /*  Adjust descendants */
-      q = p->next;
-      while (q != p) 
-	{
-	  if (! smooth(tr, q->back))   return FALSE;
-	  q = q->next;
-	}	
-      
-      if(tr->multiBranch)		  
-	newviewGenericMasked(tr, p);	
-      else
-	newviewGeneric(tr, p);     
-    }
-  
+  {                                  /*  Adjust descendants */
+    q = p->next;
+    while (q != p) 
+    {
+      if (! smooth(tr, q->back))   return FALSE;
+      q = q->next;
+    }	
+
+    if(tr->multiBranch)		  
+      newviewGenericMasked(tr, p);	
+    else
+      newviewGeneric(tr, p);     
+  }
+
   return TRUE;
 } 
 

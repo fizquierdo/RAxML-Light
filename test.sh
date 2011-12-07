@@ -61,13 +61,13 @@ if [ $1 = pro ] ; then
 else
   echo "*** run recom"
   ./raxmlLight -r $FACTOR -m GTRCAT -n ${NAME} -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} 
-  cp RAxML_info.${NAME} brm_recom
-  echo "*** run std"
-  (./raxmlLight -m GTRCAT -n ${NAME}_std -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} 2> err_std) > /dev/null
-  cp RAxML_info.${NAME}_std brm_std
-  echo "*** run pthreads"
-  ./raxmlLight-PTHREADS -r $FACTOR -T $NUM_THREADS -m GTRCAT -n ${NAME}_T${NUM_THREADS} -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} 
-  cp RAxML_info.${NAME}_T${NUM_THREADS} brm_treads
-  tail brm*
+  #cp RAxML_info.${NAME} brm_recom
+  #echo "*** run std"
+  #(./raxmlLight -m GTRCAT -n ${NAME}_std -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} 2> err_std) > /dev/null
+  #cp RAxML_info.${NAME}_std brm_std
+  #echo "*** run pthreads"
+  #./raxmlLight-PTHREADS -r $FACTOR -T $NUM_THREADS -m GTRCAT -n ${NAME}_T${NUM_THREADS} -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} 
+  #cp RAxML_info.${NAME}_T${NUM_THREADS} brm_treads
+  #tail brm*
 fi
 

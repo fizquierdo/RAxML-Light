@@ -12,27 +12,10 @@
 /* TODOFER clean up this file, unused code still present? */
 boolean needsRecomp(recompVectors *rvec, nodeptr p, int mxtips)
 { 
-  if(rvec != NULL)
-  {
-    if(!p->x || !isNodePinned(rvec, p->number, mxtips)) 
-      return TRUE;
-    else      
-      return FALSE;
-  }
-  else   
-  {
-    if(!p->x)
-      return TRUE;
-    else
-      return FALSE;
-  }
-
-  /* TODOFER like this:
-  if(!p->x || (tr->useRecom && !isNodePinned(rvec, p->number, mxtips)))
-    return TRUE:
+  if(!p->x || (rvec != NULL && !isNodePinned(rvec, p->number, mxtips)))
+    return TRUE;
   else
     return FALSE;
-    */
 }
     
 void allocRecompVectors(tree *tr, size_t width)
@@ -436,20 +419,24 @@ int countPinnedNodes(recompVectors *v)
 }
 
 
-void getxVector(recompVectors *rvec, int nodenum, int *slot, int mxtips)
+boolean getxVector(recompVectors *rvec, int nodenum, int *slot, int mxtips)
 {
   double tstart = gettime();
+  boolean slotNeedsRecomp = FALSE;
   *slot = rvec->iNode[nodenum - mxtips - 1];
   if(*slot == NODE_UNPINNED)
+  {
     *slot = pinNode(rvec, nodenum, mxtips);
+    slotNeedsRecomp = TRUE;
+  }
   assert(*slot >= 0 && *slot < rvec->numVectors);
   rvec->unpinnable[*slot] = FALSE;
   rvec->pinTime += gettime() - tstart;
+  return slotNeedsRecomp;
 }
+/*
 void getxVectorReport(recompVectors *rvec, int nodenum, int *slot, int mxtips, boolean *slotNeedsRecomp)
 {
-  /* TODOFER do we need 2 funcs for this? */
- // getxVector(rvec, nodenum, &slot, mxtips) ~= getxVectorReport(rvec, nodenum, &slot, mxtips, &unused)
   double tstart = gettime();
   assert(*slotNeedsRecomp == FALSE);
   *slot = rvec->iNode[nodenum - mxtips - 1];
@@ -462,6 +449,7 @@ void getxVectorReport(recompVectors *rvec, int nodenum, int *slot, int mxtips, b
   rvec->unpinnable[*slot] = FALSE;
   rvec->pinTime += gettime() - tstart;
 }
+*/
 
 int tipsPartialCountStlen(int maxTips, nodeptr p, recompVectors *rvec)
 {

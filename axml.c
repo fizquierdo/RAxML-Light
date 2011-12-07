@@ -6405,7 +6405,9 @@ int main (int argc, char *argv[])
       modOptJoerg(tr, adef);
 #else
          evaluateGenericInitrav(tr, tr->start);	 
-         treeEvaluate(tr, 1); 	 	 	 	 	 
+         //treeEvaluate(tr, 1); 	 	 	 	 	 
+         treeEvaluate(tr, 0.25); 	 	 	 	 	 
+         printRecomTree(tr, FALSE, "after eval");
       /*
          computeBIGRAPID(tr, adef, TRUE); 	     
          */
