@@ -2545,62 +2545,63 @@ static void allocPartitions(tree *tr)
     maxCategories = tr->maxCategories;
 
   for(i = 0; i < tr->NumberOfModels; i++)
-    {
-      const partitionLengths *pl = getPartitionLengths(&(tr->partitionData[i]));
+  {
+    const partitionLengths *pl = getPartitionLengths(&(tr->partitionData[i]));
 
-      size_t 
-	k,
-	width = tr->partitionData[i].width;      
+    size_t 
+      k,
+      width = tr->partitionData[i].width;      
 
-      tr->partitionData[i].perSiteAAModel = (int *)malloc(sizeof(int) * width);
-      for(k = 0; k < width; k++)
-	tr->partitionData[i].perSiteAAModel[k] = WAG;
+    tr->partitionData[i].perSiteAAModel = (int *)malloc(sizeof(int) * width);
+    for(k = 0; k < width; k++)
+      tr->partitionData[i].perSiteAAModel[k] = WAG;
 
-      tr->partitionData[i].wr = (double *)malloc(sizeof(double) * width);
-      tr->partitionData[i].wr2 = (double *)malloc(sizeof(double) * width);     
+    tr->partitionData[i].wr = (double *)malloc(sizeof(double) * width);
+    tr->partitionData[i].wr2 = (double *)malloc(sizeof(double) * width);     
 
-     	
-      tr->partitionData[i].globalScaler    = (unsigned int *)calloc(2 * tr->mxtips, sizeof(unsigned int));  	         
 
-      tr->partitionData[i].left              = (double *)malloc_aligned(pl->leftLength * (maxCategories + 1) * sizeof(double));
-      tr->partitionData[i].right             = (double *)malloc_aligned(pl->rightLength * (maxCategories + 1) * sizeof(double));
-      tr->partitionData[i].EIGN              = (double*)malloc(pl->eignLength * sizeof(double));
-      tr->partitionData[i].EV                = (double*)malloc_aligned(pl->evLength * sizeof(double));
-      tr->partitionData[i].EI                = (double*)malloc(pl->eiLength * sizeof(double));
-      tr->partitionData[i].substRates        = (double *)malloc(pl->substRatesLength * sizeof(double));
-      tr->partitionData[i].frequencies       = (double*)malloc(pl->frequenciesLength * sizeof(double));
-      tr->partitionData[i].tipVector         = (double *)malloc_aligned(pl->tipVectorLength * sizeof(double));
-      tr->partitionData[i].symmetryVector    = (int *)malloc(pl->symmetryVectorLength  * sizeof(int));
-      tr->partitionData[i].frequencyGrouping = (int *)malloc(pl->frequencyGroupingLength  * sizeof(int));
-      tr->partitionData[i].perSiteRates      = (double *)malloc(sizeof(double) * tr->maxCategories);
-            
-      tr->partitionData[i].nonGTR = FALSE;             
+    tr->partitionData[i].globalScaler    = (unsigned int *)calloc(2 * tr->mxtips, sizeof(unsigned int));  	         
 
-      tr->partitionData[i].gammaRates = (double*)malloc(sizeof(double) * 4);
-      tr->partitionData[i].yVector = (unsigned char **)malloc(sizeof(unsigned char*) * (tr->mxtips + 1));
+    tr->partitionData[i].left              = (double *)malloc_aligned(pl->leftLength * (maxCategories + 1) * sizeof(double));
+    tr->partitionData[i].right             = (double *)malloc_aligned(pl->rightLength * (maxCategories + 1) * sizeof(double));
+    tr->partitionData[i].EIGN              = (double*)malloc(pl->eignLength * sizeof(double));
+    tr->partitionData[i].EV                = (double*)malloc_aligned(pl->evLength * sizeof(double));
+    tr->partitionData[i].EI                = (double*)malloc(pl->eiLength * sizeof(double));
+    tr->partitionData[i].substRates        = (double *)malloc(pl->substRatesLength * sizeof(double));
+    tr->partitionData[i].frequencies       = (double*)malloc(pl->frequenciesLength * sizeof(double));
+    tr->partitionData[i].tipVector         = (double *)malloc_aligned(pl->tipVectorLength * sizeof(double));
+    tr->partitionData[i].symmetryVector    = (int *)malloc(pl->symmetryVectorLength  * sizeof(int));
+    tr->partitionData[i].frequencyGrouping = (int *)malloc(pl->frequencyGroupingLength  * sizeof(int));
+    tr->partitionData[i].perSiteRates      = (double *)malloc(sizeof(double) * tr->maxCategories);
 
-      
-      tr->partitionData[i].xVector = (double **)malloc(sizeof(double*) * tr->innerNodes);      
-      tr->partitionData[i].xSpaceVector = (size_t *)calloc(tr->innerNodes, sizeof(size_t));
+    tr->partitionData[i].nonGTR = FALSE;             
 
-     
-     
+    tr->partitionData[i].gammaRates = (double*)malloc(sizeof(double) * 4);
+    tr->partitionData[i].yVector = (unsigned char **)malloc(sizeof(unsigned char*) * (tr->mxtips + 1));
 
-      tr->partitionData[i].mxtips  = tr->mxtips;
 
-     
+    tr->partitionData[i].xVector = (double **)malloc(sizeof(double*) * tr->innerNodes);      
+
+    tr->partitionData[i].xSpaceVector = (size_t *)calloc(tr->innerNodes, sizeof(size_t));
+
+
+
+
+    tr->partitionData[i].mxtips  = tr->mxtips;
+
+
 
 
 #if ! (defined(_USE_PTHREADS) || defined(_FINE_GRAIN_MPI))
-      {
-	int j;
+    {
+      int j;
 
-	for(j = 1; j <= tr->mxtips; j++)
-	  tr->partitionData[i].yVector[j] = &(tr->yVector[j][tr->partitionData[i].lower]);
-      }
+      for(j = 1; j <= tr->mxtips; j++)
+        tr->partitionData[i].yVector[j] = &(tr->yVector[j][tr->partitionData[i].lower]);
+    }
 #endif
 
-    }
+  }
 }
 
 #if ! (defined(_USE_PTHREADS) || defined(_FINE_GRAIN_MPI))
@@ -2664,19 +2665,12 @@ static void allocNodex (tree *tr)
   /* recom */
   if(tr->useRecom)
   {
-    assert(!tr->multiGene); /* TODOFER support multiGene option */
+    assert(tr->NumberOfModels == 1); 
     allocRecompVectors(tr, memoryRequirements);
   }
   else
   {
     tr->rvec = NULL;
-    /* TODOFER check this is not allocated here anymore
-    if(!tr->multiGene)
-    {     
-      likelihoodArray = (double *)malloc_aligned(tr->innerNodes * memoryRequirements * sizeof(double));
-      assert(likelihoodArray != NULL);
-    }
-    */
   }
   /* E recom */
   
@@ -5102,7 +5096,6 @@ static void threadFixModelIndices(tree *tr, tree *localTree, int tid, int n)
 	  size_t 
 	    width = localTree->partitionData[model].width;	  	  
 	  	 
-    /* TODOFER check this for the recomp case */
 	  localTree->partitionData[model].xVector[i]   = (double*)NULL;
 	      	 
 	  countOffset += width;
@@ -5325,10 +5318,7 @@ void allocNodex(tree *tr, int tid, int n)
 
     /* recom */
     if(tr->useRecom)
-    {
-      assert(!tr->multiGene); /* TODOFER support multiGene option */
       allocRecompVectors(tr, memoryRequirements);
-    }
     /* E recom */
 
   tr->sumBuffer  = (double *)malloc_aligned(memoryRequirements * sizeof(double));
@@ -6323,23 +6313,7 @@ int main (int argc, char *argv[])
 #endif
 
     /* recom */
-    /* TODOFER alloc the traversal counter */
-    {
-      traversalCounter *tc;
-      tc = (traversalCounter *) malloc(sizeof(traversalCounter));
-      tc->travlenFreq = (unsigned int *)malloc(tr->mxtips * sizeof(int));
-      {
-        int k;
-        for(k=0; k<tr->mxtips; k++)
-          tc->travlenFreq[k] = 0;
-      }
-      tc->tt = 0;
-      tc->ti = 0;
-      tc->ii = 0;
-      tc->numTraversals = 0;
-      tr->travCounter = tc;
-    }
-    /* end alloc traversal counter */
+    allocTraversalCounter(tr);
     tr->stlenTime = 0.0;
     /* E  recom */
 

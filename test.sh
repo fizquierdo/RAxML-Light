@@ -2,6 +2,7 @@
 
 DATADIR=data
 NAME=TEST
+PARTITION_CALL=""
 
 if [ $1 = 50 ] ; then
  SET=50
@@ -9,6 +10,7 @@ if [ $1 = 50 ] ; then
 elif [ $1 = 20 ] ; then
  SET=20
  TREE=intree20
+ PARTITION_CALL="-q ${DATADIR}/20.model"
 elif [ $1 = 10 ] ; then
  SET=10
  TREE=intree10
@@ -33,7 +35,6 @@ else
 fi
 
 FACTOR=0.70
-#FACTOR=1.1
 NUM_THREADS=4
 
 # just clean dir
@@ -48,12 +49,12 @@ if [ $1 = cmp ] ; then
   rm *.o
   rm raxmlLight
   make -f Makefile.SSE3.gcc
-  rm *.o
-  rm raxmlLight-PTHREADS
-  make -f Makefile.SSE3.PTHREADS.gcc
-  rm *.o
-  rm raxmlLight-MPI
-  make -f Makefile.SSE3.MPI
+  #rm *.o
+  #rm raxmlLight-PTHREADS
+  #make -f Makefile.SSE3.PTHREADS.gcc
+  #rm *.o
+  #rm raxmlLight-MPI
+  #make -f Makefile.SSE3.MPI
 fi
 
 #run
@@ -65,18 +66,18 @@ if [ $1 = pro ] ; then
   valgrind ./raxmlLight-PTHREADS -T $NUM_THREADS -m GTRCAT -n ${NAME}_T${NUM_THREADS} -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE}
 else
   echo "*** run recom"
-  ./raxmlLight -r $FACTOR -m GTRCAT -n ${NAME} -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} 
+  ./raxmlLight -r $FACTOR -m GTRCAT -n ${NAME} -s ${DATADIR}/${SET} $PARTITION_CALL -t ${DATADIR}/${TREE} 
   cp RAxML_info.${NAME} brm_recom
   echo "*** run std"
-  (./raxmlLight -m GTRCAT -n ${NAME}_std -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} 2> err_std) > /dev/null
+  (./raxmlLight -m GTRCAT -n ${NAME}_std -s ${DATADIR}/${SET} $PARTITION_CALL -t ${DATADIR}/${TREE} 2> err_std) > /dev/null
   cp RAxML_info.${NAME}_std brm_std
-  echo "*** run pthreads"
-  ./raxmlLight-PTHREADS -r $FACTOR -T $NUM_THREADS -m GTRCAT -n ${NAME}_T${NUM_THREADS} -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} 
-  cp RAxML_info.${NAME}_T${NUM_THREADS} brm_treads
-  echo "*** run mpi"
-  mpirun.openmpi -np 4 ./raxmlLight-MPI -r $FACTOR -m GTRCAT -n ${NAME}_mpi -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} 
+  #echo "*** run pthreads"
+  #./raxmlLight-PTHREADS -r $FACTOR -T $NUM_THREADS -m GTRCAT -n ${NAME}_T${NUM_THREADS} -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} 
+  #cp RAxML_info.${NAME}_T${NUM_THREADS} brm_treads
+  #echo "*** run mpi"
+  #mpirun.openmpi -np 4 ./raxmlLight-MPI -r $FACTOR -m GTRCAT -n ${NAME}_mpi -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} 
   #mpirun.openmpi -np 2 ./raxmlLight-MPI -m GTRCAT -n ${NAME}_mpi -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} 
-  cp RAxML_info.${NAME}_T${NUM_THREADS} brm_mpi
+  #cp RAxML_info.${NAME}_T${NUM_THREADS} brm_mpi
   tail brm*
 fi
 

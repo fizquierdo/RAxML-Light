@@ -1223,7 +1223,6 @@ void getStartingTree(tree *tr, analdef *adef)
 
   tr->start = tr->nodep[1];
   /* recom */
-  /* TODOFER check if this is required */
   if(tr->useRecom)
     determineFullTraversal(tr->start, tr);
   /* E recom */

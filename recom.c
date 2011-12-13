@@ -36,6 +36,7 @@ void allocRecompVectors(tree *tr, size_t width)
   v->width = width;
   v->numVectors = num_vectors; // use minimum bound theoretical
   printBothOpen("Allocating space for %d inner vectors of width %d\n", v->numVectors, v->width);
+  /* should be done per partition */
   v->tmpvectors = (double **)malloc_aligned(num_vectors * sizeof(double *));
   for(i=0; i<num_vectors; i++)
   {
@@ -73,6 +74,20 @@ void allocRecompVectors(tree *tr, size_t width)
   /* init nodes tracking */
   v->maxVectorsUsed = 0;
   tr->rvec = v;
+}
+void allocTraversalCounter(tree *tr)
+{
+  traversalCounter *tc;
+  int k;
+  tc = (traversalCounter *) malloc(sizeof(traversalCounter));
+  tc->travlenFreq = (unsigned int *)malloc(tr->mxtips * sizeof(int));
+  for(k=0; k<tr->mxtips; k++)
+    tc->travlenFreq[k] = 0;
+  tc->tt = 0;
+  tc->ti = 0;
+  tc->ii = 0;
+  tc->numTraversals = 0;
+  tr->travCounter = tc;
 }
 /* running the strategy overwrites the current state*/
 void save_strategy_state(tree *tr)
@@ -226,13 +241,6 @@ void unpinAtomicSlot(recompVectors *v, int slot, int mxtips)
   for(i=0; i < v->width; i++)
     v->tmpvectors[slot][i] = INVALID_VALUE;
     */
-}
-void unpinAllSlots(tree *tr)
-{
-  /* TODOFER unused?*/
-  int slot;
-  for(slot=0; slot < tr->rvec->numVectors; slot++)
-    unpinAtomicSlot(tr->rvec, slot, tr->mxtips);
 }
 int findUnpinnableSlotByCost(recompVectors *v, int mxtips)
 {
@@ -434,22 +442,6 @@ boolean getxVector(recompVectors *rvec, int nodenum, int *slot, int mxtips)
   rvec->pinTime += gettime() - tstart;
   return slotNeedsRecomp;
 }
-/*
-void getxVectorReport(recompVectors *rvec, int nodenum, int *slot, int mxtips, boolean *slotNeedsRecomp)
-{
-  double tstart = gettime();
-  assert(*slotNeedsRecomp == FALSE);
-  *slot = rvec->iNode[nodenum - mxtips - 1];
-  if(*slot == NODE_UNPINNED)
-  {
-    *slot = pinNode(rvec, nodenum, mxtips);
-    *slotNeedsRecomp = TRUE;
-  }
-  assert(*slot >= 0 && *slot < rvec->numVectors);
-  rvec->unpinnable[*slot] = FALSE;
-  rvec->pinTime += gettime() - tstart;
-}
-*/
 
 int tipsPartialCountStlen(int maxTips, nodeptr p, recompVectors *rvec)
 {
