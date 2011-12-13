@@ -4984,7 +4984,8 @@ void newviewIterative (tree *tr)
     model;
 
   /* recom */
-#ifndef _USE_PTHREADS
+#if (defined(_USE_PTHREADS) || defined(_FINE_GRAIN_MPI))
+#else
   countTraversal(tr);
 #endif
   /* E recom */
