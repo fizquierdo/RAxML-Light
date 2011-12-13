@@ -32,7 +32,8 @@ else
  #TREE=RAxML_parsimonyTree.50sim.0
 fi
 
-FACTOR=0.70
+#FACTOR=0.70
+FACTOR=1.1
 NUM_THREADS=4
 
 # just clean dir
@@ -45,10 +46,12 @@ fi
 # compile
 if [ $1 = cmp ] ; then
   rm *.o
-  rm raxmlLight
-  make -f Makefile.SSE3.gcc
-  rm *.o
-  make -f Makefile.SSE3.PTHREADS.gcc
+  #rm raxmlLight
+  #make -f Makefile.SSE3.gcc
+  #rm *.o
+  #make -f Makefile.SSE3.PTHREADS.gcc
+  #rm *.o
+  make -f Makefile.SSE3.MPI
 fi
 
 #run
@@ -68,6 +71,9 @@ else
   echo "*** run pthreads"
   ./raxmlLight-PTHREADS -r $FACTOR -T $NUM_THREADS -m GTRCAT -n ${NAME}_T${NUM_THREADS} -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} 
   cp RAxML_info.${NAME}_T${NUM_THREADS} brm_treads
+  echo "*** run mpi"
+  mpirun.openmpi -np 2 ./raxmlLight-MPI -r $FACTOR -m GTRCAT -n ${NAME}_mpi -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} 
+  cp RAxML_info.${NAME}_T${NUM_THREADS} brm_mpi
   tail brm*
 fi
 
