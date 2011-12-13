@@ -186,32 +186,32 @@ boolean smoothTree (tree *tr, int maxtimes)
 {
   nodeptr  p, q;   
   int i, count = 0;
-   
+
   p = tr->start;
   for(i = 0; i < tr->numBranches; i++)
     tr->partitionConverged[i] = FALSE;
 
   while (--maxtimes >= 0) 
-    {    
-      for(i = 0; i < tr->numBranches; i++)	
-	tr->partitionSmoothed[i] = TRUE;		
+  {    
+    for(i = 0; i < tr->numBranches; i++)	
+      tr->partitionSmoothed[i] = TRUE;		
 
-      if (! smooth(tr, p->back))       return FALSE;
-      if (!isTip(p->number, tr->rdta->numsp)) 
-	{
-	  q = p->next;
-	  while (q != p) 
-	    {
-	      if (! smooth(tr, q->back))   return FALSE;
-	      q = q->next;
-	    }
-	}
-         
-      count++;
-
-      if (allSmoothed(tr)) 
-	break;      
+    if (! smooth(tr, p->back))       return FALSE;
+    if (!isTip(p->number, tr->rdta->numsp)) 
+    {
+      q = p->next;
+      while (q != p) 
+      {
+        if (! smooth(tr, q->back))   return FALSE;
+        q = q->next;
+      }
     }
+
+    count++;
+
+    if (allSmoothed(tr)) 
+      break;      
+  }
 
   for(i = 0; i < tr->numBranches; i++)
     tr->partitionConverged[i] = FALSE;

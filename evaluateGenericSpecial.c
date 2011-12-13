@@ -1446,11 +1446,32 @@ double evaluateGeneric (tree *tr, nodeptr p)
     for(i = 0; i < tr->numBranches; i++)    
       tr->td[0].ti[0].qz[i] =  q->z[i];
 
+    /* recom */
+    if(tr->useRecom)
+    {
+      int count = 0;
+      computeTraversalInfoStlen(p, tr->mxtips, tr->rvec, &count);
+      computeTraversalInfoStlen(q, tr->mxtips, tr->rvec, &count);
+      int slot = -1;
+      if(!isTip(q->number, tr->mxtips))
+      {
+        getxVector(tr->rvec, q->number, &slot, tr->mxtips);
+        tr->td[0].ti[0].slot_q = slot;
+      }
+      if(!isTip(p->number, tr->mxtips))
+      {
+        getxVector(tr->rvec, p->number, &slot, tr->mxtips);
+        tr->td[0].ti[0].slot_p = slot;
+      }
+    }
+    /* E recom */
+    save_strategy_state(tr);
     tr->td[0].count = 1;
-    if(!p->x)
+    if(needsRecomp(tr->rvec, p, tr->mxtips))
       computeTraversalInfo(p, &(tr->td[0].ti[0]), &(tr->td[0].count), tr->mxtips, tr->numBranches, tr->rvec);
-    if(!q->x)
+    if(needsRecomp(tr->rvec, q, tr->mxtips))
       computeTraversalInfo(q, &(tr->td[0].ti[0]), &(tr->td[0].count), tr->mxtips, tr->numBranches, tr->rvec);  
+    restore_strategy_state(tr);
 
 #ifdef _USE_PTHREADS 
     {

@@ -6405,12 +6405,9 @@ int main (int argc, char *argv[])
       modOptJoerg(tr, adef);
 #else
          evaluateGenericInitrav(tr, tr->start);	 
-         //treeEvaluate(tr, 1); 	 	 	 	 	 
-         treeEvaluate(tr, 0.25); 	 	 	 	 	 
+         treeEvaluate(tr, 1); 	 	 	 	 	 
          printRecomTree(tr, FALSE, "after eval");
-      /*
          computeBIGRAPID(tr, adef, TRUE); 	     
-         */
       /* recom */
       printBothOpen("Traversal freq after search \n");
       printTraversalInfo(tr);
