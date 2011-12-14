@@ -1104,7 +1104,8 @@ double evaluateIterative(tree *tr,  boolean writeVector)
           if(tr->useRecom)
           {
             slot = tr->td[0].ti[0].slot_p;
-            x2_start = tr->rvec->tmpvectors[slot];
+            x2_start = tr->partitionData[model].tmpvectors[slot];
+            //x2_start = tr->rvec->tmpvectors[slot];
             assert(x2_start[0] != INVALID_VALUE);
           }
           else
@@ -1126,7 +1127,8 @@ double evaluateIterative(tree *tr,  boolean writeVector)
           if(tr->useRecom)
           {
             slot = tr->td[0].ti[0].slot_q;
-            x2_start = tr->rvec->tmpvectors[slot];
+            x2_start = tr->partitionData[model].tmpvectors[slot];
+            //x2_start = tr->rvec->tmpvectors[slot];
             assert(x2_start[0] != INVALID_VALUE);
           }
           else
@@ -1151,9 +1153,11 @@ double evaluateIterative(tree *tr,  boolean writeVector)
         if(tr->useRecom)
         {
           slot = tr->td[0].ti[0].slot_p;
-          x1_start = tr->rvec->tmpvectors[slot];
+          x1_start = tr->partitionData[model].tmpvectors[slot];
+          //x1_start = tr->rvec->tmpvectors[slot];
           slot = tr->td[0].ti[0].slot_q;
-          x2_start = tr->rvec->tmpvectors[slot];
+          x2_start = tr->partitionData[model].tmpvectors[slot];
+          //x2_start = tr->rvec->tmpvectors[slot];
           assert(x1_start[0] != INVALID_VALUE);
           assert(x2_start[0] != INVALID_VALUE);
         }

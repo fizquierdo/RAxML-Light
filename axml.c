@@ -2618,65 +2618,79 @@ static void allocNodex (tree *tr)
     model,
     offset,
     memoryRequirements = 0;
- 
+
+  if(tr->useRecom)
+    allocRecompVectorsInfo(tr, memoryRequirements);
+  else
+    tr->rvec = NULL;
 
   allocPartitions(tr);
+
 
   if(tr->rateHetModel == CAT)
     rateHet = 1;
   else
     rateHet = 4;
 
+
   for(model = 0; model < (size_t)tr->NumberOfModels; model++)
+  {
+    size_t width = tr->partitionData[model].upper - tr->partitionData[model].lower;
+
+    memoryRequirements += (size_t)(tr->discreteRateCategories) * (size_t)(tr->partitionData[model].states) * width;  
+
+    /* recom */
+    if(tr->useRecom)
+      allocRecompVectors(tr, memoryRequirements, model);
+    /* E recom */
+
+    /* this seems to be gap-saving related code only */
     {
-      size_t width = tr->partitionData[model].upper - tr->partitionData[model].lower;
+      int 
+        undetermined, 
+        j;
 
-      memoryRequirements += (size_t)(tr->discreteRateCategories) * (size_t)(tr->partitionData[model].states) * width;  
-      
-      {
-	int 
-	  undetermined, 
-	  j;
-		
-	tr->partitionData[model].gapVectorLength = ((int)width / 32) + 1;
-	
-	tr->partitionData[model].gapVector = (unsigned int*)calloc(tr->partitionData[model].gapVectorLength * 2 * tr->mxtips, sizeof(unsigned int));
+      tr->partitionData[model].gapVectorLength = ((int)width / 32) + 1;
 
-	tr->partitionData[model].initialGapVectorSize = tr->partitionData[model].gapVectorLength * 2 * tr->mxtips * sizeof(int);
-	
-	tr->partitionData[model].gapColumn = (double *)malloc_aligned(((size_t)tr->innerNodes) *								      
-								      ((size_t)(tr->partitionData[model].states)) *
-								      rateHet *
-								      sizeof(double));		  		
-	
-	undetermined = getUndetermined(tr->partitionData[model].dataType);
+      tr->partitionData[model].gapVector = (unsigned int*)calloc(tr->partitionData[model].gapVectorLength * 2 * tr->mxtips, sizeof(unsigned int));
 
-	for(j = 1; j <= tr->mxtips; j++)
-	  for(i = 0; i < width; i++)
-	    if(tr->partitionData[model].yVector[j][i] == undetermined)
-	      tr->partitionData[model].gapVector[tr->partitionData[model].gapVectorLength * j + i / 32] |= mask32[i % 32];
-      }
- 
+      tr->partitionData[model].initialGapVectorSize = tr->partitionData[model].gapVectorLength * 2 * tr->mxtips * sizeof(int);
+
+      tr->partitionData[model].gapColumn = (double *)malloc_aligned(((size_t)tr->innerNodes) *								      
+          ((size_t)(tr->partitionData[model].states)) *
+          rateHet *
+          sizeof(double));		  		
+
+      undetermined = getUndetermined(tr->partitionData[model].dataType);
+
+      for(j = 1; j <= tr->mxtips; j++)
+        for(i = 0; i < width; i++)
+          if(tr->partitionData[model].yVector[j][i] == undetermined)
+            tr->partitionData[model].gapVector[tr->partitionData[model].gapVectorLength * j + i / 32] |= mask32[i % 32];
     }
+
+  }
 
   tr->perSiteLL       = (double *)malloc((size_t)tr->cdta->endsite * sizeof(double));
   assert(tr->perSiteLL != NULL);
 
   /* recom */
+  /*
   if(tr->useRecom)
   {
     assert(tr->NumberOfModels == 1); 
-    allocRecompVectors(tr, memoryRequirements);
+    allocRecompVectorsInfo(tr, memoryRequirements);
   }
   else
   {
     tr->rvec = NULL;
   }
+  */
   /* E recom */
-  
+
   tr->sumBuffer  = (double *)malloc_aligned(memoryRequirements * sizeof(double));
   assert(tr->sumBuffer != NULL);
-   
+
 
   assert(4 * sizeof(double) > sizeof(parsimonyVector));
 
@@ -2709,7 +2723,7 @@ static void allocNodex (tree *tr)
 
   /* recom */
   if(!tr->useRecom)
-  /* E recom */
+    /* E recom */
   {
     for(i = 0; i < tr->innerNodes; i++)
     {     
@@ -5268,62 +5282,62 @@ void allocNodex(tree *tr, int tid, int n)
     computeFraction(tr, tid, n);
 
   allocPartitions(tr);
- 
+
   if(tr->rateHetModel == CAT)
     rateHet = 1;
   else
     rateHet = 4;
 
-  
+
 
   for(model = 0; model < (size_t)tr->NumberOfModels; model++)
+  {
+    size_t 
+      width = tr->partitionData[model].width;
+
+    myLength += width;
+
+    if(width > 0)
     {
-      size_t 
-	width = tr->partitionData[model].width;
+      memoryRequirements += (size_t)(tr->discreteRateCategories) * (size_t)(tr->partitionData[model].states) * width;
 
-      myLength += width;
+      tr->partitionData[model].gapVectorLength = ((int)width / 32) + 1;
 
-      if(width > 0)
-	{
-	  memoryRequirements += (size_t)(tr->discreteRateCategories) * (size_t)(tr->partitionData[model].states) * width;
-      
-	  tr->partitionData[model].gapVectorLength = ((int)width / 32) + 1;
-     
-	  tr->partitionData[model].gapVector = (unsigned int*)calloc(tr->partitionData[model].gapVectorLength * 2 * tr->mxtips, sizeof(unsigned int));	  
-      
-	  tr->partitionData[model].initialGapVectorSize = tr->partitionData[model].gapVectorLength * 2 * tr->mxtips * sizeof(int);
-      
-	  tr->partitionData[model].gapColumn = (double *)malloc_aligned(((size_t)tr->innerNodes) *								      
-									((size_t)(tr->partitionData[model].states)) *
-									rateHet * sizeof(double));		              
-	}
-      else
-	{
-	  tr->partitionData[model].gapVectorLength = 0;
-     
-	  tr->partitionData[model].gapVector = (unsigned int*)NULL; 	  
-      
-	  tr->partitionData[model].initialGapVectorSize = 0;
-      
-	  tr->partitionData[model].gapColumn = (double*)NULL;
-	}
+      tr->partitionData[model].gapVector = (unsigned int*)calloc(tr->partitionData[model].gapVectorLength * 2 * tr->mxtips, sizeof(unsigned int));	  
+
+      tr->partitionData[model].initialGapVectorSize = tr->partitionData[model].gapVectorLength * 2 * tr->mxtips * sizeof(int);
+
+      tr->partitionData[model].gapColumn = (double *)malloc_aligned(((size_t)tr->innerNodes) *								      
+          ((size_t)(tr->partitionData[model].states)) *
+          rateHet * sizeof(double));		              
     }
+    else
+    {
+      tr->partitionData[model].gapVectorLength = 0;
+
+      tr->partitionData[model].gapVector = (unsigned int*)NULL; 	  
+
+      tr->partitionData[model].initialGapVectorSize = 0;
+
+      tr->partitionData[model].gapColumn = (double*)NULL;
+    }
+  }
 
   if(tid == 0)
-    {
-      tr->perSiteLL       = (double *)malloc((size_t)tr->cdta->endsite * sizeof(double));
-      assert(tr->perSiteLL != NULL);
-    }
-  
+  {
+    tr->perSiteLL       = (double *)malloc((size_t)tr->cdta->endsite * sizeof(double));
+    assert(tr->perSiteLL != NULL);
+  }
 
-    /* recom */
-    if(tr->useRecom)
-      allocRecompVectors(tr, memoryRequirements);
-    /* E recom */
+
+  /* recom */
+  if(tr->useRecom)
+    allocRecompVectorsInfo(tr, memoryRequirements);
+  /* E recom */
 
   tr->sumBuffer  = (double *)malloc_aligned(memoryRequirements * sizeof(double));
   assert(tr->sumBuffer != NULL);
-   
+
 
   tr->y_ptr = (unsigned char *)malloc(myLength * (size_t)(tr->mxtips) * sizeof(unsigned char));
   assert(tr->y_ptr != NULL);
@@ -5343,7 +5357,7 @@ void allocNodex(tree *tr, int tid, int n)
   tr->rateCategoryPtr  = (int*)    malloc(myLength * sizeof(int));
   assert(tr->rateCategoryPtr != NULL);
 
-  
+
 }
 
 
@@ -6300,6 +6314,7 @@ int main (int argc, char *argv[])
       multiprocessorScheduling(tr);
 #endif
 
+    printBothOpen("start lh vectors\n");   	             
 
 #ifdef _USE_PTHREADS
     startPthreads(tr);
@@ -6360,10 +6375,10 @@ int main (int argc, char *argv[])
       /* recom */
       tr->verbose = FALSE;
       printBothOpen("Get starting tree... \n");
-      getStartingTree(tr, adef);     
-      printBothOpen("Traversal freq after starting tree \n");
-      printTraversalInfo(tr);
-      printBothOpen("\n");
+      //getStartingTree(tr, adef);     
+      //printBothOpen("Traversal freq after starting tree \n");
+      //printTraversalInfo(tr);
+      //printBothOpen("\n");
       /* E recom */
 
       getStartingTree(tr, adef);     

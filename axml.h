@@ -353,8 +353,8 @@ typedef  int boolean;
 typedef struct
 {
   int numVectors;      /* #inner vectors in RAM*/
-  size_t width;        /* #doubles required per vector */
-  double **tmpvectors; /* size: numVectors, points to the vectors */
+  //size_t width;        /* #doubles required per vector */ /* this info is per-partition */
+  //double **tmpvectors; /* size: numVectors, points to the vectors */ /* this info is per-partition */
   int *iVector;        /* size: numVectors, stores node id || SLOT_UNUSED  */
   int *iVector_prev;   /* size: numVectors, stores node id || SLOT_UNUSED  */
   int *iNode;          /* size: inner nodes, stores slot id || NODE_UNPINNED */
@@ -607,7 +607,12 @@ typedef struct {
   int     protFreqs;
   int     mxtips;
   int             **expVector;
-  double          **xVector;
+
+  double       **xVector;
+  /* recom */
+  double       **tmpvectors; /* size: numVectors, points to the vectors */ /* this info is per-partition */
+  /* E recom */
+
   size_t           *xSpaceVector;
  
   unsigned char            **yVector;

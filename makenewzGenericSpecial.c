@@ -1243,7 +1243,8 @@ static void getVects(tree *tr, unsigned char **tipX1, unsigned char **tipX2, dou
         if(tr->useRecom)
         {
           slot = tr->td[0].ti[0].slot_p;
-          *x2_start = tr->rvec->tmpvectors[slot];
+          //*x2_start = tr->rvec->tmpvectors[slot];
+          *x2_start = tr->partitionData[model].tmpvectors[slot];
         }
         else
         /* E recom */
@@ -1264,7 +1265,8 @@ static void getVects(tree *tr, unsigned char **tipX1, unsigned char **tipX2, dou
         if(tr->useRecom)
         {
          slot = tr->td[0].ti[0].slot_q;
-          *x2_start = tr->rvec->tmpvectors[slot];
+          //*x2_start = tr->rvec->tmpvectors[slot];
+          *x2_start = tr->partitionData[model].tmpvectors[slot];
         }
         else
         /* E recom */
@@ -1293,10 +1295,12 @@ static void getVects(tree *tr, unsigned char **tipX1, unsigned char **tipX2, dou
     if(tr->useRecom)
     {
       slot = tr->td[0].ti[0].slot_p;
-      *x1_start = tr->rvec->tmpvectors[slot];
+      //*x1_start = tr->rvec->tmpvectors[slot];
+      *x1_start = tr->partitionData[model].tmpvectors[slot];
 
       slot = tr->td[0].ti[0].slot_q;
-      *x2_start = tr->rvec->tmpvectors[slot];
+      //*x2_start = tr->rvec->tmpvectors[slot];
+      *x2_start = tr->partitionData[model].tmpvectors[slot];
     }
     else
     /* E recom */

@@ -69,7 +69,7 @@ else
   ./raxmlLight -r $FACTOR -m GTRCAT -n ${NAME} -s ${DATADIR}/${SET} $PARTITION_CALL -t ${DATADIR}/${TREE} 
   cp RAxML_info.${NAME} brm_recom
   echo "*** run std"
-  (./raxmlLight -m GTRCAT -n ${NAME}_std -s ${DATADIR}/${SET} $PARTITION_CALL -t ${DATADIR}/${TREE} 2> err_std) > /dev/null
+  ./raxmlLight -m GTRCAT -n ${NAME}_std -s ${DATADIR}/${SET} $PARTITION_CALL -t ${DATADIR}/${TREE} > /dev/null
   cp RAxML_info.${NAME}_std brm_std
   #echo "*** run pthreads"
   #./raxmlLight-PTHREADS -r $FACTOR -T $NUM_THREADS -m GTRCAT -n ${NAME}_T${NUM_THREADS} -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} 

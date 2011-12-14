@@ -5090,9 +5090,10 @@ void newviewIterative (tree *tr)
               slot = tInfo->slot_p; 
               unpinAtomicSlot(tr->rvec, slot, tr->mxtips);
               pinAtomicNode(tr->rvec, tInfo->pNumber, slot, tr->mxtips);
-              x3_start = tr->rvec->tmpvectors[slot];
+              //x3_start = tr->rvec->tmpvectors[slot];
+              x3_start = tr->partitionData[model].tmpvectors[slot];
               assert(x3_start != NULL);
-              assert(tr->rvec->width == 4 * width);
+              //assert(tr->rvec->width == 4 * width);
             }
             else
             /* E recom */
@@ -5116,12 +5117,14 @@ void newviewIterative (tree *tr)
               slot = tInfo->slot_r; 
               unpinAtomicSlot(tr->rvec, slot, tr->mxtips);
               pinAtomicNode(tr->rvec, tInfo->rNumber, slot, tr->mxtips);
-              x2_start = tr->rvec->tmpvectors[slot];
+              //x2_start = tr->rvec->tmpvectors[slot];
+              x2_start = tr->partitionData[model].tmpvectors[slot];
 
               slot = tInfo->slot_p; 
               unpinAtomicSlot(tr->rvec, slot, tr->mxtips);
               pinAtomicNode(tr->rvec, tInfo->pNumber, slot, tr->mxtips);
-              x3_start = tr->rvec->tmpvectors[slot];
+              //x3_start = tr->rvec->tmpvectors[slot];
+              x3_start = tr->partitionData[model].tmpvectors[slot];
 
               unpin2 = tInfo->rNumber;
             }
@@ -5148,17 +5151,20 @@ void newviewIterative (tree *tr)
               slot = tInfo->slot_q; 
               unpinAtomicSlot(tr->rvec, slot, tr->mxtips);
               pinAtomicNode(tr->rvec, tInfo->qNumber, slot, tr->mxtips);
-              x1_start = tr->rvec->tmpvectors[slot];
+              //x1_start = tr->rvec->tmpvectors[slot];
+              x1_start = tr->partitionData[model].tmpvectors[slot];
 
               slot = tInfo->slot_r; 
               unpinAtomicSlot(tr->rvec, slot, tr->mxtips);
               pinAtomicNode(tr->rvec, tInfo->rNumber, slot, tr->mxtips);
-              x2_start = tr->rvec->tmpvectors[slot];
+              //x2_start = tr->rvec->tmpvectors[slot];
+              x2_start = tr->partitionData[model].tmpvectors[slot];
 
               slot = tInfo->slot_p; 
               unpinAtomicSlot(tr->rvec, slot, tr->mxtips);
               pinAtomicNode(tr->rvec, tInfo->pNumber, slot, tr->mxtips);
-              x3_start = tr->rvec->tmpvectors[slot];
+              //x3_start = tr->rvec->tmpvectors[slot];
+              x3_start = tr->partitionData[model].tmpvectors[slot];
 
               unpin2 = tInfo->rNumber;
               unpin1 = tInfo->qNumber;

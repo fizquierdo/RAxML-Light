@@ -17,11 +17,27 @@ boolean needsRecomp(recompVectors *rvec, nodeptr p, int mxtips)
   else
     return FALSE;
 }
+
+void allocRecompVectors(tree *tr, size_t width, int model)
+{
+  recompVectors *v = tr->rvec;
+  /* should be done per partition */
+  assert(v->numVectors > 0 && v->numVectors <= tr->mxtips - 2);
+  printBothOpen("Allocating space for %d inner vectors of width %d, part %d\n", v->numVectors, width, model);
+  tr->partitionData[model].tmpvectors = (double **)malloc_aligned(v->numVectors * sizeof(double *));
+  int i, j;
+  for(i=0; i<v->numVectors; i++)
+  {
+    tr->partitionData[model].tmpvectors[i] = (double *)malloc_aligned(width * sizeof(double));
+    for(j=0; j< width; j++)
+      tr->partitionData[model].tmpvectors[i][j] = INVALID_VALUE;
+  }
+}
     
-void allocRecompVectors(tree *tr, size_t width)
+void allocRecompVectorsInfo(tree *tr)
 {
   recompVectors *v;
-  int num_inner_nodes, num_vectors, i, j;
+  int num_inner_nodes, num_vectors, i;
   num_inner_nodes = tr->mxtips - 2;
   printBothOpen("recom frac %f \n", tr->vectorRecomFraction);
   assert(tr->vectorRecomFraction > 0.0);
@@ -33,17 +49,8 @@ void allocRecompVectors(tree *tr, size_t width)
   //if (num_vectors < 20) 
     //num_vectors = 20; // make my life easier
   v = (recompVectors *) malloc(sizeof(recompVectors));
-  v->width = width;
+  //v->width = width;
   v->numVectors = num_vectors; // use minimum bound theoretical
-  printBothOpen("Allocating space for %d inner vectors of width %d\n", v->numVectors, v->width);
-  /* should be done per partition */
-  v->tmpvectors = (double **)malloc_aligned(num_vectors * sizeof(double *));
-  for(i=0; i<num_vectors; i++)
-  {
-    v->tmpvectors[i] = (double *)malloc_aligned(width * sizeof(double));
-    for(j=0; j< width; j++)
-      v->tmpvectors[i][j] = INVALID_VALUE;
-  }
   /* init vectors tracking */
   v->iVector = (int *) malloc((size_t)num_vectors * sizeof(int));
   v->iVector_prev = (int *) malloc((size_t)num_vectors * sizeof(int));
@@ -130,9 +137,11 @@ void restore_strategy_state(tree *tr)
 void freeRecompVectors(recompVectors *v)
 {
   int i;
+  /*
   for(i=0; i<v->numVectors; i++)
     free(v->tmpvectors[i]);
   free(v->tmpvectors);
+  */
   free(v->iVector);
   free(v->iVector_prev);
   free(v->iNode);
@@ -170,25 +179,6 @@ boolean isNodePinned(recompVectors *rvec, int nodenum, int mxtips)
     return FALSE;
   else
     return TRUE;
-}
-boolean isNodePinnedAndActive(tree *tr, int nodenum)
-{
-  if (isTip(nodenum, tr->mxtips))
-    return TRUE;
-  assert(nodenum > tr->mxtips);
-  int slot;
-  slot = tr->rvec->iNode[nodenum-tr->mxtips-1];
-  if(slot == NODE_UNPINNED)
-  {
-    return FALSE; // because it is not pinned
-  }
-  else
-  {
-    if(tr->rvec->tmpvectors[slot][0] == INVALID_VALUE)
-      return FALSE; // because it is not computed
-    else
-      return TRUE;
-  }
 }
 void pinAtomicNode(recompVectors *v, int nodenum, int slot, int mxtips)
 {
@@ -491,72 +481,7 @@ int tipsPartialCountStlen(int maxTips, nodeptr p, recompVectors *rvec)
   return ntips;
 }
 
-/*  
-int traverseCountTipsPerSubtree(tree *tr, nodeptr p)
-{
-  int ntips1, ntips2;
-  printBothOpen("traverse at p %d - %d\n", p->number, p->back->number);
-  if(isTip(p->number, tr->mxtips))
-  {
-    return 1;
-  }
-  else
-  {
-    ntips1 = traverseCountTipsPerSubtree(tr, p->next->back);
-    ntips2 = traverseCountTipsPerSubtree(tr, p->next->next->back);
-    set_stlen(tr, p, ntips1 + ntips2);
-  }
-  return ntips1 + ntips2;
-}
-*/
 
-boolean isNodeScheduled(tree *tr, int nodenum)
-{
-    //is the node shcheduled in the traversal?
-    traversalInfo *ti   = tr->td[0].ti;
-    int i; 
-    for(i = 1; i < tr->td[0].count; i++)
-    {
-      traversalInfo *tInfo = &ti[i];
-      if (tInfo->pNumber == nodenum)
-        return TRUE;
-    }
-    return FALSE;
-}
-void protectNode(tree *tr, int nodenum)
-{
-  if (isTip(nodenum, tr->mxtips))
-    return;
-  int slot;
-  if (isNodePinnedAndActive(tr, nodenum))
-  {
-    assert(nodenum > tr->mxtips);
-    slot = tr->rvec->iNode[nodenum - tr->mxtips - 1];
-    if (slot != NODE_UNPINNED)
-    {
-      assert(slot >= 0 && slot < tr->rvec->numVectors);
-      if(tr->rvec->tmpvectors[slot][0] != INVALID_VALUE)
-      {
-        if(tr->rvec->unpinnable[slot])
-        {
-          //printBothOpen("WARNING: slot %d, node %d are unprotected, protecting...\n", slot, nodenum);
-          tr->rvec->unpinnable[slot] = FALSE;
-        }
-      }
-    }
-  }
-}
-void protectNodesInTraversal(tree *tr)
-{
-    traversalInfo *ti   = tr->td[0].ti;
-    int i, slot; 
-    for(i = 1; i < tr->td[0].count; i++)
-    {
-      traversalInfo *tInfo = &ti[i];
-      protectNode(tr, tInfo->qNumber);
-      protectNode(tr, tInfo->rNumber);
-    }
-}
 void reset_stlen(tree *tr)
 {
   int num_inner_nodes = tr->mxtips - 2;
