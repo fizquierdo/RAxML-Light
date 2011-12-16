@@ -4849,125 +4849,125 @@ void computeTraversalInfo(nodeptr p, traversalInfo *ti, int *counter, int maxTip
 void computeTraversalInfoMulti(nodeptr p, traversalInfo *ti, int *counter, int maxTips, int model)
 {
   if(isTip(p->number, maxTips))
-    {
-      assert(p->isPresent[model / MASK_LENGTH] & mask32[model % MASK_LENGTH]);
-      assert(p->backs[model]);
-      return;
-    }
+  {
+    assert(p->isPresent[model / MASK_LENGTH] & mask32[model % MASK_LENGTH]);
+    assert(p->backs[model]);
+    return;
+  }
 
- 
+
   assert(p->backs[model]);
 
   {     
     nodeptr q = p->next->backs[model];
     nodeptr r = p->next->next->backs[model];
-    
+
     assert(p == p->next->next->next);
-      
+
     assert(q && r);
 
     if(isTip(r->number, maxTips) && isTip(q->number, maxTips))
+    {	  
+      while (! p->xs[model])
       {	  
-	while (! p->xs[model])
-	 {	  
-	   if (! p->xs[model])
-	     getxsnode(p, model); 	   
-	 }
+        if (! p->xs[model])
+          getxsnode(p, model); 	   
+      }
 
-	assert(p->xs[model]);
+      assert(p->xs[model]);
 
-	ti[*counter].tipCase = TIP_TIP; 
-	ti[*counter].pNumber = p->number;
-	ti[*counter].qNumber = q->number;
-	ti[*counter].rNumber = r->number;
-	
-	{
-	  double z;
-	  z = q->z[model];
-	  z = (z > zmin) ? log(z) : log(zmin);
-	  ti[*counter].qz[model] = z;
-	  
-	  z = r->z[model];
-	  z = (z > zmin) ? log(z) : log(zmin);
-	  ti[*counter].rz[model] = z;	    
-	}     
-	*counter = *counter + 1;
-      }  
-    else
+      ti[*counter].tipCase = TIP_TIP; 
+      ti[*counter].pNumber = p->number;
+      ti[*counter].qNumber = q->number;
+      ti[*counter].rNumber = r->number;
+
       {
-	if(isTip(r->number, maxTips) || isTip(q->number, maxTips))
-	  {		
-	    nodeptr tmp;
+        double z;
+        z = q->z[model];
+        z = (z > zmin) ? log(z) : log(zmin);
+        ti[*counter].qz[model] = z;
 
-	    if(isTip(r->number, maxTips))
-	      {
-		tmp = r;
-		r = q;
-		q = tmp;
-	      }
+        z = r->z[model];
+        z = (z > zmin) ? log(z) : log(zmin);
+        ti[*counter].rz[model] = z;	    
+      }     
+      *counter = *counter + 1;
+    }  
+    else
+    {
+      if(isTip(r->number, maxTips) || isTip(q->number, maxTips))
+      {		
+        nodeptr tmp;
 
-	    while ((! p->xs[model]) || (! r->xs[model])) 
-	      {	 			
-		if (! r->xs[model]) 
-		  computeTraversalInfoMulti(r, ti, counter, maxTips, model);
-		if (! p->xs[model]) 
-		  getxsnode(p, model);	
-	      }
-	    	   
-	    assert(p->xs[model] && r->xs[model]);
+        if(isTip(r->number, maxTips))
+        {
+          tmp = r;
+          r = q;
+          q = tmp;
+        }
 
-	    ti[*counter].tipCase = TIP_INNER; 
-	    ti[*counter].pNumber = p->number;
-	    ti[*counter].qNumber = q->number;
-	    ti[*counter].rNumber = r->number;
-	   
-	    {
-	      double z;
-	      z = q->z[model];
-	      z = (z > zmin) ? log(z) : log(zmin);
-	      ti[*counter].qz[model] = z;
-	      
-	      z = r->z[model];
-	      z = (z > zmin) ? log(z) : log(zmin);
-		ti[*counter].rz[model] = z;		
-	    }   
-	    
-	    *counter = *counter + 1;
-	  }
-	else
-	  {	 
+        while ((! p->xs[model]) || (! r->xs[model])) 
+        {	 			
+          if (! r->xs[model]) 
+            computeTraversalInfoMulti(r, ti, counter, maxTips, model);
+          if (! p->xs[model]) 
+            getxsnode(p, model);	
+        }
 
-	    while ((! p->xs[model]) || (! q->xs[model]) || (! r->xs[model])) 
-	      {		
-		if (! q->xs[model]) 
-		  computeTraversalInfoMulti(q, ti, counter, maxTips, model);
-		if (! r->xs[model]) 
-		  computeTraversalInfoMulti(r, ti, counter, maxTips, model);
-		if (! p->xs[model]) 
-		  getxsnode(p, model);	
-	      }
+        assert(p->xs[model] && r->xs[model]);
 
-	    assert(p->xs[model] && r->xs[model] && q->xs[model]);
+        ti[*counter].tipCase = TIP_INNER; 
+        ti[*counter].pNumber = p->number;
+        ti[*counter].qNumber = q->number;
+        ti[*counter].rNumber = r->number;
 
-	    ti[*counter].tipCase = INNER_INNER; 
-	    ti[*counter].pNumber = p->number;
-	    ti[*counter].qNumber = q->number;
-	    ti[*counter].rNumber = r->number;
-	   
-	    {
-	      double z;
-	      z = q->z[model];
-	      z = (z > zmin) ? log(z) : log(zmin);
-	      ti[*counter].qz[model] = z;
-	      
-	      z = r->z[model];
-	      z = (z > zmin) ? log(z) : log(zmin);
-	      ti[*counter].rz[model] = z;		
-	    }   
-	    
-	    *counter = *counter + 1;
-	  }
-      }    
+        {
+          double z;
+          z = q->z[model];
+          z = (z > zmin) ? log(z) : log(zmin);
+          ti[*counter].qz[model] = z;
+
+          z = r->z[model];
+          z = (z > zmin) ? log(z) : log(zmin);
+          ti[*counter].rz[model] = z;		
+        }   
+
+        *counter = *counter + 1;
+      }
+      else
+      {	 
+
+        while ((! p->xs[model]) || (! q->xs[model]) || (! r->xs[model])) 
+        {		
+          if (! q->xs[model]) 
+            computeTraversalInfoMulti(q, ti, counter, maxTips, model);
+          if (! r->xs[model]) 
+            computeTraversalInfoMulti(r, ti, counter, maxTips, model);
+          if (! p->xs[model]) 
+            getxsnode(p, model);	
+        }
+
+        assert(p->xs[model] && r->xs[model] && q->xs[model]);
+
+        ti[*counter].tipCase = INNER_INNER; 
+        ti[*counter].pNumber = p->number;
+        ti[*counter].qNumber = q->number;
+        ti[*counter].rNumber = r->number;
+
+        {
+          double z;
+          z = q->z[model];
+          z = (z > zmin) ? log(z) : log(zmin);
+          ti[*counter].qz[model] = z;
+
+          z = r->z[model];
+          z = (z > zmin) ? log(z) : log(zmin);
+          ti[*counter].rz[model] = z;		
+        }   
+
+        *counter = *counter + 1;
+      }
+    }    
   }
 
 }
@@ -5426,6 +5426,8 @@ void newviewGeneric (tree *tr, nodeptr p)
 
 void newviewGenericMasked(tree *tr, nodeptr p)
 {
+
+  assert(!tr->useRecom);
   if(isTip(p->number, tr->mxtips))
     return;
 

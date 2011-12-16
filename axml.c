@@ -2620,7 +2620,7 @@ static void allocNodex (tree *tr)
     memoryRequirements = 0;
 
   if(tr->useRecom)
-    allocRecompVectorsInfo(tr, memoryRequirements);
+    allocRecompVectorsInfo(tr);
   else
     tr->rvec = NULL;
 
@@ -2674,19 +2674,6 @@ static void allocNodex (tree *tr)
   tr->perSiteLL       = (double *)malloc((size_t)tr->cdta->endsite * sizeof(double));
   assert(tr->perSiteLL != NULL);
 
-  /* recom */
-  /*
-  if(tr->useRecom)
-  {
-    assert(tr->NumberOfModels == 1); 
-    allocRecompVectorsInfo(tr, memoryRequirements);
-  }
-  else
-  {
-    tr->rvec = NULL;
-  }
-  */
-  /* E recom */
 
   tr->sumBuffer  = (double *)malloc_aligned(memoryRequirements * sizeof(double));
   assert(tr->sumBuffer != NULL);
@@ -5281,6 +5268,11 @@ void allocNodex(tree *tr, int tid, int n)
   else
     computeFraction(tr, tid, n);
 
+  if(tr->useRecom)
+    allocRecompVectorsInfo(tr);
+  else
+    tr->rvec = NULL;
+
   allocPartitions(tr);
 
   if(tr->rateHetModel == CAT)
@@ -5300,6 +5292,10 @@ void allocNodex(tree *tr, int tid, int n)
     if(width > 0)
     {
       memoryRequirements += (size_t)(tr->discreteRateCategories) * (size_t)(tr->partitionData[model].states) * width;
+    /* recom */
+    if(tr->useRecom)
+      allocRecompVectors(tr, memoryRequirements, model);
+    /* E recom */
 
       tr->partitionData[model].gapVectorLength = ((int)width / 32) + 1;
 
@@ -5330,10 +5326,6 @@ void allocNodex(tree *tr, int tid, int n)
   }
 
 
-  /* recom */
-  if(tr->useRecom)
-    allocRecompVectorsInfo(tr, memoryRequirements);
-  /* E recom */
 
   tr->sumBuffer  = (double *)malloc_aligned(memoryRequirements * sizeof(double));
   assert(tr->sumBuffer != NULL);
@@ -6393,10 +6385,13 @@ int main (int argc, char *argv[])
 
       modOptJoerg(tr, adef);
 #else
-         evaluateGenericInitrav(tr, tr->start);	 
-         treeEvaluate(tr, 1); 	 	 	 	 	 
-         printRecomTree(tr, FALSE, "after eval");
-         computeBIGRAPID(tr, adef, TRUE); 	     
+      printBothOpen("evaluateGenericInit... \n");
+      evaluateGenericInitrav(tr, tr->start);	 
+      printBothOpen("treeEval... \n");
+      treeEvaluate(tr, 1); 	 	 	 	 	 
+      printRecomTree(tr, FALSE, "after eval");
+      printBothOpen("ready to computeBIG... \n");
+      computeBIGRAPID(tr, adef, TRUE); 	     
       /* recom */
       printBothOpen("Traversal freq after search \n");
       printTraversalInfo(tr);

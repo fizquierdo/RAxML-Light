@@ -1424,15 +1424,15 @@ void makenewzIterative(tree *tr)
           assert(0);
       }
     }
-    /* recom */
-    /* mark VR nodes for unpinning */
-    if(tr->useRecom)
-    {
-      unpinNode(tr->rvec, tr->td[model].ti[0].pNumber, tr->mxtips);
-      unpinNode(tr->rvec, tr->td[model].ti[0].qNumber, tr->mxtips);
-    }
-    /* E recom */
   }
+  /* recom */
+  /* mark VR nodes for unpinning */
+  if(tr->useRecom)
+  {
+    unpinNode(tr->rvec, tr->td[0].ti[0].pNumber, tr->mxtips);
+    unpinNode(tr->rvec, tr->td[0].ti[0].qNumber, tr->mxtips);
+  }
+  /* E recom */
 }
 
 
@@ -1755,6 +1755,7 @@ void makenewzGeneric(tree *tr, nodeptr p, nodeptr q, double *z0, int maxiter, do
 
   if(tr->multiGene)
   {
+    assert(!tr->useRecom);
     int sum = 0;
 
     for(i = 0; i < tr->numBranches; i++)      
