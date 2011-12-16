@@ -53,9 +53,9 @@ if [ $1 = cmp ] ; then
   rm *.o
   rm raxmlLight-PTHREADS
   make -f Makefile.SSE3.PTHREADS.gcc
-  #rm *.o
-  #rm raxmlLight-MPI
-  #make -f Makefile.SSE3.MPI
+  rm *.o
+  rm raxmlLight-MPI
+  make -f Makefile.SSE3.MPI
 fi
 
 #run
@@ -73,12 +73,11 @@ else
   ./raxmlLight -m GTRCAT -n ${NAME}_std -s ${DATADIR}/${SET} $PARTITION_CALL -t ${DATADIR}/${TREE} > /dev/null
   cp RAxML_info.${NAME}_std brm_std
   echo "*** run pthreads"
-  ./raxmlLight-PTHREADS -r $FACTOR -T $NUM_THREADS -m GTRCAT -n ${NAME}_T${NUM_THREADS} -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} 
+  ./raxmlLight-PTHREADS -r $FACTOR -T $NUM_THREADS -m GTRCAT -n ${NAME}_T${NUM_THREADS} -s ${DATADIR}/${SET} $PARTITION_CALL -t ${DATADIR}/${TREE} 
   cp RAxML_info.${NAME}_T${NUM_THREADS} brm_treads
-  #echo "*** run mpi"
-  #mpirun.openmpi -np 4 ./raxmlLight-MPI -r $FACTOR -m GTRCAT -n ${NAME}_mpi -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} 
-  #mpirun.openmpi -np 2 ./raxmlLight-MPI -m GTRCAT -n ${NAME}_mpi -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} 
-  #cp RAxML_info.${NAME}_T${NUM_THREADS} brm_mpi
+  echo "*** run mpi"
+  mpirun.openmpi -np 4 ./raxmlLight-MPI -r $FACTOR -m GTRCAT -n ${NAME}_mpi -s ${DATADIR}/${SET} $PARTITION_CALL -t ${DATADIR}/${TREE} 
+  cp RAxML_info.${NAME}_mpi brm_mpi
   tail brm*
 fi
 

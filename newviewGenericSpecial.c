@@ -4988,6 +4988,7 @@ void newviewIterative (tree *tr)
 #else
   countTraversal(tr);
 #endif
+  int slot = -1, unpin1 = -1, unpin2 = -1;
   /* E recom */
 
   for(i = 1; i < tr->td[0].count; i++)
@@ -5076,9 +5077,6 @@ void newviewIterative (tree *tr)
           tr->partitionData[model].xSpaceVector[(tInfo->pNumber - tr->mxtips - 1)] = requiredLength;		 
         }
 
-        /* recom */
-        int slot = -1, unpin1 = -1, unpin2 = -1;
-        /* E recom */
         switch(tInfo->tipCase)
         {
           case TIP_TIP:		  
@@ -5096,7 +5094,7 @@ void newviewIterative (tree *tr)
               //assert(tr->rvec->width == 4 * width);
             }
             else
-            /* E recom */
+              /* E recom */
             {
               x3_start = tr->partitionData[model].xVector[tInfo->pNumber - tr->mxtips - 1];			  
             }
@@ -5129,7 +5127,7 @@ void newviewIterative (tree *tr)
               unpin2 = tInfo->rNumber;
             }
             else
-            /* E recom */
+              /* E recom */
             {
               x2_start = tr->partitionData[model].xVector[tInfo->rNumber - tr->mxtips - 1];
               x3_start = tr->partitionData[model].xVector[tInfo->pNumber - tr->mxtips - 1];	
@@ -5170,7 +5168,7 @@ void newviewIterative (tree *tr)
               unpin1 = tInfo->qNumber;
             }
             else
-            /* E recom */
+              /* E recom */
             {
               x1_start       = tr->partitionData[model].xVector[tInfo->qNumber - tr->mxtips - 1];
               x2_start       = tr->partitionData[model].xVector[tInfo->rNumber - tr->mxtips - 1];
@@ -5341,15 +5339,6 @@ void newviewIterative (tree *tr)
           default:
             assert(0);
         }
-        /* recom */
-          if(tr->useRecom)
-          {
-            assert(x3_start[0] != INVALID_VALUE);
-
-            unpinNode(tr->rvec, unpin1, tr->mxtips);
-            unpinNode(tr->rvec, unpin2, tr->mxtips);
-          }
-        /* E recom */
 
 
         tr->partitionData[model].globalScaler[tInfo->pNumber] = 
@@ -5359,6 +5348,14 @@ void newviewIterative (tree *tr)
         assert(tr->partitionData[model].globalScaler[tInfo->pNumber] < INT_MAX);
       }	
     }
+    /* recom */
+    if(tr->useRecom)
+    {
+      unpinNode(tr->rvec, unpin1, tr->mxtips);
+      unpinNode(tr->rvec, unpin2, tr->mxtips);
+    }
+    /* E recom */
+
   }
 }
 

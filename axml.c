@@ -5048,30 +5048,30 @@ static void threadFixModelIndices(tree *tr, tree *localTree, int tid, int n)
     memoryRequirements = 0;
 
   for(model = 0; model < (size_t)localTree->NumberOfModels; model++)
-    {
-      localTree->partitionData[model].lower      = tr->partitionData[model].lower;
-      localTree->partitionData[model].upper      = tr->partitionData[model].upper;
-    }
-  
+  {
+    localTree->partitionData[model].lower      = tr->partitionData[model].lower;
+    localTree->partitionData[model].upper      = tr->partitionData[model].upper;
+  }
+
   if(tr->manyPartitions)
     computeFractionMany(localTree, tid, n);
   else
     computeFraction(localTree, tid, n);
 
   for(model = 0, offset = 0, countOffset = 0; model < (size_t)localTree->NumberOfModels; model++)
-    {           
-      localTree->partitionData[model].sumBuffer       = &localTree->sumBuffer[offset];
-      
-      localTree->partitionData[model].perSiteLL    = &localTree->perSiteLLPtr[countOffset];          
+  {           
+    localTree->partitionData[model].sumBuffer       = &localTree->sumBuffer[offset];
 
-      localTree->partitionData[model].wgt          = &localTree->wgtPtr[countOffset];
-     
-      localTree->partitionData[model].rateCategory = &localTree->rateCategoryPtr[countOffset];     
+    localTree->partitionData[model].perSiteLL    = &localTree->perSiteLLPtr[countOffset];          
 
-      countOffset += localTree->partitionData[model].width;
+    localTree->partitionData[model].wgt          = &localTree->wgtPtr[countOffset];
 
-      offset += (size_t)(tr->discreteRateCategories) * (size_t)(tr->partitionData[model].states) * (size_t)(localTree->partitionData[model].width);      
-    }
+    localTree->partitionData[model].rateCategory = &localTree->rateCategoryPtr[countOffset];     
+
+    countOffset += localTree->partitionData[model].width;
+
+    offset += (size_t)(tr->discreteRateCategories) * (size_t)(tr->partitionData[model].states) * (size_t)(localTree->partitionData[model].width);      
+  }
 
   myLength           = countOffset;
   memoryRequirements = offset;
@@ -5081,99 +5081,99 @@ static void threadFixModelIndices(tree *tr, tree *localTree, int tid, int n)
 
 
   for(i = 0; i < (size_t)localTree->mxtips; i++)
+  {
+    for(model = 0, offset = 0, countOffset = 0; model < (size_t)localTree->NumberOfModels; model++)
     {
-      for(model = 0, offset = 0, countOffset = 0; model < (size_t)localTree->NumberOfModels; model++)
-	{
-	  localTree->partitionData[model].yVector[i+1]   = &localTree->y_ptr[i * myLength + countOffset];
-	  countOffset +=  localTree->partitionData[model].width;
-	}
-      assert(countOffset == myLength);
+      localTree->partitionData[model].yVector[i+1]   = &localTree->y_ptr[i * myLength + countOffset];
+      countOffset +=  localTree->partitionData[model].width;
     }
+    assert(countOffset == myLength);
+  }
 
   for(i = 0; i < (size_t)localTree->innerNodes; i++)
+  {
+    for(model = 0, offset = 0, countOffset = 0; model < (size_t)localTree->NumberOfModels; model++)
     {
-      for(model = 0, offset = 0, countOffset = 0; model < (size_t)localTree->NumberOfModels; model++)
-	{
-	  size_t 
-	    width = localTree->partitionData[model].width;	  	  
-	  	 
-	  localTree->partitionData[model].xVector[i]   = (double*)NULL;
-	      	 
-	  countOffset += width;
+      size_t 
+        width = localTree->partitionData[model].width;	  	  
 
-	  offset += (size_t)(tr->discreteRateCategories) * (size_t)(tr->partitionData[model].states) * width;
-	  
-	}
-      assert(countOffset == myLength);
+      localTree->partitionData[model].xVector[i]   = (double*)NULL;
+
+      countOffset += width;
+
+      offset += (size_t)(tr->discreteRateCategories) * (size_t)(tr->partitionData[model].states) * width;
+
     }
+    assert(countOffset == myLength);
+  }
 
   if(tr->manyPartitions)
     for(model = 0, globalCounter = 0; model < (size_t)localTree->NumberOfModels; model++)
+    {
+      if(isThisMyPartition(localTree, tid, model, n))
       {
-	if(isThisMyPartition(localTree, tid, model, n))
-	  {
-	    assert(localTree->partitionData[model].upper - localTree->partitionData[model].lower == localTree->partitionData[model].width);
-	    
-	    for(localCounter = 0, i = (size_t)localTree->partitionData[model].lower;  i < (size_t)localTree->partitionData[model].upper; i++, localCounter++)
-	      {	    
-		localTree->partitionData[model].wgt[localCounter]          = tr->cdta->aliaswgt[globalCounter];	      	     
-		localTree->partitionData[model].rateCategory[localCounter] = tr->cdta->rateCategory[globalCounter];	      
-		
-		for(j = 1; j <= (size_t)localTree->mxtips; j++)
-		  localTree->partitionData[model].yVector[j][localCounter] = tr->yVector[j][globalCounter]; 	     
-		
-		globalCounter++;
-	      }
-	  }
-      else
-	globalCounter += (localTree->partitionData[model].upper - localTree->partitionData[model].lower);
+        assert(localTree->partitionData[model].upper - localTree->partitionData[model].lower == localTree->partitionData[model].width);
+
+        for(localCounter = 0, i = (size_t)localTree->partitionData[model].lower;  i < (size_t)localTree->partitionData[model].upper; i++, localCounter++)
+        {	    
+          localTree->partitionData[model].wgt[localCounter]          = tr->cdta->aliaswgt[globalCounter];	      	     
+          localTree->partitionData[model].rateCategory[localCounter] = tr->cdta->rateCategory[globalCounter];	      
+
+          for(j = 1; j <= (size_t)localTree->mxtips; j++)
+            localTree->partitionData[model].yVector[j][localCounter] = tr->yVector[j][globalCounter]; 	     
+
+          globalCounter++;
+        }
       }
+      else
+        globalCounter += (localTree->partitionData[model].upper - localTree->partitionData[model].lower);
+    }
   else
     for(model = 0, globalCounter = 0; model < (size_t)localTree->NumberOfModels; model++)
-      {
-	for(localCounter = 0, i = (size_t)localTree->partitionData[model].lower;  i < (size_t)localTree->partitionData[model].upper; i++)
-	  {
-	    if(i % (size_t)n == (size_t)tid)
-	      {
-		localTree->partitionData[model].wgt[localCounter]          = tr->cdta->aliaswgt[globalCounter];	      	     
-		localTree->partitionData[model].rateCategory[localCounter] = tr->cdta->rateCategory[globalCounter];	      
-		
-		for(j = 1; j <= (size_t)localTree->mxtips; j++)
-		  localTree->partitionData[model].yVector[j][localCounter] = tr->yVector[j][globalCounter]; 	     
-		
-		localCounter++;
-	      }
-	    globalCounter++;
-	  }
-      }
-  
-  for(model = 0; model < (size_t)localTree->NumberOfModels; model++)
     {
-      int        
-	undetermined = getUndetermined(localTree->partitionData[model].dataType);
-      
-      size_t
-	width =  localTree->partitionData[model].width;
-      
-      if(width > 0)
-	{
-	  localTree->partitionData[model].gapVectorLength = ((int)width / 32) + 1;
-          
-	  memset(localTree->partitionData[model].gapVector, 0, localTree->partitionData[model].initialGapVectorSize);
-     
-	  if(localTree->saveMemory)
-	    {
-	      for(j = 1; j <= (size_t)(localTree->mxtips); j++)
-		for(i = 0; i < width; i++)
-		  if(localTree->partitionData[model].yVector[j][i] == undetermined)
-		    localTree->partitionData[model].gapVector[localTree->partitionData[model].gapVectorLength * j + i / 32] |= mask32[i % 32];
-	    }
-	}
-      else
-	{
-	  localTree->partitionData[model].gapVectorLength = 0;
-	}
+      for(localCounter = 0, i = (size_t)localTree->partitionData[model].lower;  i < (size_t)localTree->partitionData[model].upper; i++)
+      {
+        if(i % (size_t)n == (size_t)tid)
+        {
+          localTree->partitionData[model].wgt[localCounter]          = tr->cdta->aliaswgt[globalCounter];	      	     
+          localTree->partitionData[model].rateCategory[localCounter] = tr->cdta->rateCategory[globalCounter];	      
+
+          for(j = 1; j <= (size_t)localTree->mxtips; j++)
+            localTree->partitionData[model].yVector[j][localCounter] = tr->yVector[j][globalCounter]; 	     
+
+          localCounter++;
+        }
+        globalCounter++;
+      }
     }
+
+  for(model = 0; model < (size_t)localTree->NumberOfModels; model++)
+  {
+    int        
+      undetermined = getUndetermined(localTree->partitionData[model].dataType);
+
+    size_t
+      width =  localTree->partitionData[model].width;
+
+    if(width > 0)
+    {
+      localTree->partitionData[model].gapVectorLength = ((int)width / 32) + 1;
+
+      memset(localTree->partitionData[model].gapVector, 0, localTree->partitionData[model].initialGapVectorSize);
+
+      if(localTree->saveMemory)
+      {
+        for(j = 1; j <= (size_t)(localTree->mxtips); j++)
+          for(i = 0; i < width; i++)
+            if(localTree->partitionData[model].yVector[j][i] == undetermined)
+              localTree->partitionData[model].gapVector[localTree->partitionData[model].gapVectorLength * j + i / 32] |= mask32[i % 32];
+      }
+    }
+    else
+    {
+      localTree->partitionData[model].gapVectorLength = 0;
+    }
+  }
 }
 
 
@@ -5184,69 +5184,69 @@ static void initPartition(tree *tr, tree *localTree, int tid)
   localTree->threadID = tid; 
 
   if(tid > 0)
+  {
+    int totalLength = 0;
+
+    localTree->rateHetModel            = tr->rateHetModel;
+    localTree->saveMemory              = tr->saveMemory;
+    localTree->useGappedImplementation = tr->useGappedImplementation;
+    localTree->innerNodes              = tr->innerNodes;
+
+    localTree->maxCategories           = tr->maxCategories;
+
+    localTree->originalCrunchedLength  = tr->originalCrunchedLength;
+    localTree->NumberOfModels          = tr->NumberOfModels;
+    localTree->mxtips                  = tr->mxtips;
+    localTree->multiBranch             = tr->multiBranch;
+    localTree->multiGene               = tr->multiGene;
+    assert(localTree->multiGene == 0);
+    localTree->numBranches             = tr->numBranches;
+    localTree->lhs                     = (double*)malloc(sizeof(double)   * localTree->originalCrunchedLength);
+    localTree->executeModel            = (boolean*)malloc(sizeof(boolean) * localTree->NumberOfModels);
+    localTree->perPartitionLH          = (double*)malloc(sizeof(double)   * localTree->NumberOfModels);
+    localTree->storedPerPartitionLH    = (double*)malloc(sizeof(double)   * localTree->NumberOfModels);
+
+    localTree->fracchanges = (double*)malloc(sizeof(double)   * localTree->NumberOfModels);
+    localTree->partitionContributions = (double*)malloc(sizeof(double)   * localTree->NumberOfModels);
+
+    localTree->partitionData = (pInfo*)malloc(sizeof(pInfo) * localTree->NumberOfModels);
+
+    /* extend for multi-branch */
+    localTree->td[0].count = 0;
+    localTree->td[0].ti    = (traversalInfo *)malloc(sizeof(traversalInfo) * localTree->mxtips);
+
+    localTree->cdta               = (cruncheddata*)malloc(sizeof(cruncheddata));
+    localTree->cdta->patrat       = (double*)malloc(sizeof(double) * localTree->originalCrunchedLength);
+    localTree->cdta->patratStored = (double*)malloc(sizeof(double) * localTree->originalCrunchedLength);      
+
+    localTree->discreteRateCategories = tr->discreteRateCategories;     
+
+    for(model = 0; model < localTree->NumberOfModels; model++)
     {
-      int totalLength = 0;
-
-      localTree->rateHetModel            = tr->rateHetModel;
-      localTree->saveMemory              = tr->saveMemory;
-      localTree->useGappedImplementation = tr->useGappedImplementation;
-      localTree->innerNodes              = tr->innerNodes;
-     
-      localTree->maxCategories           = tr->maxCategories;
-      
-      localTree->originalCrunchedLength  = tr->originalCrunchedLength;
-      localTree->NumberOfModels          = tr->NumberOfModels;
-      localTree->mxtips                  = tr->mxtips;
-      localTree->multiBranch             = tr->multiBranch;
-      localTree->multiGene               = tr->multiGene;
-      assert(localTree->multiGene == 0);
-      localTree->numBranches             = tr->numBranches;
-      localTree->lhs                     = (double*)malloc(sizeof(double)   * localTree->originalCrunchedLength);
-      localTree->executeModel            = (boolean*)malloc(sizeof(boolean) * localTree->NumberOfModels);
-      localTree->perPartitionLH          = (double*)malloc(sizeof(double)   * localTree->NumberOfModels);
-      localTree->storedPerPartitionLH    = (double*)malloc(sizeof(double)   * localTree->NumberOfModels);
-
-      localTree->fracchanges = (double*)malloc(sizeof(double)   * localTree->NumberOfModels);
-      localTree->partitionContributions = (double*)malloc(sizeof(double)   * localTree->NumberOfModels);
-
-      localTree->partitionData = (pInfo*)malloc(sizeof(pInfo) * localTree->NumberOfModels);
-
-      /* extend for multi-branch */
-      localTree->td[0].count = 0;
-      localTree->td[0].ti    = (traversalInfo *)malloc(sizeof(traversalInfo) * localTree->mxtips);
-
-      localTree->cdta               = (cruncheddata*)malloc(sizeof(cruncheddata));
-      localTree->cdta->patrat       = (double*)malloc(sizeof(double) * localTree->originalCrunchedLength);
-      localTree->cdta->patratStored = (double*)malloc(sizeof(double) * localTree->originalCrunchedLength);      
-
-      localTree->discreteRateCategories = tr->discreteRateCategories;     
-
-      for(model = 0; model < localTree->NumberOfModels; model++)
-	{
-	  localTree->partitionData[model].numberOfCategories    = tr->partitionData[model].numberOfCategories;
-	  localTree->partitionData[model].states     = tr->partitionData[model].states;
-	  localTree->partitionData[model].maxTipStates    = tr->partitionData[model].maxTipStates;
-	  localTree->partitionData[model].dataType   = tr->partitionData[model].dataType;
-	  localTree->partitionData[model].protModels = tr->partitionData[model].protModels;
-	  localTree->partitionData[model].protFreqs  = tr->partitionData[model].protFreqs;
-	  localTree->partitionData[model].mxtips     = tr->partitionData[model].mxtips;
-	  localTree->partitionData[model].lower      = tr->partitionData[model].lower;
-	  localTree->partitionData[model].upper      = tr->partitionData[model].upper;
-	  localTree->executeModel[model]             = TRUE;
-	  localTree->perPartitionLH[model]           = 0.0;
-	  localTree->storedPerPartitionLH[model]     = 0.0;
-	  totalLength += (localTree->partitionData[model].upper -  localTree->partitionData[model].lower);
-	}
-
-      assert(totalLength == localTree->originalCrunchedLength);
-      /* recomp */
-      localTree->vectorRecomFraction = tr->vectorRecomFraction;
-      localTree->useRecom = tr->useRecom;
-      localTree->rvec = tr->rvec;
-      localTree->travCounter = tr->travCounter;
-      localTree->verbose = tr->verbose;
-      /* E recomp */
+      localTree->partitionData[model].numberOfCategories    = tr->partitionData[model].numberOfCategories;
+      localTree->partitionData[model].states     = tr->partitionData[model].states;
+      localTree->partitionData[model].maxTipStates    = tr->partitionData[model].maxTipStates;
+      localTree->partitionData[model].dataType   = tr->partitionData[model].dataType;
+      localTree->partitionData[model].protModels = tr->partitionData[model].protModels;
+      localTree->partitionData[model].protFreqs  = tr->partitionData[model].protFreqs;
+      localTree->partitionData[model].mxtips     = tr->partitionData[model].mxtips;
+      localTree->partitionData[model].lower      = tr->partitionData[model].lower;
+      localTree->partitionData[model].upper      = tr->partitionData[model].upper;
+      localTree->executeModel[model]             = TRUE;
+      localTree->perPartitionLH[model]           = 0.0;
+      localTree->storedPerPartitionLH[model]     = 0.0;
+      totalLength += (localTree->partitionData[model].upper -  localTree->partitionData[model].lower);
     }
+
+    assert(totalLength == localTree->originalCrunchedLength);
+    /* recomp */
+    localTree->vectorRecomFraction = tr->vectorRecomFraction;
+    localTree->useRecom = tr->useRecom;
+    localTree->rvec = tr->rvec;
+    localTree->travCounter = tr->travCounter;
+    localTree->verbose = tr->verbose;
+    /* E recomp */
+  }
 
   for(model = 0; model < localTree->NumberOfModels; model++)
     localTree->partitionData[model].width        = 0;
@@ -5428,57 +5428,57 @@ static void execFunction(tree *tr, tree *localTree, int tid, int n)
 
   currentJob = threadJob >> 16;
 
- 
-  
+
+
   switch(currentJob)
-    {            
+  {            
     case THREAD_INIT_PARTITION:
-     
+
       localTree->estimatePerSiteAA = tr->estimatePerSiteAA;
-     
-      
+
+
       localTree->manyPartitions = tr->manyPartitions;
       if(localTree->manyPartitions && tid > 0)     
-	{
-	  localTree->NumberOfModels = tr->NumberOfModels;
-	  localTree->partitionAssignment = (int*)malloc(sizeof(int) * localTree->NumberOfModels);
-	  memcpy(localTree->partitionAssignment, tr->partitionAssignment, localTree->NumberOfModels * sizeof(int));
-	}
+      {
+        localTree->NumberOfModels = tr->NumberOfModels;
+        localTree->partitionAssignment = (int*)malloc(sizeof(int) * localTree->NumberOfModels);
+        memcpy(localTree->partitionAssignment, tr->partitionAssignment, localTree->NumberOfModels * sizeof(int));
+      }
 
       initPartition(tr, localTree, tid);     
       allocNodex(localTree, tid, n);
       threadFixModelIndices(tr, localTree, tid, n);
 
-     
-      
+
+
       break;      
     case THREAD_EVALUATE:
       sendTraversalInfo(localTree, tr);
       result = evaluateIterative(localTree, FALSE);
 
       if(localTree->NumberOfModels > 1)
-	{
-	  for(model = 0; model < localTree->NumberOfModels; model++)
-	    reductionBuffer[tid * localTree->NumberOfModels + model] = localTree->perPartitionLH[model];
-	}
+      {
+        for(model = 0; model < localTree->NumberOfModels; model++)
+          reductionBuffer[tid * localTree->NumberOfModels + model] = localTree->perPartitionLH[model];
+      }
       else
-	reductionBuffer[tid] = result;
+        reductionBuffer[tid] = result;
 
       if(tid > 0)
-	{
-	  for(model = 0; model < localTree->NumberOfModels; model++)
-	    localTree->executeModel[model] = TRUE;
-	}
+      {
+        for(model = 0; model < localTree->NumberOfModels; model++)
+          localTree->executeModel[model] = TRUE;
+      }
       break;
     case THREAD_NEWVIEW_MASKED:
       sendTraversalInfo(localTree, tr);
       memcpy(localTree->executeModel, tr->executeModel, sizeof(boolean) * localTree->NumberOfModels);
       newviewIterative(localTree);
       if(tid > 0)
-	{
-	  for(model = 0; model < localTree->NumberOfModels; model++)
-	    localTree->executeModel[model] = TRUE;
-	}
+      {
+        for(model = 0; model < localTree->NumberOfModels; model++)
+          localTree->executeModel[model] = TRUE;
+      }
       break;
     case THREAD_NEWVIEW:
       sendTraversalInfo(localTree, tr);
@@ -5486,374 +5486,374 @@ static void execFunction(tree *tr, tree *localTree, int tid, int n)
       break;
     case THREAD_MAKENEWZ_FIRST:
       {
-	volatile double
-	  dlnLdlz[NUM_BRANCHES],
-	  d2lnLdlz2[NUM_BRANCHES];
+        volatile double
+          dlnLdlz[NUM_BRANCHES],
+          d2lnLdlz2[NUM_BRANCHES];
 
-	sendTraversalInfo(localTree, tr);
-	if(tid > 0)
-	  {
-	    memcpy(localTree->coreLZ,   tr->coreLZ,   sizeof(double) *  localTree->numBranches);
-	    memcpy(localTree->executeModel, tr->executeModel, sizeof(boolean) * localTree->NumberOfModels);
-	  }
+        sendTraversalInfo(localTree, tr);
+        if(tid > 0)
+        {
+          memcpy(localTree->coreLZ,   tr->coreLZ,   sizeof(double) *  localTree->numBranches);
+          memcpy(localTree->executeModel, tr->executeModel, sizeof(boolean) * localTree->NumberOfModels);
+        }
 
-	makenewzIterative(localTree);	
-	execCore(localTree, dlnLdlz, d2lnLdlz2);
+        makenewzIterative(localTree);	
+        execCore(localTree, dlnLdlz, d2lnLdlz2);
 
-	if(!tr->multiBranch)
-	  {
-	    reductionBuffer[tid]    = dlnLdlz[0];
-	    reductionBufferTwo[tid] = d2lnLdlz2[0];
-	  }
-	else
-	  {
-	    for(i = 0; i < localTree->NumberOfModels; i++)
-	      {
-		reductionBuffer[tid * localTree->NumberOfModels + i]    = dlnLdlz[i];
-		reductionBufferTwo[tid * localTree->NumberOfModels + i] = d2lnLdlz2[i];
-	      }
-	  }
+        if(!tr->multiBranch)
+        {
+          reductionBuffer[tid]    = dlnLdlz[0];
+          reductionBufferTwo[tid] = d2lnLdlz2[0];
+        }
+        else
+        {
+          for(i = 0; i < localTree->NumberOfModels; i++)
+          {
+            reductionBuffer[tid * localTree->NumberOfModels + i]    = dlnLdlz[i];
+            reductionBufferTwo[tid * localTree->NumberOfModels + i] = d2lnLdlz2[i];
+          }
+        }
 
-	if(tid > 0)
-	  {
-	    for(model = 0; model < localTree->NumberOfModels; model++)
-	      localTree->executeModel[model] = TRUE;
-	  }
+        if(tid > 0)
+        {
+          for(model = 0; model < localTree->NumberOfModels; model++)
+            localTree->executeModel[model] = TRUE;
+        }
       }
       break;
     case THREAD_MAKENEWZ:
       {
-	volatile double
-	  dlnLdlz[NUM_BRANCHES],
-	  d2lnLdlz2[NUM_BRANCHES];
+        volatile double
+          dlnLdlz[NUM_BRANCHES],
+          d2lnLdlz2[NUM_BRANCHES];
 
-	memcpy(localTree->coreLZ,   tr->coreLZ,   sizeof(double) *  localTree->numBranches);
-	memcpy(localTree->executeModel, tr->executeModel, sizeof(boolean) * localTree->NumberOfModels);
-	
-	execCore(localTree, dlnLdlz, d2lnLdlz2);
+        memcpy(localTree->coreLZ,   tr->coreLZ,   sizeof(double) *  localTree->numBranches);
+        memcpy(localTree->executeModel, tr->executeModel, sizeof(boolean) * localTree->NumberOfModels);
 
-	if(!tr->multiBranch)
-	  {
-	    reductionBuffer[tid]    = dlnLdlz[0];
-	    reductionBufferTwo[tid] = d2lnLdlz2[0];
-	  }
-	else
-	  {
-	    for(i = 0; i < localTree->NumberOfModels; i++)
-	      {
-		reductionBuffer[tid * localTree->NumberOfModels + i]    = dlnLdlz[i];
-		reductionBufferTwo[tid * localTree->NumberOfModels + i] = d2lnLdlz2[i];
-	      }
-	  }
-	if(tid > 0)
-	  {
-	    for(model = 0; model < localTree->NumberOfModels; model++)
-	      localTree->executeModel[model] = TRUE;
-	  }
+        execCore(localTree, dlnLdlz, d2lnLdlz2);
+
+        if(!tr->multiBranch)
+        {
+          reductionBuffer[tid]    = dlnLdlz[0];
+          reductionBufferTwo[tid] = d2lnLdlz2[0];
+        }
+        else
+        {
+          for(i = 0; i < localTree->NumberOfModels; i++)
+          {
+            reductionBuffer[tid * localTree->NumberOfModels + i]    = dlnLdlz[i];
+            reductionBufferTwo[tid * localTree->NumberOfModels + i] = d2lnLdlz2[i];
+          }
+        }
+        if(tid > 0)
+        {
+          for(model = 0; model < localTree->NumberOfModels; model++)
+            localTree->executeModel[model] = TRUE;
+        }
       }
       break;
     case THREAD_COPY_RATES:
       if(tid > 0)
-	{
-	  for(model = 0; model < localTree->NumberOfModels; model++)
-	    {	      
-	      const partitionLengths *pl = getPartitionLengths(&(tr->partitionData[model]));
-	      
-	      memcpy(localTree->partitionData[model].EIGN,        tr->partitionData[model].EIGN,        pl->eignLength * sizeof(double));
-	      memcpy(localTree->partitionData[model].EV,          tr->partitionData[model].EV,          pl->evLength * sizeof(double));		  
-	      memcpy(localTree->partitionData[model].EI,          tr->partitionData[model].EI,          pl->eiLength * sizeof(double));
-	      memcpy(localTree->partitionData[model].tipVector,   tr->partitionData[model].tipVector,   pl->tipVectorLength * sizeof(double));	      	     	
-	    }
-	}
+      {
+        for(model = 0; model < localTree->NumberOfModels; model++)
+        {	      
+          const partitionLengths *pl = getPartitionLengths(&(tr->partitionData[model]));
+
+          memcpy(localTree->partitionData[model].EIGN,        tr->partitionData[model].EIGN,        pl->eignLength * sizeof(double));
+          memcpy(localTree->partitionData[model].EV,          tr->partitionData[model].EV,          pl->evLength * sizeof(double));		  
+          memcpy(localTree->partitionData[model].EI,          tr->partitionData[model].EI,          pl->eiLength * sizeof(double));
+          memcpy(localTree->partitionData[model].tipVector,   tr->partitionData[model].tipVector,   pl->tipVectorLength * sizeof(double));	      	     	
+        }
+      }
       break;
     case THREAD_COPY_ALPHA:
       if(tid > 0)
-	{
-	  for(model = 0; model < localTree->NumberOfModels; model++)
-	    {
-	      memcpy(localTree->partitionData[model].gammaRates, tr->partitionData[model].gammaRates, sizeof(double) * 4);
-	      localTree->partitionData[model].alpha = tr->partitionData[model].alpha;
-	    }
-	}
+      {
+        for(model = 0; model < localTree->NumberOfModels; model++)
+        {
+          memcpy(localTree->partitionData[model].gammaRates, tr->partitionData[model].gammaRates, sizeof(double) * 4);
+          localTree->partitionData[model].alpha = tr->partitionData[model].alpha;
+        }
+      }
       break;
     case THREAD_OPT_RATE:
       if(tid > 0)
-	{
-	  memcpy(localTree->executeModel, tr->executeModel, localTree->NumberOfModels * sizeof(boolean));
+      {
+        memcpy(localTree->executeModel, tr->executeModel, localTree->NumberOfModels * sizeof(boolean));
 
-	  for(model = 0; model < localTree->NumberOfModels; model++)
-	    {
-	      const partitionLengths *pl = getPartitionLengths(&(tr->partitionData[model]));
-	      
-	      memcpy(localTree->partitionData[model].EIGN,        tr->partitionData[model].EIGN,        pl->eignLength * sizeof(double));
-	      memcpy(localTree->partitionData[model].EV,          tr->partitionData[model].EV,          pl->evLength * sizeof(double));		  
-	      memcpy(localTree->partitionData[model].EI,          tr->partitionData[model].EI,          pl->eiLength * sizeof(double));
-	      memcpy(localTree->partitionData[model].tipVector,   tr->partitionData[model].tipVector,   pl->tipVectorLength * sizeof(double));
-	      
-	      	     
-	    }
-	}
+        for(model = 0; model < localTree->NumberOfModels; model++)
+        {
+          const partitionLengths *pl = getPartitionLengths(&(tr->partitionData[model]));
+
+          memcpy(localTree->partitionData[model].EIGN,        tr->partitionData[model].EIGN,        pl->eignLength * sizeof(double));
+          memcpy(localTree->partitionData[model].EV,          tr->partitionData[model].EV,          pl->evLength * sizeof(double));		  
+          memcpy(localTree->partitionData[model].EI,          tr->partitionData[model].EI,          pl->eiLength * sizeof(double));
+          memcpy(localTree->partitionData[model].tipVector,   tr->partitionData[model].tipVector,   pl->tipVectorLength * sizeof(double));
+
+
+        }
+      }
 
       result = evaluateIterative(localTree, FALSE);
 
 
       if(localTree->NumberOfModels > 1)
-	{
-	  for(model = 0; model < localTree->NumberOfModels; model++)
-	    reductionBuffer[tid * localTree->NumberOfModels + model] = localTree->perPartitionLH[model];
-	}
+      {
+        for(model = 0; model < localTree->NumberOfModels; model++)
+          reductionBuffer[tid * localTree->NumberOfModels + model] = localTree->perPartitionLH[model];
+      }
       else
-	reductionBuffer[tid] = result;
+        reductionBuffer[tid] = result;
 
 
       if(tid > 0)
-	{
-	  for(model = 0; model < localTree->NumberOfModels; model++)
-	    localTree->executeModel[model] = TRUE;
-	}
+      {
+        for(model = 0; model < localTree->NumberOfModels; model++)
+          localTree->executeModel[model] = TRUE;
+      }
       break;               
     case THREAD_BROADCAST_RATE:
       if(tid > 0)
-	{
-	  memcpy(localTree->executeModel, tr->executeModel, localTree->NumberOfModels * sizeof(boolean));
+      {
+        memcpy(localTree->executeModel, tr->executeModel, localTree->NumberOfModels * sizeof(boolean));
 
-	  for(model = 0; model < localTree->NumberOfModels; model++)
-	    {
-	      const partitionLengths *pl = getPartitionLengths(&(tr->partitionData[model]));
-	      
-	      memcpy(localTree->partitionData[model].EIGN,        tr->partitionData[model].EIGN,        pl->eignLength * sizeof(double));
-	      memcpy(localTree->partitionData[model].EV,          tr->partitionData[model].EV,          pl->evLength * sizeof(double));		  
-	      memcpy(localTree->partitionData[model].EI,          tr->partitionData[model].EI,          pl->eiLength * sizeof(double));
-	      memcpy(localTree->partitionData[model].tipVector,   tr->partitionData[model].tipVector,   pl->tipVectorLength * sizeof(double));
-	      
-	      	     
-	    }
-	}     
+        for(model = 0; model < localTree->NumberOfModels; model++)
+        {
+          const partitionLengths *pl = getPartitionLengths(&(tr->partitionData[model]));
+
+          memcpy(localTree->partitionData[model].EIGN,        tr->partitionData[model].EIGN,        pl->eignLength * sizeof(double));
+          memcpy(localTree->partitionData[model].EV,          tr->partitionData[model].EV,          pl->evLength * sizeof(double));		  
+          memcpy(localTree->partitionData[model].EI,          tr->partitionData[model].EI,          pl->eiLength * sizeof(double));
+          memcpy(localTree->partitionData[model].tipVector,   tr->partitionData[model].tipVector,   pl->tipVectorLength * sizeof(double));
+
+
+        }
+      }     
       break;               
     case THREAD_COPY_INIT_MODEL:
       if(tid > 0)
-	{	  
-	  localTree->rateHetModel       = tr->rateHetModel;
+      {	  
+        localTree->rateHetModel       = tr->rateHetModel;
 
-	  for(model = 0; model < localTree->NumberOfModels; model++)
-	    {
-	      const partitionLengths *pl = getPartitionLengths(&(tr->partitionData[model]));
+        for(model = 0; model < localTree->NumberOfModels; model++)
+        {
+          const partitionLengths *pl = getPartitionLengths(&(tr->partitionData[model]));
 
-	      memcpy(localTree->partitionData[model].EIGN,        tr->partitionData[model].EIGN,        pl->eignLength * sizeof(double));
-	      memcpy(localTree->partitionData[model].EV,          tr->partitionData[model].EV,          pl->evLength * sizeof(double));
-	      memcpy(localTree->partitionData[model].EI,          tr->partitionData[model].EI,          pl->eiLength * sizeof(double));
-	      memcpy(localTree->partitionData[model].substRates,  tr->partitionData[model].substRates,  pl->substRatesLength * sizeof(double));
-	      memcpy(localTree->partitionData[model].frequencies, tr->partitionData[model].frequencies, pl->frequenciesLength * sizeof(double));
-	      memcpy(localTree->partitionData[model].tipVector,   tr->partitionData[model].tipVector,   pl->tipVectorLength * sizeof(double));
-	      
-	      	       
+          memcpy(localTree->partitionData[model].EIGN,        tr->partitionData[model].EIGN,        pl->eignLength * sizeof(double));
+          memcpy(localTree->partitionData[model].EV,          tr->partitionData[model].EV,          pl->evLength * sizeof(double));
+          memcpy(localTree->partitionData[model].EI,          tr->partitionData[model].EI,          pl->eiLength * sizeof(double));
+          memcpy(localTree->partitionData[model].substRates,  tr->partitionData[model].substRates,  pl->substRatesLength * sizeof(double));
+          memcpy(localTree->partitionData[model].frequencies, tr->partitionData[model].frequencies, pl->frequenciesLength * sizeof(double));
+          memcpy(localTree->partitionData[model].tipVector,   tr->partitionData[model].tipVector,   pl->tipVectorLength * sizeof(double));
 
-	       memcpy(localTree->partitionData[model].gammaRates, tr->partitionData[model].gammaRates, sizeof(double) * 4);
-	       localTree->partitionData[model].alpha = tr->partitionData[model].alpha;
-	       
-	       localTree->partitionData[model].lower      = tr->partitionData[model].lower;
-	       localTree->partitionData[model].upper      = tr->partitionData[model].upper; 
-	       
-	       localTree->partitionData[model].numberOfCategories      = tr->partitionData[model].numberOfCategories;
-	    }
 
-	  memcpy(localTree->cdta->patrat,        tr->cdta->patrat,      localTree->originalCrunchedLength * sizeof(double));
-	  memcpy(localTree->cdta->patratStored, tr->cdta->patratStored, localTree->originalCrunchedLength * sizeof(double));	  
-	}     
+
+          memcpy(localTree->partitionData[model].gammaRates, tr->partitionData[model].gammaRates, sizeof(double) * 4);
+          localTree->partitionData[model].alpha = tr->partitionData[model].alpha;
+
+          localTree->partitionData[model].lower      = tr->partitionData[model].lower;
+          localTree->partitionData[model].upper      = tr->partitionData[model].upper; 
+
+          localTree->partitionData[model].numberOfCategories      = tr->partitionData[model].numberOfCategories;
+        }
+
+        memcpy(localTree->cdta->patrat,        tr->cdta->patrat,      localTree->originalCrunchedLength * sizeof(double));
+        memcpy(localTree->cdta->patratStored, tr->cdta->patratStored, localTree->originalCrunchedLength * sizeof(double));	  
+      }     
 
 
       if(localTree->manyPartitions)
-	for(model = 0; model < localTree->NumberOfModels; model++)
-	  {	  
-	    if(isThisMyPartition(localTree, tid, model, n))
-	      {
-		int localIndex;
-		
-		for(i = localTree->partitionData[model].lower, localIndex = 0; i <  localTree->partitionData[model].upper; i++, localIndex++)	     	       
-		  localTree->partitionData[model].wgt[localIndex]          = tr->cdta->aliaswgt[i];				 					       
-	      }	  
-	  }
+        for(model = 0; model < localTree->NumberOfModels; model++)
+        {	  
+          if(isThisMyPartition(localTree, tid, model, n))
+          {
+            int localIndex;
+
+            for(i = localTree->partitionData[model].lower, localIndex = 0; i <  localTree->partitionData[model].upper; i++, localIndex++)	     	       
+              localTree->partitionData[model].wgt[localIndex]          = tr->cdta->aliaswgt[i];				 					       
+          }	  
+        }
       else
-	for(model = 0; model < localTree->NumberOfModels; model++)
-	  {
-	    int localIndex;
-	    for(i = localTree->partitionData[model].lower, localIndex = 0; i <  localTree->partitionData[model].upper; i++)
-	      if(i % n == tid)
-		{
-		  localTree->partitionData[model].wgt[localIndex]          = tr->cdta->aliaswgt[i];				 		
-		  
-		  localIndex++;
-		}	  
-	  }
+        for(model = 0; model < localTree->NumberOfModels; model++)
+        {
+          int localIndex;
+          for(i = localTree->partitionData[model].lower, localIndex = 0; i <  localTree->partitionData[model].upper; i++)
+            if(i % n == tid)
+            {
+              localTree->partitionData[model].wgt[localIndex]          = tr->cdta->aliaswgt[i];				 		
+
+              localIndex++;
+            }	  
+        }
       if(localTree->estimatePerSiteAA && tid > 0)   
-	{
-	  int p;
+      {
+        int p;
 
-	  for(p = 0; p < NUM_PROT_MODELS - 2; p++)
-	    {
-	      memcpy(localTree->siteProtModel[p].EIGN,        tr->siteProtModel[p].EIGN,        sizeof(double) * 19);
-	      memcpy(localTree->siteProtModel[p].EV,          tr->siteProtModel[p].EV,          sizeof(double) * 400);                
-	      memcpy(localTree->siteProtModel[p].EI,          tr->siteProtModel[p].EI,          sizeof(double) * 380);
-	      memcpy(localTree->siteProtModel[p].substRates,  tr->siteProtModel[p].substRates,  sizeof(double) * 190);        
-	      memcpy(localTree->siteProtModel[p].frequencies, tr->siteProtModel[p].frequencies, sizeof(double) * 20);
-	      memcpy(localTree->siteProtModel[p].tipVector,   tr->siteProtModel[p].tipVector,   sizeof(double) * 460);
-	    }
+        for(p = 0; p < NUM_PROT_MODELS - 2; p++)
+        {
+          memcpy(localTree->siteProtModel[p].EIGN,        tr->siteProtModel[p].EIGN,        sizeof(double) * 19);
+          memcpy(localTree->siteProtModel[p].EV,          tr->siteProtModel[p].EV,          sizeof(double) * 400);                
+          memcpy(localTree->siteProtModel[p].EI,          tr->siteProtModel[p].EI,          sizeof(double) * 380);
+          memcpy(localTree->siteProtModel[p].substRates,  tr->siteProtModel[p].substRates,  sizeof(double) * 190);        
+          memcpy(localTree->siteProtModel[p].frequencies, tr->siteProtModel[p].frequencies, sizeof(double) * 20);
+          memcpy(localTree->siteProtModel[p].tipVector,   tr->siteProtModel[p].tipVector,   sizeof(double) * 460);
+        }
 
-	  for(model = 0; model < localTree->NumberOfModels; model++)
-	    {
-	      int width = localTree->partitionData[model].width;
+        for(model = 0; model < localTree->NumberOfModels; model++)
+        {
+          int width = localTree->partitionData[model].width;
 
-	      for(i = 0; i < width; i++)
-		localTree->partitionData[model].perSiteAAModel[i] = WAG;
-	    }	    
-	}
+          for(i = 0; i < width; i++)
+            localTree->partitionData[model].perSiteAAModel[i] = WAG;
+        }	    
+      }
       break;    
     case THREAD_RATE_CATS:
       sendTraversalInfo(localTree, tr);
       if(tid > 0)
-	{
-	  localTree->lower_spacing = tr->lower_spacing;
-	  localTree->upper_spacing = tr->upper_spacing;
-	}
+      {
+        localTree->lower_spacing = tr->lower_spacing;
+        localTree->upper_spacing = tr->upper_spacing;
+      }
 
       optRateCatPthreads(localTree, localTree->lower_spacing, localTree->upper_spacing, localTree->lhs, n, tid);
 
       if(tid > 0)
-	{
-	  collectDouble(tr->cdta->patrat,       localTree->cdta->patrat,         localTree, n, tid);
-	  collectDouble(tr->cdta->patratStored, localTree->cdta->patratStored,   localTree, n, tid);
-	  collectDouble(tr->lhs,                localTree->lhs,                  localTree, n, tid);
-	}
+      {
+        collectDouble(tr->cdta->patrat,       localTree->cdta->patrat,         localTree, n, tid);
+        collectDouble(tr->cdta->patratStored, localTree->cdta->patratStored,   localTree, n, tid);
+        collectDouble(tr->lhs,                localTree->lhs,                  localTree, n, tid);
+      }
       break;
     case THREAD_COPY_RATE_CATS:
       if(tid > 0)
-	{	  
-	  memcpy(localTree->cdta->patrat,       tr->cdta->patrat,         localTree->originalCrunchedLength * sizeof(double));
-	  memcpy(localTree->cdta->patratStored, tr->cdta->patratStored,   localTree->originalCrunchedLength * sizeof(double));
-	  broadcastPerSiteRates(tr, localTree);
-	}
+      {	  
+        memcpy(localTree->cdta->patrat,       tr->cdta->patrat,         localTree->originalCrunchedLength * sizeof(double));
+        memcpy(localTree->cdta->patratStored, tr->cdta->patratStored,   localTree->originalCrunchedLength * sizeof(double));
+        broadcastPerSiteRates(tr, localTree);
+      }
 
       for(model = 0; model < localTree->NumberOfModels; model++)
-	{
-	  localTree->partitionData[model].numberOfCategories = tr->partitionData[model].numberOfCategories;
+      {
+        localTree->partitionData[model].numberOfCategories = tr->partitionData[model].numberOfCategories;
 
-	  if(localTree->manyPartitions)
-	    {
-	      if(isThisMyPartition(localTree, tid, model, n))
-		for(localCounter = 0, i = localTree->partitionData[model].lower;  i < localTree->partitionData[model].upper; i++, localCounter++)
-		  {	     
-		    localTree->partitionData[model].rateCategory[localCounter] = tr->cdta->rateCategory[i];
-		    localTree->partitionData[model].wr[localCounter]             = tr->wr[i];
-		    localTree->partitionData[model].wr2[localCounter]            = tr->wr2[i];		 		 	     
-		  } 
-	    }
-	  else	  
-	    {
-	      for(localCounter = 0, i = localTree->partitionData[model].lower;  i < localTree->partitionData[model].upper; i++)
-		{
-		  if(i % n == tid)
-		    {		 
-		      localTree->partitionData[model].rateCategory[localCounter] = tr->cdta->rateCategory[i];
-		      localTree->partitionData[model].wr[localCounter]             = tr->wr[i];
-		      localTree->partitionData[model].wr2[localCounter]            = tr->wr2[i];		 
-		      
-		      localCounter++;
-		    }
-		}
-	    }
-	}
+        if(localTree->manyPartitions)
+        {
+          if(isThisMyPartition(localTree, tid, model, n))
+            for(localCounter = 0, i = localTree->partitionData[model].lower;  i < localTree->partitionData[model].upper; i++, localCounter++)
+            {	     
+              localTree->partitionData[model].rateCategory[localCounter] = tr->cdta->rateCategory[i];
+              localTree->partitionData[model].wr[localCounter]             = tr->wr[i];
+              localTree->partitionData[model].wr2[localCounter]            = tr->wr2[i];		 		 	     
+            } 
+        }
+        else	  
+        {
+          for(localCounter = 0, i = localTree->partitionData[model].lower;  i < localTree->partitionData[model].upper; i++)
+          {
+            if(i % n == tid)
+            {		 
+              localTree->partitionData[model].rateCategory[localCounter] = tr->cdta->rateCategory[i];
+              localTree->partitionData[model].wr[localCounter]             = tr->wr[i];
+              localTree->partitionData[model].wr2[localCounter]            = tr->wr2[i];		 
+
+              localCounter++;
+            }
+          }
+        }
+      }
       break;
     case THREAD_OPT_ALPHA:
       if(tid > 0)
-	{
-	  memcpy(localTree->executeModel, tr->executeModel, localTree->NumberOfModels * sizeof(boolean));
-	  for(model = 0; model < localTree->NumberOfModels; model++)
-	    memcpy(localTree->partitionData[model].gammaRates, tr->partitionData[model].gammaRates, sizeof(double) * 4);
-	}
+      {
+        memcpy(localTree->executeModel, tr->executeModel, localTree->NumberOfModels * sizeof(boolean));
+        for(model = 0; model < localTree->NumberOfModels; model++)
+          memcpy(localTree->partitionData[model].gammaRates, tr->partitionData[model].gammaRates, sizeof(double) * 4);
+      }
 
       result = evaluateIterative(localTree, FALSE);
 
 
       if(localTree->NumberOfModels > 1)
-	{
-	  for(model = 0; model < localTree->NumberOfModels; model++)
-	    reductionBuffer[tid *  localTree->NumberOfModels + model] = localTree->perPartitionLH[model];
-	}
+      {
+        for(model = 0; model < localTree->NumberOfModels; model++)
+          reductionBuffer[tid *  localTree->NumberOfModels + model] = localTree->perPartitionLH[model];
+      }
       else
-	reductionBuffer[tid] = result;
+        reductionBuffer[tid] = result;
 
       if(tid > 0)
-	{
-	  for(model = 0; model < localTree->NumberOfModels; model++)
-	    localTree->executeModel[model] = TRUE;
-	}
+      {
+        for(model = 0; model < localTree->NumberOfModels; model++)
+          localTree->executeModel[model] = TRUE;
+      }
       break;
     case THREAD_OPTIMIZE_PER_SITE_AA:
       sendTraversalInfo(localTree, tr);      
       {
-	int
-	  s,
-	  p;
-	
-	double  
-	  *bestScore = (double *)malloc(localTree->originalCrunchedLength * sizeof(double));	  
-	
-	for(s = 0; s < localTree->originalCrunchedLength; s++)	    
-	  bestScore[s] = unlikely;
-	
-	for(p = 0; p < NUM_PROT_MODELS - 2; p++)
-	  {
-	    int 
-	      model;
-	    
-	    for(model = 0; model < localTree->NumberOfModels; model++)
-	      { 
-		boolean 
-		  execute = ((tr->manyPartitions && isThisMyPartition(tr, tid, model, n)) || (!tr->manyPartitions));
-		
-		if(execute)
-		  {
-		    double
-		      lh;
-		    
-		    int
-		      counter = 0,
-		      i,
-		      lower = localTree->partitionData[model].lower,
-		      upper = localTree->partitionData[model].upper;
-		    
-		    memcpy(localTree->partitionData[model].EIGN,        localTree->siteProtModel[p].EIGN,        sizeof(double) * 19);
-		    memcpy(localTree->partitionData[model].EV,          localTree->siteProtModel[p].EV,          sizeof(double) * 400);                
-		    memcpy(localTree->partitionData[model].EI,          localTree->siteProtModel[p].EI,          sizeof(double) * 380);
-		    memcpy(localTree->partitionData[model].substRates,  localTree->siteProtModel[p].substRates,  sizeof(double) * 190);        
-		    memcpy(localTree->partitionData[model].frequencies, localTree->siteProtModel[p].frequencies, sizeof(double) * 20);
-		    memcpy(localTree->partitionData[model].tipVector,   localTree->siteProtModel[p].tipVector,   sizeof(double) * 460);
-		    
-		    for(i = lower, counter = 0; i < upper; i++)
-		      {
-			if(tr->manyPartitions || (i % n == tid))
-			  {
-			    lh = evaluatePartialGeneric(localTree, counter, 0.0, model);
-			    
-			    if(lh > bestScore[i])
-			      {
-				bestScore[i] = lh; 
-				localTree->partitionData[model].perSiteAAModel[counter] = p;			    
-			      }
-			    counter++;
-			  }
-		      }
-		  }	     	           
-	      }
-	  }
-	  
-	free(bestScore);      					
+        int
+          s,
+          p;
+
+        double  
+          *bestScore = (double *)malloc(localTree->originalCrunchedLength * sizeof(double));	  
+
+        for(s = 0; s < localTree->originalCrunchedLength; s++)	    
+          bestScore[s] = unlikely;
+
+        for(p = 0; p < NUM_PROT_MODELS - 2; p++)
+        {
+          int 
+            model;
+
+          for(model = 0; model < localTree->NumberOfModels; model++)
+          { 
+            boolean 
+              execute = ((tr->manyPartitions && isThisMyPartition(tr, tid, model, n)) || (!tr->manyPartitions));
+
+            if(execute)
+            {
+              double
+                lh;
+
+              int
+                counter = 0,
+                        i,
+                        lower = localTree->partitionData[model].lower,
+                        upper = localTree->partitionData[model].upper;
+
+              memcpy(localTree->partitionData[model].EIGN,        localTree->siteProtModel[p].EIGN,        sizeof(double) * 19);
+              memcpy(localTree->partitionData[model].EV,          localTree->siteProtModel[p].EV,          sizeof(double) * 400);                
+              memcpy(localTree->partitionData[model].EI,          localTree->siteProtModel[p].EI,          sizeof(double) * 380);
+              memcpy(localTree->partitionData[model].substRates,  localTree->siteProtModel[p].substRates,  sizeof(double) * 190);        
+              memcpy(localTree->partitionData[model].frequencies, localTree->siteProtModel[p].frequencies, sizeof(double) * 20);
+              memcpy(localTree->partitionData[model].tipVector,   localTree->siteProtModel[p].tipVector,   sizeof(double) * 460);
+
+              for(i = lower, counter = 0; i < upper; i++)
+              {
+                if(tr->manyPartitions || (i % n == tid))
+                {
+                  lh = evaluatePartialGeneric(localTree, counter, 0.0, model);
+
+                  if(lh > bestScore[i])
+                  {
+                    bestScore[i] = lh; 
+                    localTree->partitionData[model].perSiteAAModel[counter] = p;			    
+                  }
+                  counter++;
+                }
+              }
+            }	     	           
+          }
+        }
+
+        free(bestScore);      					
       }
       break;
     default:
       printf("Job %d\n", currentJob);
       assert(0);
-    }
+  }
 }
 
 
@@ -6366,11 +6366,6 @@ int main (int argc, char *argv[])
 
       /* recom */
       tr->verbose = FALSE;
-      printBothOpen("Get starting tree... \n");
-      //getStartingTree(tr, adef);     
-      //printBothOpen("Traversal freq after starting tree \n");
-      //printTraversalInfo(tr);
-      //printBothOpen("\n");
       /* E recom */
 
       getStartingTree(tr, adef);     
@@ -6385,12 +6380,8 @@ int main (int argc, char *argv[])
 
       modOptJoerg(tr, adef);
 #else
-      printBothOpen("evaluateGenericInit... \n");
       evaluateGenericInitrav(tr, tr->start);	 
-      printBothOpen("treeEval... \n");
       treeEvaluate(tr, 1); 	 	 	 	 	 
-      printRecomTree(tr, FALSE, "after eval");
-      printBothOpen("ready to computeBIG... \n");
       computeBIGRAPID(tr, adef, TRUE); 	     
       /* recom */
       printBothOpen("Traversal freq after search \n");
