@@ -5424,7 +5424,7 @@ void newviewGeneric (tree *tr, nodeptr p)
 void newviewGenericMasked(tree *tr, nodeptr p)
 {
 
-  assert(!tr->useRecom);
+  //assert(!tr->useRecom);
   if(isTip(p->number, tr->mxtips))
     return;
 
@@ -5438,6 +5438,14 @@ void newviewGenericMasked(tree *tr, nodeptr p)
       else
         tr->executeModel[i] = TRUE;
     }
+
+    /* recom */
+    if(tr->useRecom) 
+    {
+      int count = 0;
+      computeTraversalInfoStlen(p, tr->mxtips, tr->rvec, &count); 
+    }
+    /* E recom */
 
     if(tr->multiGene)
     {
@@ -5457,7 +5465,18 @@ void newviewGenericMasked(tree *tr, nodeptr p)
     else
     {
       tr->td[0].count = 1;
+    /* recom */
+    if(tr->useRecom)
+    {
+      save_strategy_state(tr);
       computeTraversalInfo(p, &(tr->td[0].ti[0]), &(tr->td[0].count), tr->mxtips, tr->numBranches, tr->rvec);
+      restore_strategy_state(tr);
+    }
+    else
+    /* E recom */
+    {
+      computeTraversalInfo(p, &(tr->td[0].ti[0]), &(tr->td[0].count), tr->mxtips, tr->numBranches, tr->rvec);
+    }
 
       if(tr->td[0].count > 1)
       {
