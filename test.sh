@@ -25,17 +25,15 @@ elif [ $1 = 1288 ] ; then
  SET=1288
  TREE=intree1288
 else
- SET=7
- TREE=RAxML_parsimonyTree.7_s12345.0
-
- SET=8
- TREE=intree8
+ SET=20
+ TREE=intree20
+ PARTITION_CALL="-q ${DATADIR}/20.model -M "
 
  #SET=50
  #TREE=RAxML_parsimonyTree.50sim.0
 fi
 
-FACTOR=0.70
+FACTOR=0.7
 NUM_THREADS=4
 
 # just clean dir
@@ -50,12 +48,12 @@ if [ $1 = cmp ] ; then
   rm *.o
   rm raxmlLight
   make -f Makefile.SSE3.gcc
-  rm *.o
-  rm raxmlLight-PTHREADS
-  make -f Makefile.SSE3.PTHREADS.gcc
-  rm *.o
-  rm raxmlLight-MPI
-  make -f Makefile.SSE3.MPI
+  #rm *.o
+  #rm raxmlLight-PTHREADS
+  #make -f Makefile.SSE3.PTHREADS.gcc
+  #rm *.o
+  #rm raxmlLight-MPI
+  #make -f Makefile.SSE3.MPI
 fi
 
 #run
@@ -72,12 +70,12 @@ else
   echo "*** run std"
   ./raxmlLight -m GTRCAT -n ${NAME}_std -s ${DATADIR}/${SET} $PARTITION_CALL -t ${DATADIR}/${TREE} > /dev/null
   cp RAxML_info.${NAME}_std brm_std
-  echo "*** run pthreads"
-  ./raxmlLight-PTHREADS -r $FACTOR -T $NUM_THREADS -m GTRCAT -n ${NAME}_T${NUM_THREADS} -s ${DATADIR}/${SET} $PARTITION_CALL -t ${DATADIR}/${TREE} 
-  cp RAxML_info.${NAME}_T${NUM_THREADS} brm_treads
-  echo "*** run mpi"
-  mpirun.openmpi -np 4 ./raxmlLight-MPI -r $FACTOR -m GTRCAT -n ${NAME}_mpi -s ${DATADIR}/${SET} $PARTITION_CALL -t ${DATADIR}/${TREE} 
-  cp RAxML_info.${NAME}_mpi brm_mpi
+  #echo "*** run pthreads"
+  #./raxmlLight-PTHREADS -r $FACTOR -T $NUM_THREADS -m GTRCAT -n ${NAME}_T${NUM_THREADS} -s ${DATADIR}/${SET} $PARTITION_CALL -t ${DATADIR}/${TREE} 
+  #cp RAxML_info.${NAME}_T${NUM_THREADS} brm_treads
+  #echo "*** run mpi"
+  #mpirun.openmpi -np 4 ./raxmlLight-MPI -r $FACTOR -m GTRCAT -n ${NAME}_mpi -s ${DATADIR}/${SET} $PARTITION_CALL -t ${DATADIR}/${TREE} 
+  #cp RAxML_info.${NAME}_mpi brm_mpi
   tail brm*
 fi
 
