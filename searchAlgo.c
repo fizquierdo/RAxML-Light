@@ -107,6 +107,7 @@ boolean update(tree *tr, nodeptr p)
   for(i = 0; i < tr->numBranches; i++)
     z0[i] = q->z[i];    
 
+  //printBothOpen("update branch p%db%d\n", p->number, p->back->number);
   if(tr->numBranches > 1)
     makenewzGeneric(tr, p, q, z0, newzpercycle, z, TRUE);  
   else
@@ -160,7 +161,6 @@ boolean smooth (tree *tr, nodeptr p)
     else
       newviewGeneric(tr, p);     
   }
-
   return TRUE;
 } 
 
@@ -191,8 +191,10 @@ boolean smoothTree (tree *tr, int maxtimes)
   for(i = 0; i < tr->numBranches; i++)
     tr->partitionConverged[i] = FALSE;
 
+  //printBothOpen("smooth tree start, left %d times\n", maxtimes);
   while (--maxtimes >= 0) 
   {    
+    //printBothOpen("left %d times\n", maxtimes);
     for(i = 0; i < tr->numBranches; i++)	
       tr->partitionSmoothed[i] = TRUE;		
 
@@ -2116,6 +2118,7 @@ boolean treeEvaluate (tree *tr, double smoothFactor)       /* Evaluate a user tr
 
   evaluateGeneric(tr, tr->start);   
     
+  //printBothOpen("tr lh %f\n", tr->likelihood);
 
   return TRUE;
 }

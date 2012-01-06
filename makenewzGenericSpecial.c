@@ -1732,7 +1732,9 @@ static void topLevelMakenewz(tree *tr, double *z0, int _maxiter, double *result)
     tr->executeModel[model] = TRUE;
 
   for(i = 0; i < numBranches; i++)
+  {
     result[i] = z[i];
+  }
 }
 
 

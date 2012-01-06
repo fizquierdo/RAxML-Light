@@ -1,6 +1,7 @@
 #!/bin/bash
 
 DATADIR=data
+MODEL=GTRCAT
 NAME=TEST
 PARTITION_CALL=""
 
@@ -10,8 +11,8 @@ if [ $1 = 50 ] ; then
 elif [ $1 = 20 ] ; then
  SET=20
  TREE=intree20
- PARTITION_CALL="-q ${DATADIR}/20.model "
- #PARTITION_CALL="-q ${DATADIR}/20.model -M "
+ #PARTITION_CALL="-q ${DATADIR}/20.model "
+ PARTITION_CALL="-q ${DATADIR}/20.model -M "
 elif [ $1 = 10 ] ; then
  SET=10
  TREE=intree10
@@ -27,13 +28,14 @@ elif [ $1 = 1288 ] ; then
 else
  SET=20
  TREE=intree20
- PARTITION_CALL="-q ${DATADIR}/20.model -M "
+ PARTITION_CALL="-q ${DATADIR}/20.model2 -M "
+ #PARTITION_CALL="-q ${DATADIR}/20.model "
 
  #SET=50
  #TREE=RAxML_parsimonyTree.50sim.0
 fi
 
-FACTOR=0.7
+FACTOR=0.55
 NUM_THREADS=4
 
 # just clean dir
@@ -65,16 +67,16 @@ if [ $1 = pro ] ; then
   valgrind ./raxmlLight-PTHREADS -T $NUM_THREADS -m GTRCAT -n ${NAME}_T${NUM_THREADS} -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE}
 else
   echo "*** run recom"
-  ./raxmlLight -r $FACTOR -m GTRCAT -n ${NAME} -s ${DATADIR}/${SET} $PARTITION_CALL -t ${DATADIR}/${TREE} 
+  ./raxmlLight -r $FACTOR -m $MODEL -n ${NAME} -s ${DATADIR}/${SET} $PARTITION_CALL -t ${DATADIR}/${TREE} 
   cp RAxML_info.${NAME} brm_recom
   echo "*** run std"
-  ./raxmlLight -m GTRCAT -n ${NAME}_std -s ${DATADIR}/${SET} $PARTITION_CALL -t ${DATADIR}/${TREE} > /dev/null
+  ./raxmlLight -m $MODEL -n ${NAME}_std -s ${DATADIR}/${SET} $PARTITION_CALL -t ${DATADIR}/${TREE} > /dev/null
   cp RAxML_info.${NAME}_std brm_std
   #echo "*** run pthreads"
-  #./raxmlLight-PTHREADS -r $FACTOR -T $NUM_THREADS -m GTRCAT -n ${NAME}_T${NUM_THREADS} -s ${DATADIR}/${SET} $PARTITION_CALL -t ${DATADIR}/${TREE} 
+  #./raxmlLight-PTHREADS -r $FACTOR -T $NUM_THREADS -m $MODEL -n ${NAME}_T${NUM_THREADS} -s ${DATADIR}/${SET} $PARTITION_CALL -t ${DATADIR}/${TREE} 
   #cp RAxML_info.${NAME}_T${NUM_THREADS} brm_treads
   #echo "*** run mpi"
-  #mpirun.openmpi -np 4 ./raxmlLight-MPI -r $FACTOR -m GTRCAT -n ${NAME}_mpi -s ${DATADIR}/${SET} $PARTITION_CALL -t ${DATADIR}/${TREE} 
+  #mpirun.openmpi -np 4 ./raxmlLight-MPI -r $FACTOR -m $MODEL -n ${NAME}_mpi -s ${DATADIR}/${SET} $PARTITION_CALL -t ${DATADIR}/${TREE} 
   #cp RAxML_info.${NAME}_mpi brm_mpi
   tail brm*
 fi

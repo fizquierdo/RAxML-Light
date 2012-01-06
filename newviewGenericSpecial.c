@@ -5000,7 +5000,8 @@ void newviewIterative (tree *tr)
       size_t		
         width  = (size_t)tr->partitionData[model].width;
 
-      if(tr->executeModel[model] && width > 0)
+      //if(tr->executeModel[model] && width > 0)
+      if(tr->executeModel[model] && width > 0 || (tr->useRecom && tr->multiBranch)) /* TODOFER why? */
       {	      
         double
           *x1_start = (double*)NULL,
@@ -5066,14 +5067,15 @@ void newviewIterative (tree *tr)
         else
           requiredLength  =  width * rateHet * states * sizeof(double);
 
+        //printBothOpen("model %d, req %d, available %d\n",model, requiredLength, availableLength);
         if(requiredLength != availableLength)
         {		  
-          if(x3_start)
-            free(x3_start);
+            if(x3_start)
+              free(x3_start);
 
-          x3_start = (double*)malloc_aligned(requiredLength);		 
+            x3_start = (double*)malloc_aligned(requiredLength);		 
 
-          tr->partitionData[model].xVector[tInfo->pNumber - tr->mxtips - 1] = x3_start;		  
+           tr->partitionData[model].xVector[tInfo->pNumber - tr->mxtips - 1] = x3_start;		  
           tr->partitionData[model].xSpaceVector[(tInfo->pNumber - tr->mxtips - 1)] = requiredLength;		 
         }
 
@@ -5098,6 +5100,7 @@ void newviewIterative (tree *tr)
             {
               x3_start = tr->partitionData[model].xVector[tInfo->pNumber - tr->mxtips - 1];			  
             }
+            //printBothOpen("tip tip x3\n");
 
             if(tr->saveMemory)
             {
@@ -5132,6 +5135,7 @@ void newviewIterative (tree *tr)
               x2_start = tr->partitionData[model].xVector[tInfo->rNumber - tr->mxtips - 1];
               x3_start = tr->partitionData[model].xVector[tInfo->pNumber - tr->mxtips - 1];	
             }
+            //printBothOpen("tip inner x3\n");
 
             if(tr->saveMemory)
             {	
@@ -5174,6 +5178,8 @@ void newviewIterative (tree *tr)
               x2_start       = tr->partitionData[model].xVector[tInfo->rNumber - tr->mxtips - 1];
               x3_start       = tr->partitionData[model].xVector[tInfo->pNumber - tr->mxtips - 1];	
             }
+            //printBothOpen("inner inner x3\n");
+
 
             if(tr->saveMemory)
             {
@@ -5427,10 +5433,11 @@ void newviewGenericMasked(tree *tr, nodeptr p)
   //assert(!tr->useRecom);
   if(isTip(p->number, tr->mxtips))
     return;
+  
+  //printBothOpen("newview masked of node p%db%d\n", p->number, p->back->number);
 
   {
     int i;
-
     for(i = 0; i < tr->NumberOfModels; i++)
     {
       if(tr->partitionConverged[i])

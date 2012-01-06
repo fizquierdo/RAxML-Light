@@ -652,10 +652,10 @@ void determineFullTraversalStlen(nodeptr p, tree *tr)
   tr->stlenTime += (gettime() - travTime);
   //printBothOpen("full trav: %d/%d visits\n", count, tr->mxtips - 2);
 }
-void printVector(double *vector, int pnumber)
+void printVector(double *vector,int model, int pnumber)
 {
   int j;
-  printBothOpen("vector for node %d \n", pnumber);
+  printBothOpen("vector model %d,  node %d ",model, pnumber);
   if (vector == NULL)
   {
     printBothOpen(" is NULL\n");

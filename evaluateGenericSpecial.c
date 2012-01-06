@@ -1148,7 +1148,6 @@ double evaluateIterative(tree *tr,  boolean writeVector)
       }
       else
       {  
-
         /* recom */
         if(tr->useRecom)
         {
@@ -1177,6 +1176,7 @@ double evaluateIterative(tree *tr,  boolean writeVector)
         }
 
       }
+
 
       if(tr->multiBranch)
         z = pz[model];
@@ -1519,6 +1519,12 @@ double evaluateGeneric (tree *tr, nodeptr p)
 #endif   
 #endif
   }
+
+  /*
+  printBothOpen("lh summ\n");	   
+  for(i = 0; i < tr->NumberOfModels; i++)
+    printBothOpen("lh model %d %f\n",i,tr->perPartitionLH[i]);	   
+    */
 
   tr->likelihood = result;    
 
