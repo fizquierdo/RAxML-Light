@@ -107,34 +107,35 @@ boolean update(tree *tr, nodeptr p)
   for(i = 0; i < tr->numBranches; i++)
     z0[i] = q->z[i];    
 
+  //printBothOpen("update branch p%db%d\n", p->number, p->back->number);
   if(tr->numBranches > 1)
     makenewzGeneric(tr, p, q, z0, newzpercycle, z, TRUE);  
   else
     makenewzGeneric(tr, p, q, z0, newzpercycle, z, FALSE);
-  
+
   for(i = 0; i < tr->numBranches; i++)    
     smoothedPartitions[i]  = tr->partitionSmoothed[i];
-      
-  for(i = 0; i < tr->numBranches; i++)
-    {         
-      if(!tr->partitionConverged[i])
-	{	  
-	  _deltaz = deltaz;
-	    
-	  if(ABS(z[i] - z0[i]) > _deltaz)  
-	    {	      
-	      smoothedPartitions[i] = FALSE;       
-	    }	 
 
-	  
-	  
-	  p->z[i] = q->z[i] = z[i];	 
-	}
+  for(i = 0; i < tr->numBranches; i++)
+  {         
+    if(!tr->partitionConverged[i])
+    {	  
+      _deltaz = deltaz;
+
+      if(ABS(z[i] - z0[i]) > _deltaz)  
+      {	      
+        smoothedPartitions[i] = FALSE;       
+      }	 
+
+
+
+      p->z[i] = q->z[i] = z[i];	 
     }
-  
+  }
+
   for(i = 0; i < tr->numBranches; i++)    
     tr->partitionSmoothed[i]  = smoothedPartitions[i];
-  
+
   return TRUE;
 }
 
@@ -144,23 +145,22 @@ boolean update(tree *tr, nodeptr p)
 boolean smooth (tree *tr, nodeptr p)
 {
   nodeptr  q;
-  
+
   if (! update(tr, p))               return FALSE; /*  Adjust branch */
   if (! isTip(p->number, tr->rdta->numsp)) 
-    {                                  /*  Adjust descendants */
-      q = p->next;
-      while (q != p) 
-	{
-	  if (! smooth(tr, q->back))   return FALSE;
-	  q = q->next;
-	}	
-      
-      if(tr->multiBranch)		  
-	newviewGenericMasked(tr, p);	
-      else
-	newviewGeneric(tr, p);     
-    }
-  
+  {                                  /*  Adjust descendants */
+    q = p->next;
+    while (q != p) 
+    {
+      if (! smooth(tr, q->back))   return FALSE;
+      q = q->next;
+    }	
+
+    if(tr->multiBranch)		  
+      newviewGenericMasked(tr, p);	
+    else
+      newviewGeneric(tr, p);     
+  }
   return TRUE;
 } 
 
@@ -186,32 +186,34 @@ boolean smoothTree (tree *tr, int maxtimes)
 {
   nodeptr  p, q;   
   int i, count = 0;
-   
+
   p = tr->start;
   for(i = 0; i < tr->numBranches; i++)
     tr->partitionConverged[i] = FALSE;
 
+  //printBothOpen("smooth tree start, left %d times\n", maxtimes);
   while (--maxtimes >= 0) 
-    {    
-      for(i = 0; i < tr->numBranches; i++)	
-	tr->partitionSmoothed[i] = TRUE;		
+  {    
+    //printBothOpen("left %d times\n", maxtimes);
+    for(i = 0; i < tr->numBranches; i++)	
+      tr->partitionSmoothed[i] = TRUE;		
 
-      if (! smooth(tr, p->back))       return FALSE;
-      if (!isTip(p->number, tr->rdta->numsp)) 
-	{
-	  q = p->next;
-	  while (q != p) 
-	    {
-	      if (! smooth(tr, q->back))   return FALSE;
-	      q = q->next;
-	    }
-	}
-         
-      count++;
-
-      if (allSmoothed(tr)) 
-	break;      
+    if (! smooth(tr, p->back))       return FALSE;
+    if (!isTip(p->number, tr->rdta->numsp)) 
+    {
+      q = p->next;
+      while (q != p) 
+      {
+        if (! smooth(tr, q->back))   return FALSE;
+        q = q->next;
+      }
     }
+
+    count++;
+
+    if (allSmoothed(tr)) 
+      break;      
+  }
 
   for(i = 0; i < tr->numBranches; i++)
     tr->partitionConverged[i] = FALSE;
@@ -2116,6 +2118,7 @@ boolean treeEvaluate (tree *tr, double smoothFactor)       /* Evaluate a user tr
 
   evaluateGeneric(tr, tr->start);   
     
+  //printBothOpen("tr lh %f\n", tr->likelihood);
 
   return TRUE;
 }

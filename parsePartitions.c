@@ -316,273 +316,273 @@ void parsePartitions(analdef *adef, rawdata *rdta, tree *tr)
 
   f = myfopen(modelFileName, "rb");   
 
- 
+
   while(myGetline(&cc, &nbytes, f) > -1)
-    {     
-      if(!lineContainsOnlyWhiteChars(cc))
-	{
-	  numberOfModels++;
-	}
-      if(cc)
-	free(cc);
-      cc = (char *)NULL;
-    }     
-  
+  {     
+    if(!lineContainsOnlyWhiteChars(cc))
+    {
+      numberOfModels++;
+    }
+    if(cc)
+      free(cc);
+    cc = (char *)NULL;
+  }     
+
   rewind(f);
-      
+
   p_names = (char **)malloc(sizeof(char *) * numberOfModels);
   partitions = (int **)malloc(sizeof(int *) * numberOfModels);
-      
- 
-  
+
+
+
   tr->initialPartitionData = (pInfo*)malloc(sizeof(pInfo) * numberOfModels);
 
-      
+
   for(i = 0; i < numberOfModels; i++) 
-    {     
-      tr->initialPartitionData[i].protModels = adef->proteinMatrix;
-      tr->initialPartitionData[i].protFreqs  = adef->protEmpiricalFreqs;
-      tr->initialPartitionData[i].dataType   = -1;
-    }
+  {     
+    tr->initialPartitionData[i].protModels = adef->proteinMatrix;
+    tr->initialPartitionData[i].protFreqs  = adef->protEmpiricalFreqs;
+    tr->initialPartitionData[i].dataType   = -1;
+  }
 
   for(i = 0; i < numberOfModels; i++)    
     partitions[i] = (int *)NULL;
-    
+
   i = 0;
   while(myGetline(&cc, &nbytes, f) > -1)
-    {          
-      if(!lineContainsOnlyWhiteChars(cc))
-	{
-	  n = strlen(cc);	 
-	  p_names[i] = (char *)malloc(sizeof(char) * (n + 1));
-	  strcpy(&(p_names[i][0]), cc);
-	  i++;
-	}
-      if(cc)
-	free(cc);
-      cc = (char *)NULL;
-    }         
+  {          
+    if(!lineContainsOnlyWhiteChars(cc))
+    {
+      n = strlen(cc);	 
+      p_names[i] = (char *)malloc(sizeof(char) * (n + 1));
+      strcpy(&(p_names[i][0]), cc);
+      i++;
+    }
+    if(cc)
+      free(cc);
+    cc = (char *)NULL;
+  }         
 
   for(i = 0; i < numberOfModels; i++)
-    {           
-      ch = p_names[i];     
-      pairsCount = 0;
-      skipWhites(&ch);
-      
-      if(*ch == '=')
-	{
-	  printf("Identifier missing prior to '=' in %s\n", p_names[i]);
-	  exit(-1);
-	}
-      
-      analyzeIdentifier(&ch, i, tr);
+  {           
+    ch = p_names[i];     
+    pairsCount = 0;
+    skipWhites(&ch);
+
+    if(*ch == '=')
+    {
+      printf("Identifier missing prior to '=' in %s\n", p_names[i]);
+      exit(-1);
+    }
+
+    analyzeIdentifier(&ch, i, tr);
+    ch++;
+
+numberPairs:
+    pairsCount++;
+    partitions[i] = (int *)realloc((void *)partitions[i], (1 + 3 * pairsCount) * sizeof(int));
+    partitions[i][0] = pairsCount;
+    partitions[i][3 + 3 * (pairsCount - 1)] = -1; 	
+
+    skipWhites(&ch);
+
+    if(!isNum(*ch))
+    {
+      printf("%c Number expected in %s\n", *ch, p_names[i]);
+      exit(-1);
+    }   
+
+    l = 0;
+    while(isNum(*ch))		 
+    {
+      /*printf("%c", *ch);*/
+      buf[l] = *ch;
+      ch++;	
+      l++;
+    }
+    buf[l] = '\0';
+    lower = atoi(buf);
+    partitions[i][1 + 3 * (pairsCount - 1)] = lower;   
+
+    skipWhites(&ch);
+
+    /* NEW */
+
+    if((*ch != '-') && (*ch != ','))
+    {
+      if(*ch == '\0' || *ch == '\n' || *ch == '\r')
+      {
+        upper = lower;
+        goto SINGLE_NUMBER;
+      }
+      else
+      {
+        printf("'-' or ',' expected in %s\n", p_names[i]);
+        exit(-1);
+      }
+    }	 
+
+    if(*ch == ',')
+    {	     
+      upper = lower;
+      goto SINGLE_NUMBER;
+    }
+
+    /* END NEW */
+
+    ch++;   
+
+    skipWhites(&ch);
+
+    if(!isNum(*ch))
+    {
+      printf("%c Number expected in %s\n", *ch, p_names[i]);
+      exit(-1);
+    }    
+
+    l = 0;
+    while(isNum(*ch))
+    {    
+      buf[l] = *ch;
+      ch++;	
+      l++;
+    }
+    buf[l] = '\0';
+    upper = atoi(buf);     
+SINGLE_NUMBER:
+    partitions[i][2 + 3 * (pairsCount - 1)] = upper;        	  
+
+    if(upper < lower)
+    {
+      printf("Upper bound %d smaller than lower bound %d for this partition: %s\n", upper, lower,  p_names[i]);
+      exit(-1);
+    }
+
+    skipWhites(&ch);
+
+    if(*ch == '\0' || *ch == '\n' || *ch == '\r') /* PC-LINEBREAK*/
+    {    
+      goto parsed;
+    }
+
+    if(*ch == ',')
+    {	 
       ch++;
-            
-    numberPairs:
-      pairsCount++;
-      partitions[i] = (int *)realloc((void *)partitions[i], (1 + 3 * pairsCount) * sizeof(int));
-      partitions[i][0] = pairsCount;
-      partitions[i][3 + 3 * (pairsCount - 1)] = -1; 	
-      
+      goto numberPairs;
+    }
+
+    if(*ch == '\\')
+    {
+      ch++;
       skipWhites(&ch);
-      
+
       if(!isNum(*ch))
-	{
-	  printf("%c Number expected in %s\n", *ch, p_names[i]);
-	  exit(-1);
-	}   
-      
-      l = 0;
-      while(isNum(*ch))		 
-	{
-	  /*printf("%c", *ch);*/
-	  buf[l] = *ch;
-	  ch++;	
-	  l++;
-	}
-      buf[l] = '\0';
-      lower = atoi(buf);
-      partitions[i][1 + 3 * (pairsCount - 1)] = lower;   
-      
-      skipWhites(&ch);
-      
-      /* NEW */
-      
-      if((*ch != '-') && (*ch != ','))
-	{
-	  if(*ch == '\0' || *ch == '\n' || *ch == '\r')
-	    {
-	      upper = lower;
-	      goto SINGLE_NUMBER;
-	    }
-	  else
-	    {
-	      printf("'-' or ',' expected in %s\n", p_names[i]);
-	      exit(-1);
-	    }
-	}	 
-      
-      if(*ch == ',')
-	{	     
-	  upper = lower;
-	  goto SINGLE_NUMBER;
-	}
-      
-      /* END NEW */
-      
-      ch++;   
-      
-      skipWhites(&ch);
-      
-      if(!isNum(*ch))
-	{
-	  printf("%c Number expected in %s\n", *ch, p_names[i]);
-	  exit(-1);
-	}    
-      
+      {
+        printf("%c Number expected in %s\n", *ch, p_names[i]);
+        exit(-1);
+      }     
+
       l = 0;
       while(isNum(*ch))
-	{    
-	  buf[l] = *ch;
-	  ch++;	
-	  l++;
-	}
+      {
+        buf[l] = *ch;
+        ch++;	
+        l++;
+      }
       buf[l] = '\0';
-      upper = atoi(buf);     
-    SINGLE_NUMBER:
-      partitions[i][2 + 3 * (pairsCount - 1)] = upper;        	  
-      
-      if(upper < lower)
-	{
-	  printf("Upper bound %d smaller than lower bound %d for this partition: %s\n", upper, lower,  p_names[i]);
-	  exit(-1);
-	}
-      
+      modulo = atoi(buf);      
+      partitions[i][3 + 3 * (pairsCount - 1)] = modulo; 	
+
       skipWhites(&ch);
-      
-      if(*ch == '\0' || *ch == '\n' || *ch == '\r') /* PC-LINEBREAK*/
-	{    
-	  goto parsed;
-	}
-      
+      if(*ch == '\0' || *ch == '\n' || *ch == '\r')
+      {	     
+        goto parsed;
+      }
       if(*ch == ',')
-	{	 
-	  ch++;
-	  goto numberPairs;
-	}
-      
-      if(*ch == '\\')
-	{
-	  ch++;
-	  skipWhites(&ch);
-	  
-	  if(!isNum(*ch))
-	    {
-	      printf("%c Number expected in %s\n", *ch, p_names[i]);
-	      exit(-1);
-	    }     
-	  
-	  l = 0;
-	  while(isNum(*ch))
-	    {
-	      buf[l] = *ch;
-	      ch++;	
-	      l++;
-	    }
-	  buf[l] = '\0';
-	  modulo = atoi(buf);      
-	  partitions[i][3 + 3 * (pairsCount - 1)] = modulo; 	
-	  
-	  skipWhites(&ch);
-	  if(*ch == '\0' || *ch == '\n' || *ch == '\r')
-	    {	     
-	      goto parsed;
-	    }
-	  if(*ch == ',')
-	    {	       
-	      ch++;
-	      goto numberPairs;
-	    }
-	}  
-      
-      assert(0);
-       
-    parsed:
-      i = i;
-    }
-  
+      {	       
+        ch++;
+        goto numberPairs;
+      }
+    }  
+
+    assert(0);
+
+parsed:
+    i = i;
+  }
+
   fclose(f);
- 
+
   /*********************************************************************************************************************/ 
 
   for(i = 0; i <= rdta->sites; i++)
     tr->model[i] = -1;
-  
+
   for(i = 0; i < numberOfModels; i++)
-    {   
-      as = partitions[i][0];     
-      
-      for(j = 0; j < as; j++)
-	{
-	  lower = partitions[i][1 + j * 3];
-	  upper = partitions[i][2 + j * 3]; 
-	  modulo = partitions[i][3 + j * 3];	
-	 
-	  if(modulo == -1)
-	    {
-	      for(k = lower; k <= upper; k++)
-		setModel(i, k, tr->model);
-	    }
-	  else
-	    {
-	      for(k = lower; k <= upper; k += modulo)
-		{
-		  if(k <= rdta->sites)
-		    setModel(i, k, tr->model);	      
-		}
-	    }
-	}        
-    }
+  {   
+    as = partitions[i][0];     
+
+    for(j = 0; j < as; j++)
+    {
+      lower = partitions[i][1 + j * 3];
+      upper = partitions[i][2 + j * 3]; 
+      modulo = partitions[i][3 + j * 3];	
+
+      if(modulo == -1)
+      {
+        for(k = lower; k <= upper; k++)
+          setModel(i, k, tr->model);
+      }
+      else
+      {
+        for(k = lower; k <= upper; k += modulo)
+        {
+          if(k <= rdta->sites)
+            setModel(i, k, tr->model);	      
+        }
+      }
+    }        
+  }
 
 
   for(i = 1; i < rdta->sites + 1; i++)
+  {
+
+    if(tr->model[i] == -1)
     {
-      
-      if(tr->model[i] == -1)
-	{
-	  printf("ERROR: Alignment Position %d has not been assigned any model\n", i);
-	  exit(-1);
-	}      
-    }  
+      printf("ERROR: Alignment Position %d has not been assigned any model\n", i);
+      exit(-1);
+    }      
+  }  
 
   for(i = 0; i < numberOfModels; i++)
-    {
-      free(partitions[i]);
-      free(p_names[i]);
-    }
-  
+  {
+    free(partitions[i]);
+    free(p_names[i]);
+  }
+
   free(partitions);
   free(p_names);    
-    
+
   tr->NumberOfModels = numberOfModels;     
-  
+
   if(adef->perGeneBranchLengths)
+  {
+    if(tr->NumberOfModels != NUM_BRANCHES)
     {
-      if(tr->NumberOfModels != NUM_BRANCHES)
-	{
-	  printf("You are trying to use %d partitioned models for an individual per-gene branch length estimate.\n", tr->NumberOfModels);
-	  printf("Currently only a number of %d models/partitions is hard-coded to improve efficiency.\n", NUM_BRANCHES);
-	  printf("\n");
-	  printf("In order to change this please replace the line \"#define NUM_BRANCHES   %d\" in file \"axml.h\" \n", NUM_BRANCHES);
-	  printf("by \"#define NUM_BRANCHES   %d\" and then re-compile RAxML.\n", tr->NumberOfModels);
-	  exit(-1);
-	}
-      else
-	{
-	  tr->multiBranch = 1;
-	  tr->numBranches = tr->NumberOfModels;
-	}
+      printf("You are trying to use %d partitioned models for an individual per-gene branch length estimate.\n", tr->NumberOfModels);
+      printf("Currently only a number of %d models/partitions is hard-coded to improve efficiency.\n", NUM_BRANCHES);
+      printf("\n");
+      printf("In order to change this please replace the line \"#define NUM_BRANCHES   %d\" in file \"axml.h\" \n", NUM_BRANCHES);
+      printf("by \"#define NUM_BRANCHES   %d\" and then re-compile RAxML.\n", tr->NumberOfModels);
+      exit(-1);
     }
+    else
+    {
+      tr->multiBranch = 1;
+      tr->numBranches = tr->NumberOfModels;
+    }
+  }
 }
 
 /*******************************************************************************************************************************/

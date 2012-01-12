@@ -4651,122 +4651,197 @@ static void newviewGTRCATPROT_SAVE(int tipCase, double *extEV,
 
 
     
-void computeTraversalInfo(nodeptr p, traversalInfo *ti, int *counter, int maxTips, int numBranches)
+void computeTraversalInfo(nodeptr p, traversalInfo *ti, int *counter, int maxTips, int numBranches, recompVectors *rvec)
 {
   if(isTip(p->number, maxTips))
     return;
 
+  /* recom */
+  int slot = -1, unpin1 = -1, unpin2 = -1;
+  /* E recom */
   {
     int i;
     nodeptr q = p->next->back;
     nodeptr r = p->next->next->back;
 
     if(isTip(r->number, maxTips) && isTip(q->number, maxTips))
+    {
+      while (! p->x) /* TODOFER while unrequired */
       {
-	while (! p->x)
-	 {
-	   if (! p->x)
-	     getxnode(p);
-	 }
-
-	ti[*counter].tipCase = TIP_TIP;
-	ti[*counter].pNumber = p->number;
-	ti[*counter].qNumber = q->number;
-	ti[*counter].rNumber = r->number;
-
-	for(i = 0; i < numBranches; i++)
-	  {
-	    double z;
-	    z = q->z[i];
-	  
-	    z = (z > zmin) ? log(z) : log(zmin);
-	    ti[*counter].qz[i] = z;
-
-	    z = r->z[i];
-	    z = (z > zmin) ? log(z) : log(zmin);
-	    ti[*counter].rz[i] = z;
-	  }
-	*counter = *counter + 1;
+        if (! p->x)
+          getxnode(p);
       }
+
+      ti[*counter].tipCase = TIP_TIP;
+      ti[*counter].pNumber = p->number;
+      ti[*counter].qNumber = q->number;
+      ti[*counter].rNumber = r->number;
+
+      for(i = 0; i < numBranches; i++)
+      {
+        double z;
+        z = q->z[i];
+
+        z = (z > zmin) ? log(z) : log(zmin);
+        ti[*counter].qz[i] = z;
+
+        z = r->z[i];
+        z = (z > zmin) ? log(z) : log(zmin);
+        ti[*counter].rz[i] = z;
+      }
+      /* recom */
+      if(rvec != NULL)
+      {
+        getxVector(rvec, p->number, &slot, maxTips);
+        ti[*counter].slot_p = slot;
+      }
+      /* E recom */
+      *counter = *counter + 1;
+    }
     else
+    {
+      if(isTip(r->number, maxTips) || isTip(q->number, maxTips))
       {
-	if(isTip(r->number, maxTips) || isTip(q->number, maxTips))
-	  {
-	    nodeptr tmp;
+        nodeptr tmp;
 
-	    if(isTip(r->number, maxTips))
-	      {
-		tmp = r;
-		r = q;
-		q = tmp;
-	      }
+        if(isTip(r->number, maxTips))
+        {
+          tmp = r;
+          r = q;
+          q = tmp;
+        }
 
-	    while ((! p->x) || (! r->x))
-	      {
-		if (! r->x)
-		  computeTraversalInfo(r, ti, counter, maxTips, numBranches);
-		if (! p->x)
-		  getxnode(p);
-	      }
+        int r_stlen; /* recom needsRecomp wraps !r->x up  */
+        while ((! p->x) || needsRecomp(rvec, r, maxTips))
+        {
+          if (needsRecomp(rvec, r, maxTips))
+            computeTraversalInfo(r, ti, counter, maxTips, numBranches, rvec);
+          if (! p->x)
+            getxnode(p);
+        }
 
-	    ti[*counter].tipCase = TIP_INNER;
-	    ti[*counter].pNumber = p->number;
-	    ti[*counter].qNumber = q->number;
-	    ti[*counter].rNumber = r->number;
+        ti[*counter].tipCase = TIP_INNER;
+        ti[*counter].pNumber = p->number;
+        ti[*counter].qNumber = q->number;
+        ti[*counter].rNumber = r->number;
 
-	    for(i = 0; i < numBranches; i++)
-	      {
-		double z;
-		z = q->z[i];
-			
-		z = (z > zmin) ? log(z) : log(zmin);
-		ti[*counter].qz[i] = z;
+        for(i = 0; i < numBranches; i++)
+        {
+          double z;
+          z = q->z[i];
 
-		z = r->z[i];
-		z = (z > zmin) ? log(z) : log(zmin);
-		ti[*counter].rz[i] = z;
-	      }
+          z = (z > zmin) ? log(z) : log(zmin);
+          ti[*counter].qz[i] = z;
 
-	    *counter = *counter + 1;
-	  }
-	else
-	  {
+          z = r->z[i];
+          z = (z > zmin) ? log(z) : log(zmin);
+          ti[*counter].rz[i] = z;
+        }
+        /* recom */
+        if(rvec != NULL)
+        {
+          getxVector(rvec, r->number, &slot, maxTips);
+          ti[*counter].slot_r = slot;
 
-	    while ((! p->x) || (! q->x) || (! r->x))
-	      {
-		if (! q->x)
-		  computeTraversalInfo(q, ti, counter, maxTips, numBranches);
-		if (! r->x)
-		  computeTraversalInfo(r, ti, counter, maxTips, numBranches);
-		if (! p->x)
-		  getxnode(p);
-	      }
+          getxVector(rvec, p->number, &slot, maxTips);
+          ti[*counter].slot_p = slot;
 
-	    ti[*counter].tipCase = INNER_INNER;
-	    ti[*counter].pNumber = p->number;
-	    ti[*counter].qNumber = q->number;
-	    ti[*counter].rNumber = r->number;
+          unpin2 = r->number;
+        }
+        /* E recom */
 
-	    for(i = 0; i < numBranches; i++)
-	      {
-		double z;
-		z = q->z[i];	
-
-		z = (z > zmin) ? log(z) : log(zmin);
-		ti[*counter].qz[i] = z;
-
-		z = r->z[i];
-		z = (z > zmin) ? log(z) : log(zmin);
-		ti[*counter].rz[i] = z;
-	      }
-
-	    *counter = *counter + 1;
-	  }
+        *counter = *counter + 1;
       }
+      else
+      {
+        int r_stlen, q_stlen;
+        while ((! p->x) || needsRecomp(rvec, q, maxTips) || needsRecomp(rvec, r, maxTips))
+        {
+          if (needsRecomp(rvec, q, maxTips) && needsRecomp(rvec, r, maxTips))
+          {
+            nodeptr long_p, short_r;
+            if(rvec != NULL)
+            {
+              /* determine order */
+              int q_stlen_fast, r_stlen_fast;
+              q_stlen_fast = rvec->stlen[q->number - maxTips - 1];
+              r_stlen_fast = rvec->stlen[r->number - maxTips - 1];
+              if(q_stlen_fast > r_stlen_fast) 
+              {
+                computeTraversalInfo(q, ti, counter, maxTips, numBranches, rvec);
+                computeTraversalInfo(r, ti, counter, maxTips, numBranches, rvec);
+              }
+              else
+              {
+                computeTraversalInfo(r, ti, counter, maxTips, numBranches, rvec);
+                computeTraversalInfo(q, ti, counter, maxTips, numBranches, rvec);
+              }
+            }
+            else
+            {
+              computeTraversalInfo(q, ti, counter, maxTips, numBranches, rvec);
+              computeTraversalInfo(r, ti, counter, maxTips, numBranches, rvec);
+            }
+
+          }
+          else
+          {
+            /* order is not relevant */
+            if (needsRecomp(rvec, q, maxTips))
+              computeTraversalInfo(q, ti, counter, maxTips, numBranches, rvec);
+            if (needsRecomp(rvec, r, maxTips))
+              computeTraversalInfo(r, ti, counter, maxTips, numBranches, rvec);
+          }
+          if (! p->x)
+            getxnode(p);
+
+        }
+
+        ti[*counter].tipCase = INNER_INNER;
+        ti[*counter].pNumber = p->number;
+        ti[*counter].qNumber = q->number;
+        ti[*counter].rNumber = r->number;
+
+        if(rvec != NULL)
+        {
+          getxVector(rvec, q->number, &slot, maxTips);
+          ti[*counter].slot_q = slot;
+
+          getxVector(rvec, r->number, &slot, maxTips);
+          ti[*counter].slot_r = slot;
+          assert(slot != ti[*counter].slot_q);
+
+          getxVector(rvec, p->number, &slot, maxTips);
+          ti[*counter].slot_p = slot;
+          assert(slot != ti[*counter].slot_q);
+          assert(slot != ti[*counter].slot_r);
+
+          unpin2 = r->number;
+          unpin1 = q->number;
+        }
+
+        for(i = 0; i < numBranches; i++)
+        {
+          double z;
+          z = q->z[i];	
+
+          z = (z > zmin) ? log(z) : log(zmin);
+          ti[*counter].qz[i] = z;
+
+          z = r->z[i];
+          z = (z > zmin) ? log(z) : log(zmin);
+          ti[*counter].rz[i] = z;
+        }
+
+        *counter = *counter + 1;
+      }
+    }
   }
-
-  
-
+  if(rvec != NULL)
+  {
+    unpinNode(rvec, unpin1, maxTips);
+    unpinNode(rvec, unpin2, maxTips);
+  }
 }
 
 
@@ -4774,125 +4849,125 @@ void computeTraversalInfo(nodeptr p, traversalInfo *ti, int *counter, int maxTip
 void computeTraversalInfoMulti(nodeptr p, traversalInfo *ti, int *counter, int maxTips, int model)
 {
   if(isTip(p->number, maxTips))
-    {
-      assert(p->isPresent[model / MASK_LENGTH] & mask32[model % MASK_LENGTH]);
-      assert(p->backs[model]);
-      return;
-    }
+  {
+    assert(p->isPresent[model / MASK_LENGTH] & mask32[model % MASK_LENGTH]);
+    assert(p->backs[model]);
+    return;
+  }
 
- 
+
   assert(p->backs[model]);
 
   {     
     nodeptr q = p->next->backs[model];
     nodeptr r = p->next->next->backs[model];
-    
+
     assert(p == p->next->next->next);
-      
+
     assert(q && r);
 
     if(isTip(r->number, maxTips) && isTip(q->number, maxTips))
+    {	  
+      while (! p->xs[model])
       {	  
-	while (! p->xs[model])
-	 {	  
-	   if (! p->xs[model])
-	     getxsnode(p, model); 	   
-	 }
+        if (! p->xs[model])
+          getxsnode(p, model); 	   
+      }
 
-	assert(p->xs[model]);
+      assert(p->xs[model]);
 
-	ti[*counter].tipCase = TIP_TIP; 
-	ti[*counter].pNumber = p->number;
-	ti[*counter].qNumber = q->number;
-	ti[*counter].rNumber = r->number;
-	
-	{
-	  double z;
-	  z = q->z[model];
-	  z = (z > zmin) ? log(z) : log(zmin);
-	  ti[*counter].qz[model] = z;
-	  
-	  z = r->z[model];
-	  z = (z > zmin) ? log(z) : log(zmin);
-	  ti[*counter].rz[model] = z;	    
-	}     
-	*counter = *counter + 1;
-      }  
-    else
+      ti[*counter].tipCase = TIP_TIP; 
+      ti[*counter].pNumber = p->number;
+      ti[*counter].qNumber = q->number;
+      ti[*counter].rNumber = r->number;
+
       {
-	if(isTip(r->number, maxTips) || isTip(q->number, maxTips))
-	  {		
-	    nodeptr tmp;
+        double z;
+        z = q->z[model];
+        z = (z > zmin) ? log(z) : log(zmin);
+        ti[*counter].qz[model] = z;
 
-	    if(isTip(r->number, maxTips))
-	      {
-		tmp = r;
-		r = q;
-		q = tmp;
-	      }
+        z = r->z[model];
+        z = (z > zmin) ? log(z) : log(zmin);
+        ti[*counter].rz[model] = z;	    
+      }     
+      *counter = *counter + 1;
+    }  
+    else
+    {
+      if(isTip(r->number, maxTips) || isTip(q->number, maxTips))
+      {		
+        nodeptr tmp;
 
-	    while ((! p->xs[model]) || (! r->xs[model])) 
-	      {	 			
-		if (! r->xs[model]) 
-		  computeTraversalInfoMulti(r, ti, counter, maxTips, model);
-		if (! p->xs[model]) 
-		  getxsnode(p, model);	
-	      }
-	    	   
-	    assert(p->xs[model] && r->xs[model]);
+        if(isTip(r->number, maxTips))
+        {
+          tmp = r;
+          r = q;
+          q = tmp;
+        }
 
-	    ti[*counter].tipCase = TIP_INNER; 
-	    ti[*counter].pNumber = p->number;
-	    ti[*counter].qNumber = q->number;
-	    ti[*counter].rNumber = r->number;
-	   
-	    {
-	      double z;
-	      z = q->z[model];
-	      z = (z > zmin) ? log(z) : log(zmin);
-	      ti[*counter].qz[model] = z;
-	      
-	      z = r->z[model];
-	      z = (z > zmin) ? log(z) : log(zmin);
-		ti[*counter].rz[model] = z;		
-	    }   
-	    
-	    *counter = *counter + 1;
-	  }
-	else
-	  {	 
+        while ((! p->xs[model]) || (! r->xs[model])) 
+        {	 			
+          if (! r->xs[model]) 
+            computeTraversalInfoMulti(r, ti, counter, maxTips, model);
+          if (! p->xs[model]) 
+            getxsnode(p, model);	
+        }
 
-	    while ((! p->xs[model]) || (! q->xs[model]) || (! r->xs[model])) 
-	      {		
-		if (! q->xs[model]) 
-		  computeTraversalInfoMulti(q, ti, counter, maxTips, model);
-		if (! r->xs[model]) 
-		  computeTraversalInfoMulti(r, ti, counter, maxTips, model);
-		if (! p->xs[model]) 
-		  getxsnode(p, model);	
-	      }
+        assert(p->xs[model] && r->xs[model]);
 
-	    assert(p->xs[model] && r->xs[model] && q->xs[model]);
+        ti[*counter].tipCase = TIP_INNER; 
+        ti[*counter].pNumber = p->number;
+        ti[*counter].qNumber = q->number;
+        ti[*counter].rNumber = r->number;
 
-	    ti[*counter].tipCase = INNER_INNER; 
-	    ti[*counter].pNumber = p->number;
-	    ti[*counter].qNumber = q->number;
-	    ti[*counter].rNumber = r->number;
-	   
-	    {
-	      double z;
-	      z = q->z[model];
-	      z = (z > zmin) ? log(z) : log(zmin);
-	      ti[*counter].qz[model] = z;
-	      
-	      z = r->z[model];
-	      z = (z > zmin) ? log(z) : log(zmin);
-	      ti[*counter].rz[model] = z;		
-	    }   
-	    
-	    *counter = *counter + 1;
-	  }
-      }    
+        {
+          double z;
+          z = q->z[model];
+          z = (z > zmin) ? log(z) : log(zmin);
+          ti[*counter].qz[model] = z;
+
+          z = r->z[model];
+          z = (z > zmin) ? log(z) : log(zmin);
+          ti[*counter].rz[model] = z;		
+        }   
+
+        *counter = *counter + 1;
+      }
+      else
+      {	 
+
+        while ((! p->xs[model]) || (! q->xs[model]) || (! r->xs[model])) 
+        {		
+          if (! q->xs[model]) 
+            computeTraversalInfoMulti(q, ti, counter, maxTips, model);
+          if (! r->xs[model]) 
+            computeTraversalInfoMulti(r, ti, counter, maxTips, model);
+          if (! p->xs[model]) 
+            getxsnode(p, model);	
+        }
+
+        assert(p->xs[model] && r->xs[model] && q->xs[model]);
+
+        ti[*counter].tipCase = INNER_INNER; 
+        ti[*counter].pNumber = p->number;
+        ti[*counter].qNumber = q->number;
+        ti[*counter].rNumber = r->number;
+
+        {
+          double z;
+          z = q->z[model];
+          z = (z > zmin) ? log(z) : log(zmin);
+          ti[*counter].qz[model] = z;
+
+          z = r->z[model];
+          z = (z > zmin) ? log(z) : log(zmin);
+          ti[*counter].rz[model] = z;		
+        }   
+
+        *counter = *counter + 1;
+      }
+    }    
   }
 
 }
@@ -4903,302 +4978,385 @@ void newviewIterative (tree *tr)
 {
   traversalInfo 
     *ti   = tr->td[0].ti;
-  
+
   int 
     i, 
     model;
 
+  /* recom */
+#if (defined(_USE_PTHREADS) || defined(_FINE_GRAIN_MPI))
+#else
+  countTraversal(tr);
+#endif
+  int slot = -1, unpin1 = -1, unpin2 = -1;
+  /* E recom */
+
   for(i = 1; i < tr->td[0].count; i++)
+  {
+    traversalInfo *tInfo = &ti[i];
+
+    for(model = 0; model < tr->NumberOfModels; model++)
     {
-      traversalInfo *tInfo = &ti[i];
+      size_t		
+        width  = (size_t)tr->partitionData[model].width;
 
-      for(model = 0; model < tr->NumberOfModels; model++)
-	{
-	  size_t		
-	    width  = (size_t)tr->partitionData[model].width;
+      //if(tr->executeModel[model] && width > 0)
+      if(tr->executeModel[model] && width > 0 || (tr->useRecom && tr->multiBranch)) /* TODOFER why? */
+      {	      
+        double
+          *x1_start = (double*)NULL,
+          *x2_start = (double*)NULL,
+          *x3_start = tr->partitionData[model].xVector[tInfo->pNumber - tr->mxtips - 1],
+          *left     = (double*)NULL,
+          *right    = (double*)NULL,		
+          *x1_gapColumn = (double*)NULL,
+          *x2_gapColumn = (double*)NULL,
+          *x3_gapColumn = (double*)NULL;
 
-	  if(tr->executeModel[model] && width > 0)
-	    {	      
-	      double
-		*x1_start = (double*)NULL,
-		*x2_start = (double*)NULL,
-		*x3_start = tr->partitionData[model].xVector[tInfo->pNumber - tr->mxtips - 1],
-		*left     = (double*)NULL,
-		*right    = (double*)NULL,		
-		*x1_gapColumn = (double*)NULL,
-		*x2_gapColumn = (double*)NULL,
-		*x3_gapColumn = (double*)NULL;
+        int	       
+          scalerIncrement = 0,
+                          *wgt = tr->partitionData[model].wgt,       
+                          *ex3 = (int*)NULL;
 
-	      int	       
-		scalerIncrement = 0,
-		*wgt = tr->partitionData[model].wgt,       
-		*ex3 = (int*)NULL;
+        unsigned int
+          *x1_gap = (unsigned int*)NULL,
+          *x2_gap = (unsigned int*)NULL,
+          *x3_gap = (unsigned int*)NULL;
 
-	      unsigned int
-		*x1_gap = (unsigned int*)NULL,
-		*x2_gap = (unsigned int*)NULL,
-		*x3_gap = (unsigned int*)NULL;
+        unsigned char
+          *tipX1 = (unsigned char *)NULL,
+          *tipX2 = (unsigned char *)NULL;
 
-	      unsigned char
-		*tipX1 = (unsigned char *)NULL,
-		*tipX2 = (unsigned char *)NULL;
+        double 
+          qz, 
+          rz;	     
 
-	      double 
-		qz, 
-		rz;	     
-	      
-	      size_t
-		gapOffset,
-		rateHet,
-		states = (size_t)tr->partitionData[model].states,	
-		availableLength = tr->partitionData[model].xSpaceVector[(tInfo->pNumber - tr->mxtips - 1)],
-		requiredLength = 0;	     
+        size_t
+          gapOffset,
+          rateHet,
+          states = (size_t)tr->partitionData[model].states,	
+          availableLength = tr->partitionData[model].xSpaceVector[(tInfo->pNumber - tr->mxtips - 1)],
+          requiredLength = 0;	     
 
-	      if(tr->rateHetModel == CAT)
-		rateHet = 1;
-	      else
-		rateHet = 4;
-	     
-	      
-	      if(tr->saveMemory)
-		{
-		  size_t
-		    j,
-		    setBits = 0;		  
+        if(tr->rateHetModel == CAT)
+          rateHet = 1;
+        else
+          rateHet = 4;
 
-		  gapOffset = states * (size_t)getUndetermined(tr->partitionData[model].dataType);
 
-		  x1_gap = &(tr->partitionData[model].gapVector[tInfo->qNumber * tr->partitionData[model].gapVectorLength]);
-		  x2_gap = &(tr->partitionData[model].gapVector[tInfo->rNumber * tr->partitionData[model].gapVectorLength]);
-		  x3_gap = &(tr->partitionData[model].gapVector[tInfo->pNumber * tr->partitionData[model].gapVectorLength]);		      		  
+        if(tr->saveMemory)
+        {
+          size_t
+            j,
+            setBits = 0;		  
 
-		  for(j = 0; j < (size_t)tr->partitionData[model].gapVectorLength; j++)
-		    {		     
-		      x3_gap[j] = x1_gap[j] & x2_gap[j];
-		      setBits += (size_t)(precomputed16_bitcount(x3_gap[j]));		      
-		    }
-		      		  		 
-		  requiredLength = (width - setBits)  * rateHet * states * sizeof(double);		
-		}
-	      else
-		requiredLength  =  width * rateHet * states * sizeof(double);
+          gapOffset = states * (size_t)getUndetermined(tr->partitionData[model].dataType);
 
-	      if(requiredLength != availableLength)
-		{		  
-		  if(x3_start)
-		    free(x3_start);
-		 
-		  x3_start = (double*)malloc_aligned(requiredLength);		 
-		  
-		  tr->partitionData[model].xVector[tInfo->pNumber - tr->mxtips - 1] = x3_start;		  
-		  tr->partitionData[model].xSpaceVector[(tInfo->pNumber - tr->mxtips - 1)] = requiredLength;		 
-		}
+          x1_gap = &(tr->partitionData[model].gapVector[tInfo->qNumber * tr->partitionData[model].gapVectorLength]);
+          x2_gap = &(tr->partitionData[model].gapVector[tInfo->rNumber * tr->partitionData[model].gapVectorLength]);
+          x3_gap = &(tr->partitionData[model].gapVector[tInfo->pNumber * tr->partitionData[model].gapVectorLength]);		      		  
 
-	      switch(tInfo->tipCase)
-		{
-		case TIP_TIP:		  
-		  tipX1    = tr->partitionData[model].yVector[tInfo->qNumber];
-		  tipX2    = tr->partitionData[model].yVector[tInfo->rNumber];		  		 		  
+          for(j = 0; j < (size_t)tr->partitionData[model].gapVectorLength; j++)
+          {		     
+            x3_gap[j] = x1_gap[j] & x2_gap[j];
+            setBits += (size_t)(precomputed16_bitcount(x3_gap[j]));		      
+          }
 
-		  if(tr->saveMemory)
-		    {
-		      x1_gapColumn   = &(tr->partitionData[model].tipVector[gapOffset]);
-		      x2_gapColumn   = &(tr->partitionData[model].tipVector[gapOffset]);		    
-		      x3_gapColumn   = &tr->partitionData[model].gapColumn[(tInfo->pNumber - tr->mxtips - 1) * states * rateHet];		    
-		    }
-	      
-		  break;
-		case TIP_INNER:		 
-		  tipX1    =  tr->partitionData[model].yVector[tInfo->qNumber];
-		  x2_start = tr->partitionData[model].xVector[tInfo->rNumber - tr->mxtips - 1];		  
+          requiredLength = (width - setBits)  * rateHet * states * sizeof(double);		
+        }
+        else
+          requiredLength  =  width * rateHet * states * sizeof(double);
 
-		  if(tr->saveMemory)
-		    {	
-		      x1_gapColumn   = &(tr->partitionData[model].tipVector[gapOffset]);	     
-		      x2_gapColumn   = &tr->partitionData[model].gapColumn[(tInfo->rNumber - tr->mxtips - 1) * states * rateHet];
-		      x3_gapColumn   = &tr->partitionData[model].gapColumn[(tInfo->pNumber - tr->mxtips - 1) * states * rateHet];
-		    }
-	      		     
-		  break;
-		case INNER_INNER:		 		 
-		  x1_start       = tr->partitionData[model].xVector[tInfo->qNumber - tr->mxtips - 1];
-		  x2_start       = tr->partitionData[model].xVector[tInfo->rNumber - tr->mxtips - 1];
-		  	
+        //printBothOpen("model %d, req %d, available %d\n",model, requiredLength, availableLength);
+        if(requiredLength != availableLength)
+        {		  
+            if(x3_start)
+              free(x3_start);
 
-		  if(tr->saveMemory)
-		    {
-		      x1_gapColumn   = &tr->partitionData[model].gapColumn[(tInfo->qNumber - tr->mxtips - 1) * states * rateHet];
-		      x2_gapColumn   = &tr->partitionData[model].gapColumn[(tInfo->rNumber - tr->mxtips - 1) * states * rateHet];
-		      x3_gapColumn   = &tr->partitionData[model].gapColumn[(tInfo->pNumber - tr->mxtips - 1) * states * rateHet];
-		    }
-	  		     
-		  break;
-		default:
-		  assert(0);
-		}
+            x3_start = (double*)malloc_aligned(requiredLength);		 
 
-	      
-	      left  = tr->partitionData[model].left;
-	      right = tr->partitionData[model].right;
-	      
+           tr->partitionData[model].xVector[tInfo->pNumber - tr->mxtips - 1] = x3_start;		  
+          tr->partitionData[model].xSpaceVector[(tInfo->pNumber - tr->mxtips - 1)] = requiredLength;		 
+        }
 
-	      if(tr->multiBranch)
-		{
-		  qz = tInfo->qz[model];
-		  rz = tInfo->rz[model];
-		}
-	      else
-		{
-		  qz = tInfo->qz[0];
-		  rz = tInfo->rz[0];
-		}	      	      	      	     	      
+        switch(tInfo->tipCase)
+        {
+          case TIP_TIP:		  
+            tipX1    = tr->partitionData[model].yVector[tInfo->qNumber];
+            tipX2    = tr->partitionData[model].yVector[tInfo->rNumber];		  
+            /* recom */
+            if(tr->useRecom)
+            {
+              slot = tInfo->slot_p; 
+              unpinAtomicSlot(tr->rvec, slot, tr->mxtips);
+              pinAtomicNode(tr->rvec, tInfo->pNumber, slot, tr->mxtips);
+              //x3_start = tr->rvec->tmpvectors[slot];
+              x3_start = tr->partitionData[model].tmpvectors[slot];
+              assert(x3_start != NULL);
+              //assert(tr->rvec->width == 4 * width);
+            }
+            /* E recom */
+            //printBothOpen("tip tip x3\n");
 
-	      switch(tr->partitionData[model].dataType)
-		{		
-		case DNA_DATA:	
-		  if(tr->rateHetModel == CAT)
-		    {
-		    
-		      makeP(qz, rz, tr->partitionData[model].perSiteRates,   tr->partitionData[model].EI,
-			    tr->partitionData[model].EIGN, tr->partitionData[model].numberOfCategories,
-			    left, right, DNA_DATA, tr->saveMemory, tr->maxCategories);
-		  
-		      if(tr->saveMemory)
-			newviewGTRCAT_SAVE(tInfo->tipCase,  tr->partitionData[model].EV, tr->partitionData[model].rateCategory,
-					   x1_start, x2_start, x3_start, tr->partitionData[model].tipVector,
-					   ex3, tipX1, tipX2,
-					   width, left, right, wgt, &scalerIncrement, TRUE, x1_gap, x2_gap, x3_gap,
-					   x1_gapColumn, x2_gapColumn, x3_gapColumn, tr->maxCategories);
-		      else
+            if(tr->saveMemory)
+            {
+              x1_gapColumn   = &(tr->partitionData[model].tipVector[gapOffset]);
+              x2_gapColumn   = &(tr->partitionData[model].tipVector[gapOffset]);		    
+              x3_gapColumn   = &tr->partitionData[model].gapColumn[(tInfo->pNumber - tr->mxtips - 1) * states * rateHet];		    
+            }
+
+            break;
+          case TIP_INNER:		 
+            tipX1    =  tr->partitionData[model].yVector[tInfo->qNumber];
+            /* recom */
+            if(tr->useRecom)
+            {
+              slot = tInfo->slot_r; 
+              unpinAtomicSlot(tr->rvec, slot, tr->mxtips);
+              pinAtomicNode(tr->rvec, tInfo->rNumber, slot, tr->mxtips);
+              //x2_start = tr->rvec->tmpvectors[slot];
+              x2_start = tr->partitionData[model].tmpvectors[slot];
+
+              slot = tInfo->slot_p; 
+              unpinAtomicSlot(tr->rvec, slot, tr->mxtips);
+              pinAtomicNode(tr->rvec, tInfo->pNumber, slot, tr->mxtips);
+              //x3_start = tr->rvec->tmpvectors[slot];
+              x3_start = tr->partitionData[model].tmpvectors[slot];
+
+              unpin2 = tInfo->rNumber;
+            }
+            else
+              /* E recom */
+            {
+              x2_start = tr->partitionData[model].xVector[tInfo->rNumber - tr->mxtips - 1];
+            }
+            //printBothOpen("tip inner x3\n");
+
+            if(tr->saveMemory)
+            {	
+              x1_gapColumn   = &(tr->partitionData[model].tipVector[gapOffset]);	     
+              x2_gapColumn   = &tr->partitionData[model].gapColumn[(tInfo->rNumber - tr->mxtips - 1) * states * rateHet];
+              x3_gapColumn   = &tr->partitionData[model].gapColumn[(tInfo->pNumber - tr->mxtips - 1) * states * rateHet];
+            }
+
+            break;
+          case INNER_INNER:		 		 
+            /* recom */
+            if(tr->useRecom)
+            {
+              /* TODOFER refactor this sth. like follow_recom_strategy(rvec,x1_start, tInfo->slot_q, tInfo->qNumber)*/
+              slot = tInfo->slot_q; 
+              unpinAtomicSlot(tr->rvec, slot, tr->mxtips);
+              pinAtomicNode(tr->rvec, tInfo->qNumber, slot, tr->mxtips);
+              //x1_start = tr->rvec->tmpvectors[slot];
+              x1_start = tr->partitionData[model].tmpvectors[slot];
+
+              slot = tInfo->slot_r; 
+              unpinAtomicSlot(tr->rvec, slot, tr->mxtips);
+              pinAtomicNode(tr->rvec, tInfo->rNumber, slot, tr->mxtips);
+              //x2_start = tr->rvec->tmpvectors[slot];
+              x2_start = tr->partitionData[model].tmpvectors[slot];
+
+              slot = tInfo->slot_p; 
+              unpinAtomicSlot(tr->rvec, slot, tr->mxtips);
+              pinAtomicNode(tr->rvec, tInfo->pNumber, slot, tr->mxtips);
+              //x3_start = tr->rvec->tmpvectors[slot];
+              x3_start = tr->partitionData[model].tmpvectors[slot];
+
+              unpin2 = tInfo->rNumber;
+              unpin1 = tInfo->qNumber;
+            }
+            else
+              /* E recom */
+            {
+              x1_start       = tr->partitionData[model].xVector[tInfo->qNumber - tr->mxtips - 1];
+              x2_start       = tr->partitionData[model].xVector[tInfo->rNumber - tr->mxtips - 1];
+            }
+            //printBothOpen("inner inner x3\n");
+
+
+            if(tr->saveMemory)
+            {
+              x1_gapColumn   = &tr->partitionData[model].gapColumn[(tInfo->qNumber - tr->mxtips - 1) * states * rateHet];
+              x2_gapColumn   = &tr->partitionData[model].gapColumn[(tInfo->rNumber - tr->mxtips - 1) * states * rateHet];
+              x3_gapColumn   = &tr->partitionData[model].gapColumn[(tInfo->pNumber - tr->mxtips - 1) * states * rateHet];
+            }
+
+            break;
+          default:
+            assert(0);
+        }
+
+
+        left  = tr->partitionData[model].left;
+        right = tr->partitionData[model].right;
+
+
+        if(tr->multiBranch)
+        {
+          qz = tInfo->qz[model];
+          rz = tInfo->rz[model];
+        }
+        else
+        {
+          qz = tInfo->qz[0];
+          rz = tInfo->rz[0];
+        }	      	      	      	     	      
+
+        switch(tr->partitionData[model].dataType)
+        {		
+          case DNA_DATA:	
+            if(tr->rateHetModel == CAT)
+            {
+
+              makeP(qz, rz, tr->partitionData[model].perSiteRates,   tr->partitionData[model].EI,
+                  tr->partitionData[model].EIGN, tr->partitionData[model].numberOfCategories,
+                  left, right, DNA_DATA, tr->saveMemory, tr->maxCategories);
+
+              if(tr->saveMemory)
+                newviewGTRCAT_SAVE(tInfo->tipCase,  tr->partitionData[model].EV, tr->partitionData[model].rateCategory,
+                    x1_start, x2_start, x3_start, tr->partitionData[model].tipVector,
+                    ex3, tipX1, tipX2,
+                    width, left, right, wgt, &scalerIncrement, TRUE, x1_gap, x2_gap, x3_gap,
+                    x1_gapColumn, x2_gapColumn, x3_gapColumn, tr->maxCategories);
+              else
 #ifdef __AVX
-			newviewGTRCAT_AVX(tInfo->tipCase,  tr->partitionData[model].EV, tr->partitionData[model].rateCategory,
-					  x1_start, x2_start, x3_start, tr->partitionData[model].tipVector,
-					  ex3, tipX1, tipX2,
-					  width, left, right, wgt, &scalerIncrement, TRUE);
+                newviewGTRCAT_AVX(tInfo->tipCase,  tr->partitionData[model].EV, tr->partitionData[model].rateCategory,
+                    x1_start, x2_start, x3_start, tr->partitionData[model].tipVector,
+                    ex3, tipX1, tipX2,
+                    width, left, right, wgt, &scalerIncrement, TRUE);
 #else
-			newviewGTRCAT(tInfo->tipCase,  tr->partitionData[model].EV, tr->partitionData[model].rateCategory,
-				      x1_start, x2_start, x3_start, tr->partitionData[model].tipVector,
-				      ex3, tipX1, tipX2,
-				      width, left, right, wgt, &scalerIncrement, TRUE);
+              newviewGTRCAT(tInfo->tipCase,  tr->partitionData[model].EV, tr->partitionData[model].rateCategory,
+                  x1_start, x2_start, x3_start, tr->partitionData[model].tipVector,
+                  ex3, tipX1, tipX2,
+                  width, left, right, wgt, &scalerIncrement, TRUE);
 #endif
-		    }
-		  else
-		    {
-		       makeP(qz, rz, tr->partitionData[model].gammaRates,
-			     tr->partitionData[model].EI, tr->partitionData[model].EIGN,
-			     4, left, right, DNA_DATA, tr->saveMemory, 4);
-		       
-		       if(tr->saveMemory)
-			 newviewGTRGAMMA_GAPPED_SAVE(tInfo->tipCase,
-						     x1_start, x2_start, x3_start, tr->partitionData[model].EV, tr->partitionData[model].tipVector,
-						     ex3, tipX1, tipX2,
-						     width, left, right, wgt, &scalerIncrement, TRUE,
-						     x1_gap, x2_gap, x3_gap, 
-						     x1_gapColumn, x2_gapColumn, x3_gapColumn);
-		       else
-#ifdef __AVX
-			 newviewGTRGAMMA_AVX(tInfo->tipCase,
-					     x1_start, x2_start, x3_start, tr->partitionData[model].EV, tr->partitionData[model].tipVector,
-					     ex3, tipX1, tipX2,
-					     width, left, right, wgt, &scalerIncrement, TRUE);
-#else
-			 newviewGTRGAMMA(tInfo->tipCase,
-					 x1_start, x2_start, x3_start, tr->partitionData[model].EV, tr->partitionData[model].tipVector,
-					 ex3, tipX1, tipX2,
-					 width, left, right, wgt, &scalerIncrement, TRUE);
-#endif
-		    }
-		
-		  break;		    
-		case AA_DATA:
+            }
+            else
+            {
+              makeP(qz, rz, tr->partitionData[model].gammaRates,
+                  tr->partitionData[model].EI, tr->partitionData[model].EIGN,
+                  4, left, right, DNA_DATA, tr->saveMemory, 4);
 
-		  if(tr->rateHetModel == CAT)
-		    {
-		      makeP(qz, rz, tr->partitionData[model].perSiteRates,
-			    tr->partitionData[model].EI,
-			    tr->partitionData[model].EIGN,
-			    tr->partitionData[model].numberOfCategories, left, right, AA_DATA, tr->saveMemory, tr->maxCategories);
-		      
-		      if(tr->saveMemory)
-			newviewGTRCATPROT_SAVE(tInfo->tipCase,  tr->partitionData[model].EV, tr->partitionData[model].rateCategory,
-					       x1_start, x2_start, x3_start, tr->partitionData[model].tipVector,
-					       ex3, tipX1, tipX2, width, left, right, wgt, &scalerIncrement, TRUE, x1_gap, x2_gap, x3_gap,
-					       x1_gapColumn, x2_gapColumn, x3_gapColumn, tr->maxCategories);
-		      else
+              if(tr->saveMemory)
+                newviewGTRGAMMA_GAPPED_SAVE(tInfo->tipCase,
+                    x1_start, x2_start, x3_start, tr->partitionData[model].EV, tr->partitionData[model].tipVector,
+                    ex3, tipX1, tipX2,
+                    width, left, right, wgt, &scalerIncrement, TRUE,
+                    x1_gap, x2_gap, x3_gap, 
+                    x1_gapColumn, x2_gapColumn, x3_gapColumn);
+              else
 #ifdef __AVX
-			newviewGTRCATPROT_AVX(tInfo->tipCase,  tr->partitionData[model].EV, tr->partitionData[model].rateCategory,
-					      x1_start, x2_start, x3_start, tr->partitionData[model].tipVector,
-					      ex3, tipX1, tipX2, width, left, right, wgt, &scalerIncrement, TRUE);
+                newviewGTRGAMMA_AVX(tInfo->tipCase,
+                    x1_start, x2_start, x3_start, tr->partitionData[model].EV, tr->partitionData[model].tipVector,
+                    ex3, tipX1, tipX2,
+                    width, left, right, wgt, &scalerIncrement, TRUE);
 #else
-			newviewGTRCATPROT(tInfo->tipCase,  tr->partitionData[model].EV, tr->partitionData[model].rateCategory,
-					  x1_start, x2_start, x3_start, tr->partitionData[model].tipVector,
-					  ex3, tipX1, tipX2, width, left, right, wgt, &scalerIncrement, TRUE);			
+              newviewGTRGAMMA(tInfo->tipCase,
+                  x1_start, x2_start, x3_start, tr->partitionData[model].EV, tr->partitionData[model].tipVector,
+                  ex3, tipX1, tipX2,
+                  width, left, right, wgt, &scalerIncrement, TRUE);
 #endif
-		    }
-		  else
-		    {
-		      if(tr->estimatePerSiteAA)
-			{
-			  int 
-			    p;
-			  
-			  /*for(p = 0; p < (NUM_PROT_MODELS - 2); p++)				
-			    makeP(qz, rz, tr->partitionData[model].gammaRates,
-				  tr->siteProtModel[p].EI,
-				  tr->siteProtModel[p].EIGN,
-				  4, 
-				  tr->siteProtModel[p].left, 
-				  tr->siteProtModel[p].right, 
-				  AA_DATA, FALSE, 4);				*/
-			  makeP_perSite(qz, rz, tr, model);
-			  newviewGTRGAMMAPROT_perSite(tInfo->tipCase,
-						      x1_start, x2_start, x3_start,
-						      tr->partitionData[model].perSiteAAModel,
-						      tr->siteProtModel,
-						      tipX1, 
-						      tipX2,
-						      width,
-						      wgt,
-						      &scalerIncrement);
+            }
 
-			 
-			}
-		      else
-			{
-			  makeP(qz, rz, tr->partitionData[model].gammaRates,
-				tr->partitionData[model].EI, tr->partitionData[model].EIGN,
-				4, left, right, AA_DATA, tr->saveMemory, 4); 
-			  
-			  if(tr->saveMemory)
-			    newviewGTRGAMMAPROT_GAPPED_SAVE(tInfo->tipCase,
-							    x1_start, x2_start, x3_start,
-							    tr->partitionData[model].EV,
-							    tr->partitionData[model].tipVector,
-							    ex3, tipX1, tipX2,
-							    width, left, right, wgt, &scalerIncrement, TRUE,
-							    x1_gap, x2_gap, x3_gap,
-							    x1_gapColumn, x2_gapColumn, x3_gapColumn);
-			  else
-			    newviewGTRGAMMAPROT(tInfo->tipCase,
-						x1_start, x2_start, x3_start, tr->partitionData[model].EV, tr->partitionData[model].tipVector,
-						ex3, tipX1, tipX2,
-						width, left, right, wgt, &scalerIncrement, TRUE);
-			}
-		    }		  
-		  break;	
-		default:
-		  assert(0);
-		}
-	      
-	
-	      tr->partitionData[model].globalScaler[tInfo->pNumber] = 
-		tr->partitionData[model].globalScaler[tInfo->qNumber] + 
-		tr->partitionData[model].globalScaler[tInfo->rNumber] +
-		(unsigned int)scalerIncrement;
-	      assert(tr->partitionData[model].globalScaler[tInfo->pNumber] < INT_MAX);
-	    }	
-	}
+            break;		    
+          case AA_DATA:
+
+            if(tr->rateHetModel == CAT)
+            {
+              makeP(qz, rz, tr->partitionData[model].perSiteRates,
+                  tr->partitionData[model].EI,
+                  tr->partitionData[model].EIGN,
+                  tr->partitionData[model].numberOfCategories, left, right, AA_DATA, tr->saveMemory, tr->maxCategories);
+
+              if(tr->saveMemory)
+                newviewGTRCATPROT_SAVE(tInfo->tipCase,  tr->partitionData[model].EV, tr->partitionData[model].rateCategory,
+                    x1_start, x2_start, x3_start, tr->partitionData[model].tipVector,
+                    ex3, tipX1, tipX2, width, left, right, wgt, &scalerIncrement, TRUE, x1_gap, x2_gap, x3_gap,
+                    x1_gapColumn, x2_gapColumn, x3_gapColumn, tr->maxCategories);
+              else
+#ifdef __AVX
+                newviewGTRCATPROT_AVX(tInfo->tipCase,  tr->partitionData[model].EV, tr->partitionData[model].rateCategory,
+                    x1_start, x2_start, x3_start, tr->partitionData[model].tipVector,
+                    ex3, tipX1, tipX2, width, left, right, wgt, &scalerIncrement, TRUE);
+#else
+              newviewGTRCATPROT(tInfo->tipCase,  tr->partitionData[model].EV, tr->partitionData[model].rateCategory,
+                  x1_start, x2_start, x3_start, tr->partitionData[model].tipVector,
+                  ex3, tipX1, tipX2, width, left, right, wgt, &scalerIncrement, TRUE);			
+#endif
+            }
+            else
+            {
+              if(tr->estimatePerSiteAA)
+              {
+                int 
+                  p;
+
+                /*for(p = 0; p < (NUM_PROT_MODELS - 2); p++)				
+                  makeP(qz, rz, tr->partitionData[model].gammaRates,
+                  tr->siteProtModel[p].EI,
+                  tr->siteProtModel[p].EIGN,
+                  4, 
+                  tr->siteProtModel[p].left, 
+                  tr->siteProtModel[p].right, 
+                  AA_DATA, FALSE, 4);				*/
+                makeP_perSite(qz, rz, tr, model);
+                newviewGTRGAMMAPROT_perSite(tInfo->tipCase,
+                    x1_start, x2_start, x3_start,
+                    tr->partitionData[model].perSiteAAModel,
+                    tr->siteProtModel,
+                    tipX1, 
+                    tipX2,
+                    width,
+                    wgt,
+                    &scalerIncrement);
+
+
+              }
+              else
+              {
+                makeP(qz, rz, tr->partitionData[model].gammaRates,
+                    tr->partitionData[model].EI, tr->partitionData[model].EIGN,
+                    4, left, right, AA_DATA, tr->saveMemory, 4); 
+
+                if(tr->saveMemory)
+                  newviewGTRGAMMAPROT_GAPPED_SAVE(tInfo->tipCase,
+                      x1_start, x2_start, x3_start,
+                      tr->partitionData[model].EV,
+                      tr->partitionData[model].tipVector,
+                      ex3, tipX1, tipX2,
+                      width, left, right, wgt, &scalerIncrement, TRUE,
+                      x1_gap, x2_gap, x3_gap,
+                      x1_gapColumn, x2_gapColumn, x3_gapColumn);
+                else
+                  newviewGTRGAMMAPROT(tInfo->tipCase,
+                      x1_start, x2_start, x3_start, tr->partitionData[model].EV, tr->partitionData[model].tipVector,
+                      ex3, tipX1, tipX2,
+                      width, left, right, wgt, &scalerIncrement, TRUE);
+              }
+            }		  
+            break;	
+          default:
+            assert(0);
+        }
+
+
+        tr->partitionData[model].globalScaler[tInfo->pNumber] = 
+          tr->partitionData[model].globalScaler[tInfo->qNumber] + 
+          tr->partitionData[model].globalScaler[tInfo->rNumber] +
+          (unsigned int)scalerIncrement;
+        assert(tr->partitionData[model].globalScaler[tInfo->pNumber] < INT_MAX);
+      }	
     }
+    /* recom */
+    if(tr->useRecom)
+    {
+      unpinNode(tr->rvec, unpin1, tr->mxtips);
+      unpinNode(tr->rvec, unpin2, tr->mxtips);
+    }
+    /* E recom */
+
+  }
 }
 
 
@@ -5207,38 +5365,57 @@ void newviewGeneric (tree *tr, nodeptr p)
   if(isTip(p->number, tr->mxtips))
     return;
 
+  /* recom */
+  if(tr->useRecom) 
+  {
+      int count = 0;
+      computeTraversalInfoStlen(p, tr->mxtips, tr->rvec, &count); 
+  }
+  /* E recom */
+
   if(tr->multiGene)
-    {	           
-      int i;
-      for(i = 0; i < tr->NumberOfModels; i++)
-	{
-	  if(tr->executeModel[i])
-	    {
-	      tr->td[i].count = 1; 
-	      computeTraversalInfoMulti(p, &(tr->td[i].ti[0]), &(tr->td[i].count), tr->mxtips, i); 
-	    }
-	}
-      /* if(tr->td[i].count > 1)*/
-      newviewIterativeMulti(tr);
-    }
-  else
+  {	           
+    int i;
+    for(i = 0; i < tr->NumberOfModels; i++)
     {
-      tr->td[0].count = 1;
-      computeTraversalInfo(p, &(tr->td[0].ti[0]), &(tr->td[0].count), tr->mxtips, tr->numBranches);
-      
-      if(tr->td[0].count > 1)
-	{
+      if(tr->executeModel[i])
+      {
+        tr->td[i].count = 1; 
+        computeTraversalInfoMulti(p, &(tr->td[i].ti[0]), &(tr->td[i].count), tr->mxtips, i); 
+      }
+    }
+    /* if(tr->td[i].count > 1)*/
+    newviewIterativeMulti(tr);
+  }
+  else
+  {
+    tr->td[0].count = 1;
+    /* recom */
+    if(tr->useRecom)
+    {
+      save_strategy_state(tr);
+      computeTraversalInfo(p, &(tr->td[0].ti[0]), &(tr->td[0].count), tr->mxtips, tr->numBranches, tr->rvec);
+      restore_strategy_state(tr);
+    }
+    else
+    /* E recom */
+    {
+      computeTraversalInfo(p, &(tr->td[0].ti[0]), &(tr->td[0].count), tr->mxtips, tr->numBranches, tr->rvec);
+    }
+
+    if(tr->td[0].count > 1)
+    {
 #ifdef _USE_PTHREADS
-	  masterBarrier(THREAD_NEWVIEW, tr);
+      masterBarrier(THREAD_NEWVIEW, tr);
 #else
 #ifdef _FINE_GRAIN_MPI
-	  masterBarrierMPI(THREAD_NEWVIEW, tr);
+      masterBarrierMPI(THREAD_NEWVIEW, tr);
 #else
-	  newviewIterative(tr);
+      newviewIterative(tr);
 #endif
 #endif
-	}
     }
+  }
 }
 
 
@@ -5246,53 +5423,75 @@ void newviewGeneric (tree *tr, nodeptr p)
 
 void newviewGenericMasked(tree *tr, nodeptr p)
 {
+
+  //assert(!tr->useRecom);
   if(isTip(p->number, tr->mxtips))
     return;
+  
+  //printBothOpen("newview masked of node p%db%d\n", p->number, p->back->number);
 
   {
     int i;
-
     for(i = 0; i < tr->NumberOfModels; i++)
-      {
-	if(tr->partitionConverged[i])
-	  tr->executeModel[i] = FALSE;
-	else
-	  tr->executeModel[i] = TRUE;
-      }
-    
-    if(tr->multiGene)
-      {
-	for(i = 0; i < tr->NumberOfModels; i++)
-	  {
-	    if(tr->executeModel[i])
-	      {
-		tr->td[i].count = 1; 
-		computeTraversalInfoMulti(p, &(tr->td[i].ti[0]), &(tr->td[i].count), tr->mxtips, i); 
-	      }
-	    else
-	      tr->td[i].count = 0; 
-	  }
-	/* if(tr->td[i].count > 1) ? */
-	newviewIterativeMulti(tr);
-      }
-    else
-      {
-	tr->td[0].count = 1;
-	computeTraversalInfo(p, &(tr->td[0].ti[0]), &(tr->td[0].count), tr->mxtips, tr->numBranches);
+    {
+      if(tr->partitionConverged[i])
+        tr->executeModel[i] = FALSE;
+      else
+        tr->executeModel[i] = TRUE;
+    }
 
-	if(tr->td[0].count > 1)
-	  {
+    /* recom */
+    if(tr->useRecom) 
+    {
+      int count = 0;
+      computeTraversalInfoStlen(p, tr->mxtips, tr->rvec, &count); 
+    }
+    /* E recom */
+
+    if(tr->multiGene)
+    {
+      for(i = 0; i < tr->NumberOfModels; i++)
+      {
+        if(tr->executeModel[i])
+        {
+          tr->td[i].count = 1; 
+          computeTraversalInfoMulti(p, &(tr->td[i].ti[0]), &(tr->td[i].count), tr->mxtips, i); 
+        }
+        else
+          tr->td[i].count = 0; 
+      }
+      /* if(tr->td[i].count > 1) ? */
+      newviewIterativeMulti(tr);
+    }
+    else
+    {
+      tr->td[0].count = 1;
+    /* recom */
+    if(tr->useRecom)
+    {
+      save_strategy_state(tr);
+      computeTraversalInfo(p, &(tr->td[0].ti[0]), &(tr->td[0].count), tr->mxtips, tr->numBranches, tr->rvec);
+      restore_strategy_state(tr);
+    }
+    else
+    /* E recom */
+    {
+      computeTraversalInfo(p, &(tr->td[0].ti[0]), &(tr->td[0].count), tr->mxtips, tr->numBranches, tr->rvec);
+    }
+
+      if(tr->td[0].count > 1)
+      {
 #ifdef _USE_PTHREADS
-	    masterBarrier(THREAD_NEWVIEW_MASKED, tr);
+        masterBarrier(THREAD_NEWVIEW_MASKED, tr);
 #else
 #ifdef _FINE_GRAIN_MPI
-	    masterBarrierMPI(THREAD_NEWVIEW_MASKED, tr);
+        masterBarrierMPI(THREAD_NEWVIEW_MASKED, tr);
 #else
-	    newviewIterative(tr);
+        newviewIterative(tr);
 #endif
 #endif
-	  }
       }
+    }
 
     for(i = 0; i < tr->NumberOfModels; i++)
       tr->executeModel[i] = TRUE;

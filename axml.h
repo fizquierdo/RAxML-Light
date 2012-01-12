@@ -94,7 +94,8 @@
 
 #define badRear         -1
 
-#define NUM_BRANCHES     2
+#define NUM_BRANCHES     4
+//#define NUM_BRANCHES     1
 
 #define TRUE             1
 #define FALSE            0
@@ -334,10 +335,43 @@ extern double exp_approx (double x);
 #define GAMMA_I     2
 
 
+/* recomp */
+#define SLOT_UNUSED     -2 
+#define NODE_UNPINNED   -3 
+#define INNER_NODE_INIT_STLEN   -1 
+#define NO_VEC_RECOMP        -1
+#define MIN_RECOM_FRACTION       0.1 
+#define MAX_RECOM_FRACTION       1.0 
+#define INVALID_VALUE   -999.0 
+/* E recomp */
+
 
 
 typedef  int boolean;
 
+/* recomp */
+typedef struct
+{
+  int numVectors;      /* #inner vectors in RAM*/
+  //size_t width;        /* #doubles required per vector */ /* this info is per-partition */
+  //double **tmpvectors; /* size: numVectors, points to the vectors */ /* this info is per-partition */
+  int *iVector;        /* size: numVectors, stores node id || SLOT_UNUSED  */
+  int *iVector_prev;   /* size: numVectors, stores node id || SLOT_UNUSED  */
+  int *iNode;          /* size: inner nodes, stores slot id || NODE_UNPINNED */
+  int *iNode_prev;          /* size: inner nodes, stores slot id || NODE_UNPINNED */
+  int *stlen;          /* #tips behind the current orientation of the indexed inner node */ 
+  int *unpinnable;     /* size:numVectors , TRUE if we dont need the vector */
+  int *unpinnable_prev; /* size:numVectors , TRUE if we dont need the vector */
+  int maxVectorsUsed;
+  double pinTime;
+  boolean allSlotsBusy; 
+  boolean allSlotsBusy_prev; 
+  /* unpin prio */
+  int *unpinPrio;      /* size:numVectors, slots present in this list have priority to be unpinned */
+  int nextPrio;
+  boolean usePrioList;
+}recompVectors;
+/* E recomp */
 
 typedef struct {
   double lh;
@@ -428,6 +462,11 @@ typedef struct
   int rNumber;
   double qz[NUM_BRANCHES];
   double rz[NUM_BRANCHES];
+  /* recom */
+  int slot_p;
+  int slot_q;
+  int slot_r;
+  /* E recom */
 } traversalInfo;
 
 typedef struct
@@ -507,6 +546,10 @@ typedef  struct noderec
   int              support;
   int              number;
   char             x;
+  /* recom */
+  /* needs to be reoriented prior to x, TODOFER add rationale of why this cant be done with x */
+  char             x_stlen;
+  /* E recom */
 }
   node, *nodeptr;
 
@@ -564,7 +607,12 @@ typedef struct {
   int     protFreqs;
   int     mxtips;
   int             **expVector;
-  double          **xVector;
+
+  double       **xVector;
+  /* recom */
+  double       **tmpvectors; /* size: numVectors, points to the vectors */ /* this info is per-partition */
+  /* E recom */
+
   size_t           *xSpaceVector;
  
   unsigned char            **yVector;
@@ -706,7 +754,27 @@ typedef struct {
   double right[1600] __attribute__ ((aligned (BYTE_ALIGNMENT)));
 } siteAAModels;
 
+  /* recomp */
+typedef struct{
+  unsigned long int numTraversals;
+  unsigned long int tt;
+  unsigned long int ti;
+  unsigned long int ii;
+  unsigned int *travlenFreq;
+}traversalCounter;
+  /* E recomp */
+
 typedef  struct  {
+
+  /* recomp */
+  traversalCounter *travCounter;
+  recompVectors *rvec;
+  float vectorRecomFraction;
+  boolean useRecom;
+  boolean verbose;
+  double stlenTime;
+  /* E recomp */
+
   boolean useGappedImplementation;
   boolean saveMemory;
   
@@ -1103,6 +1171,9 @@ typedef  struct {
   int           slidingWindowSize;
   boolean       writeBinaryFile;
   boolean       readBinaryFile;
+  /* recom */
+  float         vectorRecomFraction;
+  /* E recom */
 } analdef;
 
 typedef struct 
@@ -1298,7 +1369,10 @@ extern double evaluateGenericVector (tree *tr, nodeptr p);
 extern void categorizeGeneric (tree *tr, nodeptr p);
 extern double makenewzPartitionGeneric(tree *tr, nodeptr p, nodeptr q, double z0, int maxiter, int model);
 extern boolean isTip(int number, int maxTips);
-extern void computeTraversalInfo(nodeptr p, traversalInfo *ti, int *counter, int maxTips, int numBranches);
+/*extern void computeTraversalInfo(nodeptr p, traversalInfo *ti, int *counter, int maxTips, int numBranches);*/
+/* recom */
+extern void computeTraversalInfo(nodeptr p, traversalInfo *ti, int *counter, int maxTips, int numBranches, recompVectors *rvec);
+/* E recom */
 
 
 
@@ -1349,7 +1423,10 @@ extern nodeptr findAnyTip(nodeptr p, int numsp);
 
 extern void parseProteinModel(analdef *adef);
 
-extern void computeFullTraversalInfo(nodeptr p, traversalInfo *ti, int *counter, int maxTips, int numBranches);
+/* recomp */
+extern void computeFullTraversalInfo(nodeptr p, traversalInfo *ti, int *counter, int maxTips, int numBranches, recompVectors *rvec);
+/*extern void computeFullTraversalInfo(nodeptr p, traversalInfo *ti, int *counter, int maxTips, int numBranches);*/
+/* E recomp */
 
 extern void computeNextReplicate(tree *tr, long *seed, int *originalRateCategories, int *originalInvariant, boolean isRapid, boolean fixRates);
 /*extern void computeNextReplicate(tree *tr, analdef *adef, int *originalRateCategories, int *originalInvariant);*/

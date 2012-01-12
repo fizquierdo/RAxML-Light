@@ -1043,210 +1043,261 @@ double evaluateIterative(tree *tr,  boolean writeVector)
 
   int 
     rateHet = tr->discreteRateCategories,
-    pNumber = tr->td[0].ti[0].pNumber, 
-    qNumber = tr->td[0].ti[0].qNumber, 
-    model;
- 
+            pNumber = tr->td[0].ti[0].pNumber, 
+            qNumber = tr->td[0].ti[0].qNumber, 
+            model;
+
+  /* recom */
+  int slot = -1;
+  int unpin1, unpin2;
+  /* E recom */
+
   newviewIterative(tr);  
 
   for(model = 0; model < tr->NumberOfModels; model++)
-    {    
-      int 	    
-	width = tr->partitionData[model].width;
-        
-      if(tr->executeModel[model] && width > 0)
-	{	
-	  int 
-	    rateHet,	  
-	    states = tr->partitionData[model].states;
-	  
-	  double 
-	    z, 
-	    partitionLikelihood = 0.0, 
-	    *_vector = (double*)NULL;;
-	  
-	  int    
-	    *ex1 = (int*)NULL, 
-	    *ex2 = (int*)NULL;
-	  
-	   unsigned int
-	    *x1_gap = (unsigned int*)NULL,
-	    *x2_gap = (unsigned int*)NULL;
+  {    
+    int 	    
+      width = tr->partitionData[model].width;
 
-	  double 
-	    *x1_start   = (double*)NULL, 
-	    *x2_start   = (double*)NULL,
-	    *diagptable = (double*)NULL,  
-	    *x1_gapColumn = (double*)NULL,
-	    *x2_gapColumn = (double*)NULL;
-	  
-	  unsigned char 
-	    *tip = (unsigned char*)NULL;
-	  
+    if(tr->executeModel[model] && width > 0)
+    {	
+      int 
+        rateHet,	  
+        states = tr->partitionData[model].states;
 
-	  if(tr->rateHetModel == CAT)
-	    rateHet = 1;
-	  else
-	    rateHet = 4;
-	  
-	  diagptable = tr->partitionData[model].left;
+      double 
+        z, 
+        partitionLikelihood = 0.0, 
+        *_vector = (double*)NULL;;
 
-	  if(isTip(pNumber, tr->mxtips) || isTip(qNumber, tr->mxtips))
-	    {	        	    
-	      if(isTip(qNumber, tr->mxtips))
-		{			  		 
-		  x2_start = tr->partitionData[model].xVector[pNumber - tr->mxtips -1];		  
-		  tip      = tr->partitionData[model].yVector[qNumber];	 
+      int    
+        *ex1 = (int*)NULL, 
+        *ex2 = (int*)NULL;
 
-		  if(tr->saveMemory)
-		    {
-		      x2_gap         = &(tr->partitionData[model].gapVector[pNumber * tr->partitionData[model].gapVectorLength]);
-		      x2_gapColumn   = &(tr->partitionData[model].gapColumn[(pNumber - tr->mxtips - 1) * states * rateHet]);
-		    }
-		}           
-	      else
-		{		 
-		  x2_start = tr->partitionData[model].xVector[qNumber - tr->mxtips - 1];		  		  
-		  tip = tr->partitionData[model].yVector[pNumber];
+      unsigned int
+        *x1_gap = (unsigned int*)NULL,
+        *x2_gap = (unsigned int*)NULL;
 
-		  if(tr->saveMemory)
-		    {
-		      x2_gap         = &(tr->partitionData[model].gapVector[qNumber * tr->partitionData[model].gapVectorLength]);
-		      x2_gapColumn   = &(tr->partitionData[model].gapColumn[(qNumber - tr->mxtips - 1) * states * rateHet]);
-		    }
+      double 
+        *x1_start   = (double*)NULL, 
+        *x2_start   = (double*)NULL,
+        *diagptable = (double*)NULL,  
+        *x1_gapColumn = (double*)NULL,
+        *x2_gapColumn = (double*)NULL;
 
-		}
-	    }
-	  else
-	    {  
-	     
-	      x1_start = tr->partitionData[model].xVector[pNumber - tr->mxtips - 1];
-	      x2_start = tr->partitionData[model].xVector[qNumber - tr->mxtips - 1];
+      unsigned char 
+        *tip = (unsigned char*)NULL;
 
-	      if(tr->saveMemory)
-		{
-		  x1_gap = &(tr->partitionData[model].gapVector[pNumber * tr->partitionData[model].gapVectorLength]);
-		  x2_gap = &(tr->partitionData[model].gapVector[qNumber * tr->partitionData[model].gapVectorLength]);
-		  x1_gapColumn   = &tr->partitionData[model].gapColumn[(pNumber - tr->mxtips - 1) * states * rateHet];
-		  x2_gapColumn   = &tr->partitionData[model].gapColumn[(qNumber - tr->mxtips - 1) * states * rateHet];
-		}
-	
-	    }
 
-	  if(tr->multiBranch)
-	    z = pz[model];
-	  else
-	    z = pz[0];
-
-	  
-	  switch(tr->partitionData[model].dataType)
-	    { 	  
-	    case DNA_DATA:
-	      if(tr->rateHetModel == CAT)
-		{
-		  calcDiagptable(z, DNA_DATA, tr->partitionData[model].numberOfCategories, 
-				 tr->partitionData[model].perSiteRates, tr->partitionData[model].EIGN, diagptable);
-		  
-		  if(tr->saveMemory)
-		    partitionLikelihood =  evaluateGTRCAT_SAVE(ex1, ex2, tr->partitionData[model].rateCategory, tr->partitionData[model].wgt,
-							       x1_start, x2_start, tr->partitionData[model].tipVector, 
-							       tip, width, diagptable, TRUE, x1_gapColumn, x2_gapColumn, x1_gap, x2_gap);
-		  else
-		    partitionLikelihood =  evaluateGTRCAT(ex1, ex2, tr->partitionData[model].rateCategory, tr->partitionData[model].wgt,
-							  x1_start, x2_start, tr->partitionData[model].tipVector, 
-							  tip, width, diagptable, TRUE);
-		}
-	      else
-		{
-		  calcDiagptable(z, DNA_DATA, 4, tr->partitionData[model].gammaRates, tr->partitionData[model].EIGN, diagptable);
-
-		  if(tr->saveMemory)		   
-		    partitionLikelihood =  evaluateGTRGAMMA_GAPPED_SAVE(ex1, ex2, tr->partitionData[model].wgt,
-									x1_start, x2_start, tr->partitionData[model].tipVector,
-									tip, width, diagptable, TRUE,
-									x1_gapColumn, x2_gapColumn, x1_gap, x2_gap);		    
-		  else
-		    partitionLikelihood =  evaluateGTRGAMMA(ex1, ex2, tr->partitionData[model].wgt,
-							    x1_start, x2_start, tr->partitionData[model].tipVector,
-							    tip, width, diagptable, TRUE); 
-		  
-		  
-		}
-	      break;	  	   		   
-	    case AA_DATA:	
-	      if(tr->rateHetModel == CAT)
-		{
-		  calcDiagptable(z, AA_DATA, tr->partitionData[model].numberOfCategories, 
-				 tr->partitionData[model].perSiteRates, tr->partitionData[model].EIGN, diagptable);
-		  
-		  if(tr->saveMemory)
-		    partitionLikelihood = evaluateGTRCATPROT_SAVE(ex1, ex2, tr->partitionData[model].rateCategory, tr->partitionData[model].wgt,
-								  x1_start, x2_start, tr->partitionData[model].tipVector,
-								  tip, width, diagptable, TRUE,  x1_gapColumn, x2_gapColumn, x1_gap, x2_gap);
-		  else
-		    partitionLikelihood = evaluateGTRCATPROT(ex1, ex2, tr->partitionData[model].rateCategory, tr->partitionData[model].wgt,
-							     x1_start, x2_start, tr->partitionData[model].tipVector,
-							     tip, width, diagptable, TRUE);		  
-		}
-	      else
-		{
-		  if(tr->estimatePerSiteAA)
-		    { 
-		      int 
-			p;
-		      
-		      for(p = 0; p < (NUM_PROT_MODELS - 2); p++)			    
-			calcDiagptable(z, AA_DATA, 4, tr->partitionData[model].gammaRates, tr->siteProtModel[p].EIGN, tr->siteProtModel[p].left);
-		      
-		      partitionLikelihood = evaluateGTRGAMMAPROT_perSite(ex1, 
-									 ex2,
-									  tr->partitionData[model].wgt,
-									 x1_start, 
-									 x2_start,
-									 tip,
-									 width, 
-									 tr->partitionData[model].perSiteAAModel,
-									 tr->siteProtModel);					   
-		      
-		    }
-		  else
-		    {
-		      calcDiagptable(z, AA_DATA, 4, tr->partitionData[model].gammaRates, tr->partitionData[model].EIGN, diagptable);
-		      
-		      if(tr->saveMemory)
-			partitionLikelihood = evaluateGTRGAMMAPROT_GAPPED_SAVE(ex1, ex2, tr->partitionData[model].wgt,
-									       x1_start, x2_start, tr->partitionData[model].tipVector,
-									       tip, width, diagptable, TRUE,
-									       x1_gapColumn, x2_gapColumn, x1_gap, x2_gap);
-		      
-		      else
-			partitionLikelihood = evaluateGTRGAMMAPROT(ex1, ex2, tr->partitionData[model].wgt,
-								   x1_start, x2_start, tr->partitionData[model].tipVector,
-								   tip, width, diagptable, TRUE);
-		    }	      
-		}
-	      break;	      		    
-	    default:
-	      assert(0);	    
-	    }	
-	  
-	  if(width > 0)
-	    {
-	      assert(partitionLikelihood < 0.0);
-	  	     		      
-	      partitionLikelihood += (tr->partitionData[model].globalScaler[pNumber] + tr->partitionData[model].globalScaler[qNumber]) * LOG(minlikelihood);
-	    }		
-	  
-	  result += partitionLikelihood;	  
-	  tr->perPartitionLH[model] = partitionLikelihood; 	  
-	}
+      if(tr->rateHetModel == CAT)
+        rateHet = 1;
       else
-	{
-	  if(width == 0)	    
-	    tr->perPartitionLH[model] = 0.0;	   
-	}
+        rateHet = 4;
+
+      diagptable = tr->partitionData[model].left;
+
+      if(isTip(pNumber, tr->mxtips) || isTip(qNumber, tr->mxtips))
+      {	        	    
+        if(isTip(qNumber, tr->mxtips))
+        {			  		 
+          /* recom */
+          if(tr->useRecom)
+          {
+            slot = tr->td[0].ti[0].slot_p;
+            x2_start = tr->partitionData[model].tmpvectors[slot];
+            //x2_start = tr->rvec->tmpvectors[slot];
+            assert(x2_start[0] != INVALID_VALUE);
+          }
+          else
+          /* E recom */
+          {
+            x2_start = tr->partitionData[model].xVector[pNumber - tr->mxtips -1];		  
+          }
+          tip      = tr->partitionData[model].yVector[qNumber];	 
+
+          if(tr->saveMemory)
+          {
+            x2_gap         = &(tr->partitionData[model].gapVector[pNumber * tr->partitionData[model].gapVectorLength]);
+            x2_gapColumn   = &(tr->partitionData[model].gapColumn[(pNumber - tr->mxtips - 1) * states * rateHet]);
+          }
+        }           
+        else
+        {		 
+          /* recom */
+          if(tr->useRecom)
+          {
+            slot = tr->td[0].ti[0].slot_q;
+            x2_start = tr->partitionData[model].tmpvectors[slot];
+            //x2_start = tr->rvec->tmpvectors[slot];
+            assert(x2_start[0] != INVALID_VALUE);
+          }
+          else
+          /* E recom */
+          {
+            x2_start = tr->partitionData[model].xVector[qNumber - tr->mxtips - 1];		  		  
+          }
+          tip = tr->partitionData[model].yVector[pNumber];
+
+          if(tr->saveMemory)
+          {
+            x2_gap         = &(tr->partitionData[model].gapVector[qNumber * tr->partitionData[model].gapVectorLength]);
+            x2_gapColumn   = &(tr->partitionData[model].gapColumn[(qNumber - tr->mxtips - 1) * states * rateHet]);
+          }
+
+        }
+      }
+      else
+      {  
+        /* recom */
+        if(tr->useRecom)
+        {
+          slot = tr->td[0].ti[0].slot_p;
+          x1_start = tr->partitionData[model].tmpvectors[slot];
+          //x1_start = tr->rvec->tmpvectors[slot];
+          slot = tr->td[0].ti[0].slot_q;
+          x2_start = tr->partitionData[model].tmpvectors[slot];
+          //x2_start = tr->rvec->tmpvectors[slot];
+          assert(x1_start[0] != INVALID_VALUE);
+          assert(x2_start[0] != INVALID_VALUE);
+        }
+        else
+        /* E recom */
+        {
+          x1_start = tr->partitionData[model].xVector[pNumber - tr->mxtips - 1];
+          x2_start = tr->partitionData[model].xVector[qNumber - tr->mxtips - 1];
+        }
+
+        if(tr->saveMemory)
+        {
+          x1_gap = &(tr->partitionData[model].gapVector[pNumber * tr->partitionData[model].gapVectorLength]);
+          x2_gap = &(tr->partitionData[model].gapVector[qNumber * tr->partitionData[model].gapVectorLength]);
+          x1_gapColumn   = &tr->partitionData[model].gapColumn[(pNumber - tr->mxtips - 1) * states * rateHet];
+          x2_gapColumn   = &tr->partitionData[model].gapColumn[(qNumber - tr->mxtips - 1) * states * rateHet];
+        }
+
+      }
+
+
+      if(tr->multiBranch)
+        z = pz[model];
+      else
+        z = pz[0];
+
+
+      switch(tr->partitionData[model].dataType)
+      { 	  
+        case DNA_DATA:
+          if(tr->rateHetModel == CAT)
+          {
+            calcDiagptable(z, DNA_DATA, tr->partitionData[model].numberOfCategories, 
+                tr->partitionData[model].perSiteRates, tr->partitionData[model].EIGN, diagptable);
+
+            if(tr->saveMemory)
+              partitionLikelihood =  evaluateGTRCAT_SAVE(ex1, ex2, tr->partitionData[model].rateCategory, tr->partitionData[model].wgt,
+                  x1_start, x2_start, tr->partitionData[model].tipVector, 
+                  tip, width, diagptable, TRUE, x1_gapColumn, x2_gapColumn, x1_gap, x2_gap);
+            else
+              partitionLikelihood =  evaluateGTRCAT(ex1, ex2, tr->partitionData[model].rateCategory, tr->partitionData[model].wgt,
+                  x1_start, x2_start, tr->partitionData[model].tipVector, 
+                  tip, width, diagptable, TRUE);
+          }
+          else
+          {
+            calcDiagptable(z, DNA_DATA, 4, tr->partitionData[model].gammaRates, tr->partitionData[model].EIGN, diagptable);
+
+            if(tr->saveMemory)		   
+              partitionLikelihood =  evaluateGTRGAMMA_GAPPED_SAVE(ex1, ex2, tr->partitionData[model].wgt,
+                  x1_start, x2_start, tr->partitionData[model].tipVector,
+                  tip, width, diagptable, TRUE,
+                  x1_gapColumn, x2_gapColumn, x1_gap, x2_gap);		    
+            else
+              partitionLikelihood =  evaluateGTRGAMMA(ex1, ex2, tr->partitionData[model].wgt,
+                  x1_start, x2_start, tr->partitionData[model].tipVector,
+                  tip, width, diagptable, TRUE); 
+
+
+          }
+          break;	  	   		   
+        case AA_DATA:	
+          if(tr->rateHetModel == CAT)
+          {
+            calcDiagptable(z, AA_DATA, tr->partitionData[model].numberOfCategories, 
+                tr->partitionData[model].perSiteRates, tr->partitionData[model].EIGN, diagptable);
+
+            if(tr->saveMemory)
+              partitionLikelihood = evaluateGTRCATPROT_SAVE(ex1, ex2, tr->partitionData[model].rateCategory, tr->partitionData[model].wgt,
+                  x1_start, x2_start, tr->partitionData[model].tipVector,
+                  tip, width, diagptable, TRUE,  x1_gapColumn, x2_gapColumn, x1_gap, x2_gap);
+            else
+              partitionLikelihood = evaluateGTRCATPROT(ex1, ex2, tr->partitionData[model].rateCategory, tr->partitionData[model].wgt,
+                  x1_start, x2_start, tr->partitionData[model].tipVector,
+                  tip, width, diagptable, TRUE);		  
+          }
+          else
+          {
+            if(tr->estimatePerSiteAA)
+            { 
+              int 
+                p;
+
+              for(p = 0; p < (NUM_PROT_MODELS - 2); p++)			    
+                calcDiagptable(z, AA_DATA, 4, tr->partitionData[model].gammaRates, tr->siteProtModel[p].EIGN, tr->siteProtModel[p].left);
+
+              partitionLikelihood = evaluateGTRGAMMAPROT_perSite(ex1, 
+                  ex2,
+                  tr->partitionData[model].wgt,
+                  x1_start, 
+                  x2_start,
+                  tip,
+                  width, 
+                  tr->partitionData[model].perSiteAAModel,
+                  tr->siteProtModel);					   
+
+            }
+            else
+            {
+              calcDiagptable(z, AA_DATA, 4, tr->partitionData[model].gammaRates, tr->partitionData[model].EIGN, diagptable);
+
+              if(tr->saveMemory)
+                partitionLikelihood = evaluateGTRGAMMAPROT_GAPPED_SAVE(ex1, ex2, tr->partitionData[model].wgt,
+                    x1_start, x2_start, tr->partitionData[model].tipVector,
+                    tip, width, diagptable, TRUE,
+                    x1_gapColumn, x2_gapColumn, x1_gap, x2_gap);
+
+              else
+                partitionLikelihood = evaluateGTRGAMMAPROT(ex1, ex2, tr->partitionData[model].wgt,
+                    x1_start, x2_start, tr->partitionData[model].tipVector,
+                    tip, width, diagptable, TRUE);
+            }	      
+          }
+          break;	      		    
+        default:
+          assert(0);	    
+      }	
+
+      if(width > 0)
+      {
+        assert(partitionLikelihood < 0.0);
+
+        partitionLikelihood += (tr->partitionData[model].globalScaler[pNumber] + tr->partitionData[model].globalScaler[qNumber]) * LOG(minlikelihood);
+      }		
+
+      result += partitionLikelihood;	  
+      tr->perPartitionLH[model] = partitionLikelihood; 	  
     }
-      
+    else
+    {
+      if(width == 0)	    
+        tr->perPartitionLH[model] = 0.0;	   
+    }
+  }
+  /* now the root can be unpinned too */
+  if(tr->useRecom)
+  {
+    /* TODOFER check if this is required or not*/
+    unpinNode(tr->rvec, pNumber, tr->mxtips);
+    unpinNode(tr->rvec, qNumber, tr->mxtips);
+  }
   return result;
 }
 
@@ -1365,92 +1416,119 @@ double evaluateGeneric (tree *tr, nodeptr p)
   volatile double result;
   nodeptr q = p->back; 
   int i;
-  
+
   if(tr->multiGene)
-    {     
-      nodeptr startNodes[NUM_BRANCHES];  
-      nodeptr q;
+  {     
+    nodeptr startNodes[NUM_BRANCHES];  
+    nodeptr q;
 
-      findNext(p, tr, startNodes);
-      
-      for(i = 0; i < tr->NumberOfModels; i++)
-	{
-	  p = startNodes[i];
-	  q = p->backs[i];
+    findNext(p, tr, startNodes);
 
-	  tr->td[i].ti[0].pNumber = p->number;
-	  tr->td[i].ti[0].qNumber = q->number;          	  	 
-	  tr->td[i].ti[0].qz[i] =  q->z[i];	  
-	  tr->td[i].count = 1;
-
-	  if(!p->xs[i])
-	    computeTraversalInfoMulti(p, &(tr->td[i].ti[0]), &(tr->td[i].count), tr->mxtips, i);
-	  if(!q->xs[i])
-	    computeTraversalInfoMulti(q, &(tr->td[i].ti[0]), &(tr->td[i].count), tr->mxtips, i);
-	}
-      
-      result = evaluateIterativeMulti(tr, FALSE);
-    }
-  else
+    for(i = 0; i < tr->NumberOfModels; i++)
     {
-      tr->td[0].ti[0].pNumber = p->number;
-      tr->td[0].ti[0].qNumber = q->number;          
-  
-      for(i = 0; i < tr->numBranches; i++)    
-	tr->td[0].ti[0].qz[i] =  q->z[i];
-  
-      tr->td[0].count = 1;
-      if(!p->x)
-	computeTraversalInfo(p, &(tr->td[0].ti[0]), &(tr->td[0].count), tr->mxtips, tr->numBranches);
-      if(!q->x)
-	computeTraversalInfo(q, &(tr->td[0].ti[0]), &(tr->td[0].count), tr->mxtips, tr->numBranches);  
-      
-#ifdef _USE_PTHREADS 
+      p = startNodes[i];
+      q = p->backs[i];
+
+      tr->td[i].ti[0].pNumber = p->number;
+      tr->td[i].ti[0].qNumber = q->number;          	  	 
+      tr->td[i].ti[0].qz[i] =  q->z[i];	  
+      tr->td[i].count = 1;
+
+      if(!p->xs[i])
+        computeTraversalInfoMulti(p, &(tr->td[i].ti[0]), &(tr->td[i].count), tr->mxtips, i);
+      if(!q->xs[i])
+        computeTraversalInfoMulti(q, &(tr->td[i].ti[0]), &(tr->td[i].count), tr->mxtips, i);
+    }
+
+    result = evaluateIterativeMulti(tr, FALSE);
+  }
+  else
+  {
+    tr->td[0].ti[0].pNumber = p->number;
+    tr->td[0].ti[0].qNumber = q->number;          
+
+    for(i = 0; i < tr->numBranches; i++)    
+      tr->td[0].ti[0].qz[i] =  q->z[i];
+
+    /* recom */
+    if(tr->useRecom)
+    {
+      int count = 0;
+      computeTraversalInfoStlen(p, tr->mxtips, tr->rvec, &count);
+      computeTraversalInfoStlen(q, tr->mxtips, tr->rvec, &count);
+      int slot = -1;
+      if(!isTip(q->number, tr->mxtips))
       {
-	int j;
-	
-	masterBarrier(THREAD_EVALUATE, tr); 
-	if(tr->NumberOfModels == 1)
-	  {
-	    for(i = 0, result = 0.0; i < NumberOfThreads; i++)          
-	      result += reductionBuffer[i];  	  	     
-	    
-	    tr->perPartitionLH[0] = result;
-	  }
-	else
-	  {
-	    volatile double partitionResult;
-	    
-	    result = 0.0;
-	    
-	    for(j = 0; j < tr->NumberOfModels; j++)
-	      {
-		for(i = 0, partitionResult = 0.0; i < NumberOfThreads; i++)          	      
-		  partitionResult += reductionBuffer[i * tr->NumberOfModels + j];
-		result += partitionResult;
-		tr->perPartitionLH[j] = partitionResult;
-	      }
-	  }
-      }  
+        getxVector(tr->rvec, q->number, &slot, tr->mxtips);
+        tr->td[0].ti[0].slot_q = slot;
+      }
+      if(!isTip(p->number, tr->mxtips))
+      {
+        getxVector(tr->rvec, p->number, &slot, tr->mxtips);
+        tr->td[0].ti[0].slot_p = slot;
+      }
+    }
+    /* E recom */
+    save_strategy_state(tr);
+    tr->td[0].count = 1;
+    if(needsRecomp(tr->rvec, p, tr->mxtips))
+      computeTraversalInfo(p, &(tr->td[0].ti[0]), &(tr->td[0].count), tr->mxtips, tr->numBranches, tr->rvec);
+    if(needsRecomp(tr->rvec, q, tr->mxtips))
+      computeTraversalInfo(q, &(tr->td[0].ti[0]), &(tr->td[0].count), tr->mxtips, tr->numBranches, tr->rvec);  
+    restore_strategy_state(tr);
+
+#ifdef _USE_PTHREADS 
+    {
+      int j;
+
+      masterBarrier(THREAD_EVALUATE, tr); 
+      if(tr->NumberOfModels == 1)
+      {
+        for(i = 0, result = 0.0; i < NumberOfThreads; i++)          
+          result += reductionBuffer[i];  	  	     
+
+        tr->perPartitionLH[0] = result;
+      }
+      else
+      {
+        volatile double partitionResult;
+
+        result = 0.0;
+
+        for(j = 0; j < tr->NumberOfModels; j++)
+        {
+          for(i = 0, partitionResult = 0.0; i < NumberOfThreads; i++)          	      
+            partitionResult += reductionBuffer[i * tr->NumberOfModels + j];
+          result += partitionResult;
+          tr->perPartitionLH[j] = partitionResult;
+        }
+      }
+    }  
 #else
 #ifdef _FINE_GRAIN_MPI
-      masterBarrierMPI(THREAD_EVALUATE, tr);
-      
-      {
-	int model = 0;
+    masterBarrierMPI(THREAD_EVALUATE, tr);
 
-	for(model = 0, result = 0.0; model < tr->NumberOfModels; model++)
-	  result += tr->perPartitionLH[model];		  
-      }
+    {
+      int model = 0;
+
+      for(model = 0, result = 0.0; model < tr->NumberOfModels; model++)
+        result += tr->perPartitionLH[model];		  
+    }
 #else
-      result = evaluateIterative(tr, FALSE);
+    result = evaluateIterative(tr, FALSE);
 #endif   
 #endif
-    }
+  }
+
+  /*
+  printBothOpen("lh summ\n");	   
+  for(i = 0; i < tr->NumberOfModels; i++)
+    printBothOpen("lh model %d %f\n",i,tr->perPartitionLH[i]);	   
+    */
 
   tr->likelihood = result;    
 
- 
+
 
   return result;
 }
@@ -1499,62 +1577,62 @@ double evaluateGenericMulti (tree *tr, nodeptr p, int model)
 double evaluateGenericInitrav (tree *tr, nodeptr p)
 {
   volatile double result;   
-  
-  if(tr->multiGene)
-    {
-      determineFullTraversalMulti(p, tr);
-      result = evaluateIterativeMulti(tr, FALSE);
-    }
-  else
-    {
-      determineFullTraversal(p, tr);
-      
-#ifdef _USE_PTHREADS 
-      {
-	int i, j;
-    
-	masterBarrier(THREAD_EVALUATE, tr);    
 
-	if(tr->NumberOfModels == 1)
-	  {
-	    for(i = 0, result = 0.0; i < NumberOfThreads; i++)          
-	      result += reductionBuffer[i];  	  	     
-      
-	    tr->perPartitionLH[0] = result;
-	  }
-	else
-	  {
-	    volatile double partitionResult;
-	    
-	    result = 0.0;
-	    
-	    for(j = 0; j < tr->NumberOfModels; j++)
-	      {
-		for(i = 0, partitionResult = 0.0; i < NumberOfThreads; i++)          	      
-		  partitionResult += reductionBuffer[i * tr->NumberOfModels + j];
-		result +=  partitionResult;
-		tr->perPartitionLH[j] = partitionResult;
-	      }
-	  }
-    
+  if(tr->multiGene)
+  {
+    determineFullTraversalMulti(p, tr);
+    result = evaluateIterativeMulti(tr, FALSE);
+  }
+  else
+  {
+    determineFullTraversal(p, tr);
+
+#ifdef _USE_PTHREADS 
+    {
+      int i, j;
+
+      masterBarrier(THREAD_EVALUATE, tr);    
+
+      if(tr->NumberOfModels == 1)
+      {
+        for(i = 0, result = 0.0; i < NumberOfThreads; i++)          
+          result += reductionBuffer[i];  	  	     
+
+        tr->perPartitionLH[0] = result;
       }
+      else
+      {
+        volatile double partitionResult;
+
+        result = 0.0;
+
+        for(j = 0; j < tr->NumberOfModels; j++)
+        {
+          for(i = 0, partitionResult = 0.0; i < NumberOfThreads; i++)          	      
+            partitionResult += reductionBuffer[i * tr->NumberOfModels + j];
+          result +=  partitionResult;
+          tr->perPartitionLH[j] = partitionResult;
+        }
+      }
+
+    }
 #else
 #ifdef _FINE_GRAIN_MPI
-      masterBarrierMPI(THREAD_EVALUATE, tr);
-      {
-	int model = 0;
+    masterBarrierMPI(THREAD_EVALUATE, tr);
+    {
+      int model = 0;
 
-	for(model = 0, result = 0.0; model < tr->NumberOfModels; model++)
-	  result += tr->perPartitionLH[model];	
-	  
-      }     
+      for(model = 0, result = 0.0; model < tr->NumberOfModels; model++)
+        result += tr->perPartitionLH[model];	
+
+    }     
 #else
-      result = evaluateIterative(tr, FALSE);
+    result = evaluateIterative(tr, FALSE);
 #endif
 #endif
 
-    }
- 
+  }
+
 
   tr->likelihood = result;         
 
