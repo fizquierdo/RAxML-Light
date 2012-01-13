@@ -609,11 +609,12 @@ typedef struct {
   int             **expVector;
 
   double       **xVector;
+  size_t           *xSpaceVector;
   /* recom */
   double       **tmpvectors; /* size: numVectors, points to the vectors */ /* this info is per-partition */
+  size_t           *xSpaceSlot; /* we only have slots permanently in memory, not vectors */
   /* E recom */
 
-  size_t           *xSpaceVector;
  
   unsigned char            **yVector;
   char   *partitionName;

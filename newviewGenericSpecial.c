@@ -5035,7 +5035,7 @@ void newviewIterative (tree *tr)
           gapOffset,
           rateHet,
           states = (size_t)tr->partitionData[model].states,	
-          availableLength = tr->partitionData[model].xSpaceVector[(tInfo->pNumber - tr->mxtips - 1)],
+          availableLength,
           requiredLength = 0;	     
 
         if(tr->rateHetModel == CAT)
@@ -5052,10 +5052,12 @@ void newviewIterative (tree *tr)
           //x3_start = tr->rvec->tmpvectors[slot];
           x3_start = tr->partitionData[model].tmpvectors[slot];
           //assert(x3_start != NULL);
+          availableLength = tr->partitionData[model].xSpaceSlot[slot];
         }
         else
         {
           x3_start = tr->partitionData[model].xVector[tInfo->pNumber - tr->mxtips - 1];
+          availableLength = tr->partitionData[model].xSpaceVector[(tInfo->pNumber - tr->mxtips - 1)];
         }
 
         if(tr->saveMemory)
@@ -5084,9 +5086,7 @@ void newviewIterative (tree *tr)
           requiredLength  =  width * rateHet * states * sizeof(double);
         }
 
-        if(requiredLength != availableLength || (tr->saveMemory && tr->useRecom)) /* TODOFER why? */
-          /* TODOFER xSpaceVector is meaningless for useRecom because the indexing of xVector is meaningless in that case!*/
-          /* so availableLength is meaningless too, this should be tracked with rvec, but depends on partitions! */
+        if(requiredLength != availableLength) 
         {		  
           if(x3_start)
             free(x3_start);
@@ -5098,12 +5098,13 @@ void newviewIterative (tree *tr)
           if(tr->useRecom)
           {
             tr->partitionData[model].tmpvectors[tInfo->slot_p]  = x3_start;
+            tr->partitionData[model].xSpaceSlot[tInfo->slot_p] = requiredLength;		 
           }
           else
           {
             tr->partitionData[model].xVector[tInfo->pNumber - tr->mxtips - 1] = x3_start;		  
+            tr->partitionData[model].xSpaceVector[(tInfo->pNumber - tr->mxtips - 1)] = requiredLength;		 
           }
-          tr->partitionData[model].xSpaceVector[(tInfo->pNumber - tr->mxtips - 1)] = requiredLength;		 
         }
 
         switch(tInfo->tipCase)

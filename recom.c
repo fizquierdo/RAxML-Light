@@ -26,6 +26,7 @@ void allocRecompVectors(tree *tr, size_t width, int model)
   printBothOpen("Allocating space for %d inner vectors of width %d, part %d\n", v->numVectors, width, model);
   //tr->partitionData[model].tmpvectors = (double **)malloc_aligned(v->numVectors * sizeof(double *));
   tr->partitionData[model].tmpvectors = (double **)malloc(v->numVectors * sizeof(double *));
+  tr->partitionData[model].xSpaceSlot = (size_t *)calloc(v->numVectors, sizeof(size_t));
   int i, j;
   for(i=0; i<v->numVectors; i++)
   {

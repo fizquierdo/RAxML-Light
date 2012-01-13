@@ -2580,9 +2580,12 @@ static void allocPartitions(tree *tr)
     tr->partitionData[i].yVector = (unsigned char **)malloc(sizeof(unsigned char*) * (tr->mxtips + 1));
 
 
+    /*TODOFER check where xVector is used with useRecom (not needed)*/ 
     tr->partitionData[i].xVector = (double **)malloc(sizeof(double*) * tr->innerNodes);      
-
-    tr->partitionData[i].xSpaceVector = (size_t *)calloc(tr->innerNodes, sizeof(size_t));
+    if(!tr->useRecom)
+    {
+      tr->partitionData[i].xSpaceVector = (size_t *)calloc(tr->innerNodes, sizeof(size_t));
+    }
 
 
 
