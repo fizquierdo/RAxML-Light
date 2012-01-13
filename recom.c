@@ -28,9 +28,12 @@ void allocRecompVectors(tree *tr, size_t width, int model)
   int i, j;
   for(i=0; i<v->numVectors; i++)
   {
-    tr->partitionData[model].tmpvectors[i] = (double *)malloc_aligned(width * sizeof(double));
+    //tr->partitionData[model].tmpvectors[i] = (double *)malloc_aligned(width * sizeof(double));
+    tr->partitionData[model].tmpvectors[i] = (double *)NULL;
+    /*
     for(j=0; j< width; j++)
       tr->partitionData[model].tmpvectors[i][j] = INVALID_VALUE;
+      */
   }
 }
     

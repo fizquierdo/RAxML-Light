@@ -6188,6 +6188,16 @@ static void printTraversalInfo(tree *tr)
 }
 
 /*end code to track traversal descriptor stats */
+void printTipCase(int tipcase)
+{
+  switch(tipcase)
+  {
+    case TIP_TIP: printBothOpen("TIP-TIP\n"); break;
+    case TIP_INNER: printBothOpen("TIP-INNER\n"); break;
+    case INNER_INNER: printBothOpen("TIP-TIP\n"); break;
+    default: assert(FALSE);
+  }
+}
 /* E recomp */
 
 int main (int argc, char *argv[])
@@ -6381,8 +6391,9 @@ int main (int argc, char *argv[])
       modOptJoerg(tr, adef);
 #else
       evaluateGenericInitrav(tr, tr->start);	 
-      treeEvaluate(tr, 1); 	 	 	 	 	 
-      computeBIGRAPID(tr, adef, TRUE); 	     
+      //treeEvaluate(tr, 0.25); 	 	 	 	 	 
+      //treeEvaluate(tr, 1); 	 	 	 	 	 
+      //computeBIGRAPID(tr, adef, TRUE); 	     
       /* recom */
       printBothOpen("Traversal freq after search \n");
       printTraversalInfo(tr);

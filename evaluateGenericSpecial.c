@@ -1052,6 +1052,7 @@ double evaluateIterative(tree *tr,  boolean writeVector)
   int unpin1, unpin2;
   /* E recom */
 
+
   newviewIterative(tr);  
 
   for(model = 0; model < tr->NumberOfModels; model++)
