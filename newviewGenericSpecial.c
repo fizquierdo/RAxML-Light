@@ -4986,7 +4986,6 @@ void newviewIterative (tree *tr)
 #if (defined(_USE_PTHREADS) || defined(_FINE_GRAIN_MPI))
 #else
   countTraversal(tr);
-  printBothOpen("counted\n");
 #endif
   int slot = -1, unpin1 = -1, unpin2 = -1;
   /* E recom */
@@ -4995,7 +4994,7 @@ void newviewIterative (tree *tr)
   {
     traversalInfo *tInfo = &ti[i];
 
-    printBothOpen("trav elem %d\n", i);
+    //printBothOpen("trav elem %d\n", i);
     for(model = 0; model < tr->NumberOfModels; model++)
     {
       size_t		
@@ -5077,6 +5076,7 @@ void newviewIterative (tree *tr)
             setBits += (size_t)(precomputed16_bitcount(x3_gap[j]));		      
           }
 
+          //printBothOpen("widt %d, setBits %d, requires %d\n", width, setBits, width - setBits);
           requiredLength = (width - setBits)  * rateHet * states * sizeof(double);		
         }
         else
@@ -5084,12 +5084,13 @@ void newviewIterative (tree *tr)
           requiredLength  =  width * rateHet * states * sizeof(double);
         }
 
-        if(requiredLength != availableLength)
+        if(requiredLength != availableLength || (tr->saveMemory && tr->useRecom)) /* TODOFER why? */
+          /* TODOFER xSpaceVector is meaningless for useRecom because the indexing of xVector is meaningless in that case!*/
+          /* so availableLength is meaningless too, this should be tracked with rvec, but depends on partitions! */
         {		  
           if(x3_start)
             free(x3_start);
 
-          /* TODOFER this will crash here, for the -S option we need more if useRecom is applied? */
           x3_start = (double*)malloc_aligned(requiredLength);		 
 
           assert(x3_start != NULL);

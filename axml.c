@@ -2619,12 +2619,13 @@ static void allocNodex (tree *tr)
     offset,
     memoryRequirements = 0;
 
+  allocPartitions(tr);
+
   if(tr->useRecom)
     allocRecompVectorsInfo(tr);
   else
     tr->rvec = NULL;
 
-  allocPartitions(tr);
 
 
   if(tr->rateHetModel == CAT)
@@ -2709,7 +2710,7 @@ static void allocNodex (tree *tr)
 
 
   /* recom */
-  if(!tr->useRecom)
+  //if(!tr->useRecom)
     /* E recom */
   {
     for(i = 0; i < tr->innerNodes; i++)
@@ -6391,9 +6392,8 @@ int main (int argc, char *argv[])
       modOptJoerg(tr, adef);
 #else
       evaluateGenericInitrav(tr, tr->start);	 
-      //treeEvaluate(tr, 0.25); 	 	 	 	 	 
-      //treeEvaluate(tr, 1); 	 	 	 	 	 
-      //computeBIGRAPID(tr, adef, TRUE); 	     
+      treeEvaluate(tr, 1); 	 	 	 	 	 
+      computeBIGRAPID(tr, adef, TRUE); 	     
       /* recom */
       printBothOpen("Traversal freq after search \n");
       printTraversalInfo(tr);

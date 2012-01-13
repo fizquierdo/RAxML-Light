@@ -64,11 +64,9 @@ rm *${NAME}*
   RECOM=" -r 0.8 "
   #RECOM=""
   echo "*** run recom"
-  #valgrind ./raxmlLight $RECOM -m $MODEL -n ${NAME}_std -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE}
-  #./raxmlLight $RECOM -m $MODEL -n ${NAME}_std -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} 
+  ./raxmlLight $RECOM -m $MODEL -n ${NAME}_std -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} 
   echo "*** run S -----------------------------------"
-  valgrind ./raxmlLight $RECOM -m $MODEL -n ${NAME}_stdS -s ${DATADIR}/${SET} -S -t ${DATADIR}/${TREE}
-  #./raxmlLight $RECOM -m $MODEL -n ${NAME}_stdS -s ${DATADIR}/${SET} -S -t ${DATADIR}/${TREE}
+  ./raxmlLight $RECOM -m $MODEL -n ${NAME}_stdS -s ${DATADIR}/${SET} -S -t ${DATADIR}/${TREE}
   #echo "*** run pthreads"
   #./raxmlLight-PTHREADS -T $NUM_THREADS -m $MODEL -n ${NAME}_T${NUM_THREADS} -s ${DATADIR}/${SET} $PARTITION_CALL -t ${DATADIR}/${TREE} 
   #./raxmlLight-PTHREADS -T $NUM_THREADS -m $MODEL -n ${NAME}_T${NUM_THREADS}_norec -s ${DATADIR}/${SET} $PARTITION_CALL -t ${DATADIR}/${TREE} 

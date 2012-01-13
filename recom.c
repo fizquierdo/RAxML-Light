@@ -24,7 +24,8 @@ void allocRecompVectors(tree *tr, size_t width, int model)
   /* should be done per partition */
   assert(v->numVectors > 0 && v->numVectors <= tr->mxtips - 2);
   printBothOpen("Allocating space for %d inner vectors of width %d, part %d\n", v->numVectors, width, model);
-  tr->partitionData[model].tmpvectors = (double **)malloc_aligned(v->numVectors * sizeof(double *));
+  //tr->partitionData[model].tmpvectors = (double **)malloc_aligned(v->numVectors * sizeof(double *));
+  tr->partitionData[model].tmpvectors = (double **)malloc(v->numVectors * sizeof(double *));
   int i, j;
   for(i=0; i<v->numVectors; i++)
   {
@@ -150,7 +151,7 @@ void freeRecompVectors(recompVectors *v)
   free(v->iNode);
   free(v->iNode_prev);
   free(v->stlen);
-  free(v->unpinPrio);
+  //free(v->unpinPrio);
   free(v->unpinnable);
   free(v->unpinnable_prev);
   free(v);
