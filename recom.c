@@ -59,19 +59,15 @@ void allocRecompVectorsInfo(tree *tr)
   /* init vectors tracking */
   v->iVector = (int *) malloc((size_t)num_vectors * sizeof(int));
   v->iVector_prev = (int *) malloc((size_t)num_vectors * sizeof(int));
-  v->unpinPrio = (int *) malloc((size_t)num_vectors * sizeof(int));
-  v->nextPrio = 0;
   v->unpinnable = (boolean *) malloc((size_t)num_vectors * sizeof(boolean));
   v->unpinnable_prev = (boolean *) malloc((size_t)num_vectors * sizeof(boolean));
   for(i=0; i<num_vectors; i++)
   {
     v->iVector[i] = SLOT_UNUSED;
     v->iVector_prev[i] = SLOT_UNUSED;
-    v->unpinPrio[i] = SLOT_UNUSED;
     v->unpinnable[i] = FALSE;
     v->unpinnable_prev[i] = FALSE;
   }
-  v->usePrioList = FALSE;
   v->iNode = (int *) malloc((size_t)num_inner_nodes * sizeof(int));
   v->iNode_prev = (int *) malloc((size_t)num_inner_nodes * sizeof(int));
   v->stlen = (int *) malloc((size_t)num_inner_nodes * sizeof(int));
@@ -152,7 +148,6 @@ void freeRecompVectors(recompVectors *v)
   free(v->iNode);
   free(v->iNode_prev);
   free(v->stlen);
-  //free(v->unpinPrio);
   free(v->unpinnable);
   free(v->unpinnable_prev);
   free(v);
@@ -266,57 +261,6 @@ int findUnpinnableSlotByCost(recompVectors *v, int mxtips)
   assert(cheapest_slot >= 0);
   return cheapest_slot;
 }
-/* priority list */
-void traverseBackRec(tree *tr, nodeptr p)
-{
-  if(isTip(p->number, tr->mxtips))
-    return;
-  //printBothOpen(" %d", p->number);
-  int slot;
-  int pos = tr->rvec->nextPrio;
-  slot = tr->rvec->iNode[p->number - tr->mxtips - 1];
-  if (slot != NODE_UNPINNED)
-  {
-    assert(slot >= 0 && slot < tr->rvec->numVectors);
-    if(tr->rvec->unpinnable[slot])
-    {
-      tr->rvec->unpinPrio[pos] = p->number;
-      tr->rvec->nextPrio = pos + 1;
-    }
-    else
-    {
-      //printBothOpen(" W");
-    }
-  }
-  traverseBackRec(tr, p->next->back);
-  traverseBackRec(tr, p->next->next->back);
-}
-void resetUnpinPrio(recompVectors *v)
-{
-  int i;
-  assert(v->nextPrio < v->numVectors);
-  assert(v->nextPrio >= 0);
-  for(i=0; i < v->nextPrio; i++)
-    v->unpinPrio[i] = SLOT_UNUSED;
-  v->nextPrio = 0;
-}
-void updatePrioNodes(tree *tr, nodeptr p)
-{
-  resetUnpinPrio(tr->rvec);
-  assert(!isTip(p->back->number, tr->mxtips));
-  traverseBackRec(tr, p->back);
-}
-void set_node_priority(tree *tr, nodeptr p)
-{
-  if(!isTip(p->back->number, tr->mxtips)) 
-  {
-    updatePrioNodes(tr, p);
-    tr->rvec->usePrioList = TRUE;
-  }
-  else
-    tr->rvec->usePrioList = FALSE;
-}
-/* end priority list */
 void showTreeNodes(tree *tr)
 {
   if(!tr->useRecom) 
@@ -378,31 +322,7 @@ int findUnpinnableSlot(recompVectors *v, int mxtips)
   int i, slot;
   int node_unpinned;
   int slot_unpinned = -1;
-  /* try using the prio list */
-  if(v->usePrioList && v->nextPrio > 0)
-  {
-    int listnode;
-    int pos = v->nextPrio - 1;
-    while(pos >= 0)
-    {
-      listnode = v->unpinPrio[pos];
-      slot_unpinned = v->iNode[listnode - mxtips - 1];
-      assert(v->iVector[slot_unpinned] == listnode);
-      v->unpinPrio[pos] = SLOT_UNUSED;
-      v->nextPrio = pos;
-      if(v->unpinnable[slot_unpinned])
-        break;
-      else
-      {
-        pos--;
-        slot_unpinned = -1;
-      }
-    }
-  }
-  /* uses minimum cost if prio list failed */
-  if(slot_unpinned == -1)
-    slot_unpinned = findUnpinnableSlotByCost(v, mxtips);
-
+  slot_unpinned = findUnpinnableSlotByCost(v, mxtips);
   assert(slot_unpinned >= 0);
   assert(v->unpinnable[slot_unpinned]);
   unpinAtomicSlot(v, slot_unpinned, mxtips);

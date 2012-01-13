@@ -61,7 +61,7 @@ fi
 
 #run
 rm *${NAME}*
-  RECOM=" -r 0.8 "
+  RECOM=" -r 0.4 "
   #RECOM=""
   echo "*** run recom"
   ./raxmlLight $RECOM -m $MODEL -n ${NAME}_std -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} 
