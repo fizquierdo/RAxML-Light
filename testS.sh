@@ -3,7 +3,6 @@
 DATADIR=datar
 MODEL=GTRCAT
 NAME=TEST
-PARTITION_CALL=""
 
 if [ $1 = 50 ] ; then
  SET=50
@@ -12,7 +11,7 @@ elif [ $1 = 20 ] ; then
  SET=20
  TREE=intree20
  #PARTITION_CALL="-q ${DATADIR}/20.model "
- #PARTITION_CALL="-q ${DATADIR}/20.model -M "
+ PARTITION_CALL="-q ${DATADIR}/20.model -M "
 elif [ $1 = 10 ] ; then
  SET=10
  TREE=intree10
@@ -22,7 +21,7 @@ elif [ $1 = 8 ] ; then
 elif [ $1 = 150 ] ; then
  SET=150
  TREE=intree150
- #PARTITION_CALL="-q ${DATADIR}/20.model"
+ PARTITION_CALL="-q ${DATADIR}/20.model -M"
 elif [ $1 = 1288 ] ; then
  SET=1288
  TREE=intree1288
@@ -51,27 +50,24 @@ if [ $1 = cmp ] ; then
   rm *.o
   rm raxmlLight
   make -f Makefile.SSE3.gcc
-  #rm *.o
-  #rm raxmlLight-PTHREADS
-  #make -f Makefile.SSE3.PTHREADS.gcc
-  #rm *.o
-  #rm raxmlLight-MPI
-  #make -f Makefile.SSE3.MPI
+  rm *.o
+  rm raxmlLight-PTHREADS
+  make -f Makefile.SSE3.PTHREADS.gcc
+  rm *.o
+  rm raxmlLight-MPI
+  make -f Makefile.SSE3.MPI
 fi
 
 #run
 rm *${NAME}*
-  RECOM=" -r 0.4 "
+  RECOM=" -r 0.6 "
   #RECOM=""
+  echo $PARTITION_CALL
   echo "*** run recom"
-  ./raxmlLight $RECOM -m $MODEL -n ${NAME}_std -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} 
+  #./raxmlLight $RECOM -m $MODEL -n ${NAME}_std -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} $PARTITION_CALL
   echo "*** run S -----------------------------------"
-  ./raxmlLight $RECOM -m $MODEL -n ${NAME}_stdS -s ${DATADIR}/${SET} -S -t ${DATADIR}/${TREE}
-  #echo "*** run pthreads"
-  #./raxmlLight-PTHREADS -T $NUM_THREADS -m $MODEL -n ${NAME}_T${NUM_THREADS} -s ${DATADIR}/${SET} $PARTITION_CALL -t ${DATADIR}/${TREE} 
-  #./raxmlLight-PTHREADS -T $NUM_THREADS -m $MODEL -n ${NAME}_T${NUM_THREADS}_norec -s ${DATADIR}/${SET} $PARTITION_CALL -t ${DATADIR}/${TREE} 
-  #cp RAxML_info.${NAME}_T${NUM_THREADS} brm_treads
-  #echo "*** run mpi"
-  #mpirun.openmpi -np 4 ./raxmlLight-MPI -m $MODEL -n ${NAME}_mpi -s ${DATADIR}/${SET} $PARTITION_CALL -t ${DATADIR}/${TREE} 
-  #cp RAxML_info.${NAME}_mpi brm_mpi
-  #tail brm*
+  #./raxmlLight $RECOM -m $MODEL -n ${NAME}_stdS -s ${DATADIR}/${SET} -S -t ${DATADIR}/${TREE} $PARTITION_CALL
+  echo "*** run pthreads"
+  ./raxmlLight-PTHREADS $RECOM -T $NUM_THREADS -m $MODEL -S -n ${NAME}_T${NUM_THREADS} -s ${DATADIR}/${SET} $PARTITION_CALL -t ${DATADIR}/${TREE} 
+  echo "*** run mpi"
+  mpirun.openmpi -np 4 ./raxmlLight-MPI $RECOM -m $MODEL -S -n ${NAME}_mpi -s ${DATADIR}/${SET} $PARTITION_CALL -t ${DATADIR}/${TREE} 
