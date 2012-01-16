@@ -6365,11 +6365,6 @@ int main (int argc, char *argv[])
       assert(0);
 #endif
 
-      /* recom */
-      if(tr->useRecom)
-        assert(0); /* TODOFER add restart support, does it work out-of-the-box? */
-      /* E recom */
-
       restart(tr, adef);
 
       computeBIGRAPID(tr, adef, TRUE); 

@@ -4,46 +4,14 @@ DATADIR=datar
 MODEL=GTRCAT
 NAME=TEST
 
-if [ $1 = 50 ] ; then
- SET=50
- TREE=RAxML_parsimonyTree.50sim.0
-elif [ $1 = 20 ] ; then
- SET=20
- TREE=intree20
- #PARTITION_CALL="-q ${DATADIR}/20.model "
- PARTITION_CALL="-q ${DATADIR}/20.model -M "
-elif [ $1 = 10 ] ; then
- SET=10
- TREE=intree10
-elif [ $1 = 8 ] ; then
- SET=8
- TREE=intree8
-elif [ $1 = 150 ] ; then
- SET=150
- TREE=intree150
- PARTITION_CALL="-q ${DATADIR}/20.model -M"
-elif [ $1 = 1288 ] ; then
- SET=1288
- TREE=intree1288
+if [ $1 = 150 ] ; then
+  SET=150
+  TREE=intree150
 else
- SET=20
- TREE=intree20
- PARTITION_CALL="-q ${DATADIR}/20.model -M "
- #PARTITION_CALL="-q ${DATADIR}/20.model "
-
- #SET=50
- #TREE=RAxML_parsimonyTree.50sim.0
+  SET=20
+  TREE=intree20
 fi
 
-FACTOR=0.55
-NUM_THREADS=4
-
-# just clean dir
-if [ $1 = clean ] ; then
-  rm *.o
-  rm *${NAME}*
-  exit
-fi
 
 # compile
 if [ $1 = cmp ] ; then
@@ -59,15 +27,14 @@ if [ $1 = cmp ] ; then
 fi
 
 #run
-rm *${NAME}*
-  RECOM=" -r 0.6 "
-  #RECOM=""
-  echo $PARTITION_CALL
-  echo "*** run recom"
-  #./raxmlLight $RECOM -m $MODEL -n ${NAME}_std -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} $PARTITION_CALL
-  echo "*** run S -----------------------------------"
-  #./raxmlLight $RECOM -m $MODEL -n ${NAME}_stdS -s ${DATADIR}/${SET} -S -t ${DATADIR}/${TREE} $PARTITION_CALL
-  echo "*** run pthreads"
-  ./raxmlLight-PTHREADS $RECOM -T $NUM_THREADS -m $MODEL -S -n ${NAME}_T${NUM_THREADS} -s ${DATADIR}/${SET} $PARTITION_CALL -t ${DATADIR}/${TREE} 
-  echo "*** run mpi"
-  mpirun.openmpi -np 4 ./raxmlLight-MPI $RECOM -m $MODEL -S -n ${NAME}_mpi -s ${DATADIR}/${SET} $PARTITION_CALL -t ${DATADIR}/${TREE} 
+NUM_THREADS=4
+PARTITION_CALL="-q ${DATADIR}/20.model -M -S"
+RECOM=" -r 0.6 "
+echo $PARTITION_CALL
+
+echo "*** run serial -----------------------------------"
+./raxmlLight $RECOM -m $MODEL -n ${NAME}_serial -s ${DATADIR}/${SET} -t ${DATADIR}/${TREE} $PARTITION_CALL
+echo "*** run pthreads"
+./raxmlLight-PTHREADS $RECOM -T $NUM_THREADS -m $MODEL -n ${NAME}_T${NUM_THREADS} -s ${DATADIR}/${SET} $PARTITION_CALL -t ${DATADIR}/${TREE} 
+echo "*** run mpi"
+mpirun.openmpi -np 4 ./raxmlLight-MPI $RECOM -m $MODEL -n ${NAME}_mpi -s ${DATADIR}/${SET} $PARTITION_CALL -t ${DATADIR}/${TREE} 
