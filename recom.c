@@ -10,6 +10,20 @@
 
 #include "axml.h"
 
+void protectNode(recompVectors *rvec, int nodenum, int mxtips)
+{
+  /* If a node is available we dont need to recompute it, but we neet to maker sure it is not unpinned while buildding the rest of the traversal descriptor,
+   * i.e. unpinnable must be false at this point, it will automatically be set to true, after the *counter post-order instructions have been executed */
+  /* This might be a but in RAxML-light, Omitting this code will likely still work as long as num_allocated_nodes >> log n, but wrong inner vectors will
+   * be used at the wrong moment of newviewIterative, careful! */
+  /* QUESTION This function had been implemented and was then dropped at some point?!? */
+  int slot;
+  slot = rvec->iNode[nodenum - mxtips - 1];
+  assert(slot != NODE_UNPINNED);
+  assert(rvec->iVector[slot] == nodenum);
+  if(rvec->unpinnable[slot])
+    rvec->unpinnable[slot] = FALSE;
+}
 
 
 static boolean isNodePinned(recompVectors *rvec, int nodenum, int mxtips)

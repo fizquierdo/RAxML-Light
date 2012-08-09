@@ -4720,6 +4720,11 @@ void computeTraversalInfo(nodeptr p, traversalInfo *ti, int *counter, int maxTip
         {
           if(needsRecomp(recompute, rvec, r, maxTips))
             computeTraversalInfo(r, ti, counter, maxTips, numBranches, rvec, recompute);
+          else
+          {
+            if(recompute) 
+              protectNode(rvec, r->number, maxTips);
+          }
           if (!p->x)
             getxnode(p);
         }
@@ -4774,34 +4779,20 @@ void computeTraversalInfo(nodeptr p, traversalInfo *ti, int *counter, int maxTip
               int 
                 q_stlen_fast = rvec->stlen[q->number - maxTips - 1],
                              r_stlen_fast = rvec->stlen[r->number - maxTips - 1];
-
-
-
-
-
               if(q_stlen_fast > r_stlen_fast) 
               {		
-
                 computeTraversalInfo(q, ti, counter, maxTips, numBranches, rvec, recompute);
-
-
                 computeTraversalInfo(r, ti, counter, maxTips, numBranches, rvec, recompute);
               }
               else
               {
-
                 computeTraversalInfo(r, ti, counter, maxTips, numBranches, rvec, recompute);
-
-
                 computeTraversalInfo(q, ti, counter, maxTips, numBranches, rvec, recompute);
               }
             }
             else
             {
-
               computeTraversalInfo(q, ti, counter, maxTips, numBranches, rvec, recompute);
-
-
               computeTraversalInfo(r, ti, counter, maxTips, numBranches, rvec, recompute);
             }		    
           }
@@ -4810,8 +4801,18 @@ void computeTraversalInfo(nodeptr p, traversalInfo *ti, int *counter, int maxTip
             /* order is not relevant */
             if (needsRecomp(recompute, rvec, q, maxTips))
               computeTraversalInfo(q, ti, counter, maxTips, numBranches, rvec, recompute);
+            else
+            {
+              if(recompute) 
+                protectNode(rvec, q->number, maxTips);
+            }
+
             if (needsRecomp(recompute, rvec, r, maxTips))
               computeTraversalInfo(r, ti, counter, maxTips, numBranches, rvec, recompute);
+            {
+              if(recompute) 
+                protectNode(rvec, r->number, maxTips);
+            }
           }
           if(!p->x)
             getxnode(p);		
